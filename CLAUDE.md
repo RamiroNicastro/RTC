@@ -7,7 +7,7 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
 ## Reglas inviolables
 
 - **R1.** `PlayerInput`, `AIInput` y `DummyInput` controlan **exactamente el mismo** `Fighter`. El Fighter no sabe quién lo maneja: solo recibe un `FighterCommand` por tick.
-- **R2.** El combate recibe un `FightSetup` y (a partir del Hito E3) devuelve un `FightResult`. **Nada dentro de `combat/` usa autoloads** ni conoce la carrera, la economía o la narrativa.
+- **R2.** El combate recibe un `FightSetup` y, al terminar, emite `fight_finished(FightResult)`. **Nada dentro de `combat/` usa autoloads** ni conoce la carrera, la economía o la narrativa.
 
 ## Reglas de arquitectura
 
@@ -56,5 +56,6 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [x] Hito D: esquive (solo cabeza) con counter, golpes al cuerpo con desgaste del máximo (tope 30 %), guardia más suave
 - [x] Hito E1: knockdown, cuenta (mínimo 3 para levantarse), barra para levantarse, KO/TKO, textos en i18n/
 - [x] Hito E2: rounds (3×60 s), reloj que se frena en la cuenta, descanso con recuperación parcial, salud en dos capas, TKO por round
-- [ ] **Hito E3: FightStats, jueces, FightResult, pantalla final** ← siguiente
-- [ ] Hitos F, G, H, I
+- [x] Hito E3: FightStats (solo eventos reales), 3 jueces con pesos distintos, decisiones, FightResult (solo datos), pantalla final
+- [ ] **Hito F: primera IA funcional** ← siguiente
+- [ ] Hitos G, H, I

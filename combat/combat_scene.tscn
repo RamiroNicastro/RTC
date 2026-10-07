@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://combat/camera/combat_camera.gd" id="4_camera"]
 [ext_resource type="Script" path="res://combat/hud/combat_hud.gd" id="5_hud"]
 [ext_resource type="Script" path="res://combat/hud/touch_controls.gd" id="6_touch"]
+[ext_resource type="Script" path="res://combat/hud/result_screen.gd" id="7_result"]
 
 [node name="CombatScene" type="Node2D"]
 script = ExtResource("1_scene")
@@ -26,3 +27,6 @@ script = ExtResource("5_hud")
 
 [node name="TouchControls" type="CanvasLayer" parent="."]
 script = ExtResource("6_touch")
+
+[node name="ResultScreen" type="CanvasLayer" parent="."]
+script = ExtResource("7_result")

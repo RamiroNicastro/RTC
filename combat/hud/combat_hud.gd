@@ -114,10 +114,9 @@ func _draw_fight_messages(width: float) -> void:
 				FightManager.Method.KO, FightManager.Method.TKO:
 					var title: String = tr("COMBAT_KO") if _fight.method == FightManager.Method.KO else tr("COMBAT_TKO")
 					_draw_centered(title, 290.0, 96, Color(1.0, 0.3, 0.2))
-					_draw_centered(tr("COMBAT_WINNER").format({"name": _fight.winner.setup.display_name}), 360.0, 36, Color.WHITE)
 				FightManager.Method.DECISION:
+					# El resultado (jueces) lo muestra ResultScreen un momento después.
 					_draw_centered(tr("COMBAT_FIGHT_OVER"), 290.0, 64, Color.WHITE)
-					_draw_centered(tr("COMBAT_DECISION_PENDING"), 345.0, 26, Color(0.8, 0.8, 0.8))
 
 
 func _draw_centered(text: String, y: float, font_size: int, color: Color) -> void:

@@ -10,4 +10,19 @@ COMBAT_ROUND_SHORT,ROUND {n}/{total},ROUND {n}/{total}
 COMBAT_ROUND_END,FIN DEL ROUND {n},END OF ROUND {n}
 COMBAT_REST,Descanso: se recupera parte de la salud y del cansancio,Rest: recovering some health and stamina
 COMBAT_FIGHT_OVER,¡FIN DE LA PELEA!,FIGHT OVER!
-COMBAT_DECISION_PENDING,Decisión de los jueces: llega en el próximo hito,Judges' decision: coming in the next milestone
+RESULT_UNANIMOUS,DECISIÓN UNÁNIME,UNANIMOUS DECISION
+RESULT_SPLIT,DECISIÓN DIVIDIDA,SPLIT DECISION
+RESULT_MAJORITY,DECISIÓN MAYORITARIA,MAJORITY DECISION
+RESULT_DRAW_TITLE,EMPATE,DRAW
+RESULT_DRAW,Nadie gana: empate,No winner: it's a draw
+RESULT_WHEN,"Round {round}, {time}","Round {round}, {time}"
+RESULT_LANDED,Golpes conectados,Punches landed
+RESULT_POWER,Golpes de poder,Power punches
+RESULT_BODY,Al cuerpo,Body shots
+RESULT_COUNTERS,Counters,Counters
+RESULT_DEFENSE,Bloqueos y esquives,Blocks and dodges
+RESULT_KNOCKDOWNS,Caídas,Knockdowns
+RESULT_DAMAGE,Daño hecho,Damage dealt
+JUDGE_BALANCED,Juez 1 (equilibrado),Judge 1 (balanced)
+JUDGE_AGGRESSIVE,Juez 2 (agresividad),Judge 2 (aggression)
+JUDGE_TECHNICAL,Juez 3 (técnica),Judge 3 (technique)

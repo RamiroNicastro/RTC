@@ -9,6 +9,8 @@ extends Resource
 enum Zone { HEAD, BODY }
 
 @export var id: StringName = &"move"
+## true para golpes de poder (los jueces los valoran aparte).
+@export var is_power_punch: bool = false
 
 @export_group("Timing (ticks)")
 @export var startup_ticks: int = 6

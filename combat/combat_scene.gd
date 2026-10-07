@@ -2,7 +2,7 @@ class_name CombatScene
 extends Node2D
 ## Raíz del combate.
 ##
-## Regla R2: se configura con start(FightSetup) y (desde el Hito E3) devuelve un FightResult.
+## Regla R2: se configura con start(FightSetup) y al terminar emite fight_finished(FightResult).
 ## No usa autoloads ni conoce la carrera. Se puede correr solo desde debug/combat_sandbox.tscn.
 ##
 ## Maneja el orden de cada tick, que es siempre el mismo:
@@ -10,10 +10,12 @@ extends Node2D
 ##   2. avanzar a los dos Fighters;
 ##   3. resolver el espacio (cuerdas y choque entre peleadores);
 ##   4. resolver los golpes de AMBOS y recién después aplicarlos (si conectan en el mismo tick, es un intercambio);
-##   5. mover la cámara.
+##   5. avanzar al árbitro (reloj, cuenta, rounds) y mover la cámara.
 
 ## Se emite por cada golpe que llegó al rival (HIT, BLOCKED o DODGED).
 signal hit_resolved(info: HitInfo)
+## Salida del combate (R2): se emite una sola vez, cuando termina la pelea.
+signal fight_finished(result: FightResult)
 
 @onready var ring: Ring = $Ring
 @onready var fighter_a: Fighter = $FighterA
@@ -21,16 +23,24 @@ signal hit_resolved(info: HitInfo)
 @onready var camera: CombatCamera = $CombatCamera
 @onready var hud: CombatHUD = $CombatHUD
 @onready var touch_controls: TouchControls = $TouchControls
+@onready var result_screen: ResultScreen = $ResultScreen
 
 var clock := CombatClock.new()
 ## Árbitro: rounds, reloj, knockdowns, cuenta, KO y TKO.
 var fight := FightManager.new()
-var _setup: FightSetup
+## Registro de lo que pasa en la pelea (lo usan los jueces y el FightResult).
+var stats := FightStats.new()
+var judges: Array[Judge] = Judge.make_panel()
+## Tarjetas: un elemento por juez, con un Vector2i (A, B) por round puntuado.
+var judge_cards: Array = [[], [], []]
 ## Intercambiable: más adelante HitboxHitResolver, sin tocar nada más.
 var hit_resolver: HitResolver = DistanceHitResolver.new()
+## El resultado, cuando la pelea terminó (null mientras tanto).
+var result: FightResult
 
 var controller_a: FighterController
 var controller_b: FighterController
+var _setup: FightSetup
 var _started: bool = false
 
 
@@ -45,8 +55,16 @@ func start(fight_setup: FightSetup) -> void:
 	controller_a = _make_controller(fight_setup.fighter_a.controller_type)
 	controller_b = _make_controller(fight_setup.fighter_b.controller_type)
 
-	fight.setup(fighter_a, fighter_b, fight_setup)
+	fighter_a.attack_started.connect(func(_m: MoveData) -> void: stats.record_attack_started(0))
+	fighter_b.attack_started.connect(func(_m: MoveData) -> void: stats.record_attack_started(1))
+
+	# Conectar ANTES de fight.setup(): si la pelea arranca sin cartel, el round 1 empieza ahí mismo.
+	fight.round_started.connect(func(_n: int) -> void: stats.start_round())
+	fight.round_ended.connect(_on_round_ended)
 	fight.round_break_started.connect(_on_round_break_started)
+	fight.fight_ended.connect(_on_fight_ended)
+	fight.setup(fighter_a, fighter_b, fight_setup)
+
 	camera.setup(fighter_a, fighter_b, ring.stage_half_width())
 	hud.setup(fighter_a, fighter_b, fight)
 	# Los botones táctiles se ven solo en celulares (en PC se muestran con F3 desde la sandbox).
@@ -62,7 +80,7 @@ func _physics_process(_delta: float) -> void:
 
 	var cmd_a: FighterCommand = controller_a.get_command(fighter_a, fighter_b)
 	var cmd_b: FighterCommand = controller_b.get_command(fighter_b, fighter_a)
-	# Fuera de la pelea activa (cuenta, "¡boxeen!", final), solo el caído puede hacer algo: tocar para levantarse.
+	# Fuera de la pelea activa (cuenta, carteles, descanso, final), solo el caído puede hacer algo: tocar para levantarse.
 	if not fight.is_fighting():
 		if fight.downed != fighter_a:
 			cmd_a = FighterCommand.new()
@@ -74,6 +92,7 @@ func _physics_process(_delta: float) -> void:
 
 	ring.resolve_positions(fighter_a, fighter_b)
 	if fight.is_fighting():
+		_record_aggression()
 		_resolve_hits()
 	fight.tick()
 	camera.follow()
@@ -107,9 +126,70 @@ func _apply_hit(info: HitInfo) -> void:
 		# Que te esquiven cansa como pegarle al aire.
 		info.attacker.spend_stamina(info.move.whiff_stamina_penalty)
 	info.defender.receive_hit(info)
+	stats.record_hit(info, _index_of(info.attacker))
 	hit_resolved.emit(info)
 	if info.defender.state == Fighter.State.KNOCKDOWN:
+		stats.record_knockdown(_index_of(info.defender))
 		fight.on_knockdown(info.defender)
+
+
+## Agresividad para los jueces: ticks en que cada uno avanza hacia el rival.
+func _record_aggression() -> void:
+	for f in [fighter_a, fighter_b]:
+		if f.state == Fighter.State.MOVING and f.position.x * f.facing > f.previous_x * f.facing:
+			stats.record_forward_tick(_index_of(f))
+
+
+## Al terminar cada round, los tres jueces lo puntúan con lo que registró FightStats.
+func _on_round_ended(_round_number: int) -> void:
+	var a: FightStats.FighterRoundStats = stats.current(0)
+	var b: FightStats.FighterRoundStats = stats.current(1)
+	for j in judges.size():
+		judge_cards[j].append(judges[j].score_round(a, b))
+
+
+func _on_fight_ended(winner: Fighter, method: FightManager.Method) -> void:
+	result = _build_result(winner, method)
+	result_screen.show_result(result)
+	fight_finished.emit(result)
+
+
+func _build_result(winner: Fighter, method: FightManager.Method) -> FightResult:
+	var r := FightResult.new()
+	r.fighter_names = PackedStringArray([fighter_a.setup.display_name, fighter_b.setup.display_name])
+	r.scheduled_rounds = fight.total_rounds
+	r.end_round = fight.round_number
+	r.end_round_elapsed_seconds = roundi(_setup.round_seconds - CombatTime.ticks_to_seconds(fight.round_ticks_left))
+	r.stats = stats
+	r.knockdowns = Vector2i(fighter_a.knockdowns, fighter_b.knockdowns)
+	r.final_health = Vector2i(fighter_a.health, fighter_b.health)
+	r.final_max_health = Vector2i(fighter_a.max_health, fighter_b.max_health)
+	r.base_health = Vector2i(fighter_a.base_max_health, fighter_b.base_max_health)
+
+	r.judge_cards = judge_cards
+	for j in judges.size():
+		r.judge_name_keys.append(judges[j].judge_name_key)
+		var total := Vector2i.ZERO
+		for round_score: Vector2i in judge_cards[j]:
+			total += round_score
+		r.judge_totals.append(total)
+
+	match method:
+		FightManager.Method.KO:
+			r.method = FightResult.Method.KO
+			r.winner_index = _index_of(winner)
+		FightManager.Method.TKO:
+			r.method = FightResult.Method.TKO
+			r.winner_index = _index_of(winner)
+		_:
+			var decision: Array = FightResult.decide(r.judge_totals)
+			r.winner_index = decision[0]
+			r.method = decision[1]
+	return r
+
+
+func _index_of(f: Fighter) -> int:
+	return 0 if f == fighter_a else 1
 
 
 func _place_fighters_at_start() -> void:

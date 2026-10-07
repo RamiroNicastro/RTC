@@ -95,12 +95,29 @@ func _process(_delta: float) -> void:
 			gap, a.setup.jab.reach, "EN RANGO" if gap <= a.setup.jab.reach else "fuera",
 			a.setup.power_punch.reach, "EN RANGO" if gap <= a.setup.power_punch.reach else "fuera"],
 		"Cámara: x=%.1f   zoom=%.3f" % [_combat.camera.position.x, _combat.camera.zoom.x],
+		_judges_line(),
 		"Jugador: tirados %d  conectados %d  bloqueados %d  guardias rotas %d  fallados %d  daño %d" % [
 			_thrown, _landed, _blocked, _guard_breaks, _whiffed, _damage_dealt],
 		"Jugador: esquives exitosos %d   counters %d" % [_dodges, _counters],
 		"Último: %s" % _last_event,
 	]
 	_label.text = "\n".join(lines)
+
+
+## Cómo va el round actual para cada juez (puntos de este round) y las tarjetas hasta ahora.
+func _judges_line() -> String:
+	if _combat.stats.rounds.is_empty():
+		return "Jueces: -"
+	var a: FightStats.FighterRoundStats = _combat.stats.current(0)
+	var b: FightStats.FighterRoundStats = _combat.stats.current(1)
+	var parts: PackedStringArray = []
+	for j in _combat.judges.size():
+		var judge: Judge = _combat.judges[j]
+		var total := Vector2i.ZERO
+		for s: Vector2i in _combat.judge_cards[j]:
+			total += s
+		parts.append("J%d: round %.1f-%.1f  tarjeta %d-%d" % [j + 1, judge.points(a), judge.points(b), total.x, total.y])
+	return "   ".join(parts)
 
 
 func _fighter_line(f: Fighter) -> String:

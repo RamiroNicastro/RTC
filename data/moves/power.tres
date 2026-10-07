@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1_move")
 id = &"fuerte"
+is_power_punch = true
 startup_ticks = 16
 active_ticks = 3
 recovery_ticks = 20
