@@ -81,6 +81,20 @@ const CHARGE_HOLD_TICK: int = 8
 ## Stamina que cuesta cada tick de carga.
 const CHARGE_STAMINA_PER_TICK: float = 0.2
 
+## --- Golpe estrella y combo 1-2 (ampliación pedida por la persona) ---
+## Cuánto llena el medidor de estrella (0–1) cada cosa bien hecha, y cuánto baja al recibir un fuerte.
+const STAR_GAIN_COUNTER: float = 0.4
+const STAR_GAIN_CLEAN_POWER: float = 0.25
+const STAR_GAIN_DODGE: float = 0.15
+const STAR_GAIN_TIP_JAB: float = 0.05
+const STAR_LOSS_POWER_HIT: float = 0.15
+## Golpe estrella: multiplicadores de daño y empuje (y siempre rompe la guardia).
+const STAR_DAMAGE_MULT: float = 1.6
+const STAR_KNOCKBACK_MULT: float = 1.8
+## Combo 1-2: después de un jab que CONECTA, durante estos ticks el fuerte arranca más rápido.
+const COMBO_WINDOW_TICKS: int = 24
+const COMBO_STARTUP_CUT_TICKS: int = 6
+
 var setup: FighterSetup
 ## +1 = mira a la derecha, -1 = mira a la izquierda.
 var facing: int = 1
@@ -127,11 +141,17 @@ var momentum: float = 0.0
 var charging: bool = false
 ## Número de serie del golpe actual: sube con cada golpe nuevo (identifica cada golpe, aunque se cargue).
 var attack_serial: int = 0
+## Medidor de estrella (0–1). Lleno: el próximo fuerte es un golpe estrella.
+var star_meter: float = 0.0
+## Ticks que quedan de la ventana del combo 1-2 (después de un jab que conectó).
+var combo_window_left: int = 0
 
 # Arranque y recuperación efectivos del golpe actual (más largos si está cansado).
 var _startup_ticks: int = 0
 var _recovery_ticks: int = 0
 var _attack_is_counter: bool = false
+var _attack_is_star: bool = false
+var _attack_is_combo: bool = false
 var _attack_momentum: float = 0.0
 var _charge_ticks: int = 0
 var _knockback_left: float = 0.0
@@ -150,6 +170,8 @@ func configure(fighter_setup: FighterSetup, facing_dir: int) -> void:
 	health = max_health
 	knockdowns = 0
 	round_knockdowns = 0
+	star_meter = 0.0
+	combo_window_left = 0
 	base_max_stamina = setup.max_stamina
 	fatigue = 0.0
 	body_drain = 0.0
@@ -167,6 +189,8 @@ func tick(cmd: FighterCommand) -> void:
 		flash_left -= 1
 	if counter_ready_left > 0:
 		counter_ready_left -= 1
+	if combo_window_left > 0:
+		combo_window_left -= 1
 	match state:
 		State.IDLE, State.MOVING, State.BLOCKING:
 			_tick_neutral(cmd)
@@ -207,6 +231,39 @@ func is_dodging_head() -> bool:
 ## true si el golpe actual es un counter (salió dentro de la ventana de un esquive exitoso).
 func is_counter_attack() -> bool:
 	return state == State.ATTACKING and _attack_is_counter
+
+
+## true si el golpe actual es un golpe estrella (fuerte con el medidor lleno).
+func is_star_attack() -> bool:
+	return state == State.ATTACKING and _attack_is_star
+
+
+## true si el golpe actual salió como segundo golpe del combo 1-2.
+func is_combo_attack() -> bool:
+	return state == State.ATTACKING and _attack_is_combo
+
+
+func star_ready() -> bool:
+	return star_meter >= 1.0
+
+
+## CombatScene: un golpe de ESTE peleador llegó al rival (HIT, BLOCKED o DODGED).
+## Llena el medidor de estrella y abre la ventana del combo 1-2.
+func notify_attack_result(info: HitInfo) -> void:
+	if info.result != HitInfo.Result.HIT:
+		return
+	if info.counter:
+		_add_star(STAR_GAIN_COUNTER)
+	elif info.move.is_power_punch and info.range_mult >= 0.99 and info.momentum_mult >= 1.12:
+		_add_star(STAR_GAIN_CLEAN_POWER)
+	elif not info.move.is_power_punch and info.range_mult >= 0.99:
+		_add_star(STAR_GAIN_TIP_JAB)
+	if not info.move.is_power_punch:
+		combo_window_left = COMBO_WINDOW_TICKS
+
+
+func _add_star(amount: float) -> void:
+	star_meter = clampf(star_meter + amount, 0.0, 1.0)
 
 
 ## Ticks que faltan para que el golpe actual llegue a su fase activa (0 si ya pasó o no está atacando).
@@ -297,6 +354,9 @@ func receive_hit(info: HitInfo) -> void:
 			_take_damage(info.damage)
 			_interrupt_attack()
 			counter_ready_left = 0
+			combo_window_left = 0
+			if info.move.is_power_punch:
+				_add_star(-STAR_LOSS_POWER_HIT)
 			if info.move.max_stamina_drain > 0.0:
 				_add_body_drain(info.move.max_stamina_drain)
 			if health <= 0:
@@ -426,6 +486,15 @@ func _start_attack(move: MoveData) -> void:
 	# El cansancio se evalúa ANTES de pagar el golpe.
 	var tired: bool = is_tired()
 	_startup_ticks = move.startup_ticks + (TIRED_EXTRA_STARTUP_TICKS if tired else 0)
+	# Combo 1-2: el fuerte que sigue a un jab que conectó arranca más rápido.
+	_attack_is_combo = move.is_power_punch and combo_window_left > 0
+	if _attack_is_combo:
+		_startup_ticks = maxi(4, _startup_ticks - COMBO_STARTUP_CUT_TICKS)
+		combo_window_left = 0
+	# Golpe estrella: el primer fuerte con el medidor lleno lo consume.
+	_attack_is_star = move.is_power_punch and star_ready()
+	if _attack_is_star:
+		star_meter = 0.0
 	_recovery_ticks = move.recovery_ticks + (TIRED_EXTRA_RECOVERY_TICKS if tired else 0)
 	spend_stamina(move.stamina_cost)
 	current_move = move
@@ -490,6 +559,8 @@ func _interrupt_attack() -> void:
 	attack_phase = AttackPhase.NONE
 	attack_tick = 0
 	_attack_is_counter = false
+	_attack_is_star = false
+	_attack_is_combo = false
 	_attack_momentum = 0.0
 	_charge_ticks = 0
 	charging = false
@@ -525,6 +596,7 @@ func _on_dodge_succeeded(info: HitInfo) -> void:
 	dodge_tick = 0
 	_set_state(State.IDLE)
 	counter_ready_left = setup.counter_window_ticks
+	_add_star(STAR_GAIN_DODGE)
 	dodge_succeeded.emit(info)
 	hit_received.emit(info)
 

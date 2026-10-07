@@ -28,6 +28,14 @@ func touch(index: int, button: TouchScreenButton, pressed: bool) -> void:
 	root.push_input(ev, true)
 
 
+func drag(index: int, button: TouchScreenButton, offset: Vector2) -> void:
+	var ev := InputEventScreenDrag.new()
+	ev.index = index
+	var radius: float = (button.shape as CircleShape2D).radius
+	ev.position = button.position + Vector2.ONE * radius + offset
+	root.push_input(ev, true)
+
+
 func _physics_process(_delta: float) -> bool:
 	step += 1
 	var tc: TouchControls = combat.touch_controls
@@ -76,6 +84,15 @@ func _physics_process(_delta: float) -> bool:
 			var moved: float = a.position.x - float(get_meta("x0"))
 			print("◀ durante 30 ticks → se movió %.1f" % moved)
 			check(moved < -50.0, "◀ debería mover hacia la izquierda")
+		125:
+			touch(5, tc._jab, true)      # JAB…
+		126:
+			drag(5, tc._jab, Vector2(0, 60))  # …y deslizar hacia abajo = jab al cuerpo
+		129:
+			touch(5, tc._jab, false)
+			var id: StringName = a.current_move.id if a.current_move != null else &"-"
+			print("JAB deslizando hacia abajo → golpe %s" % id)
+			check(id == &"jab_cuerpo", "deslizar hacia abajo sobre JAB debería pegar al cuerpo")
 			print("RESULTADO: ", "OK" if failures.is_empty() else "FALLÓ:\n  " + "\n  ".join(failures))
 			quit()
 	return false
@@ -83,7 +100,7 @@ func _physics_process(_delta: float) -> bool:
 
 func check_layout(tc: TouchControls, view: Vector2) -> void:
 	# Recalcula la distribución para ese tamaño de pantalla y verifica que nada se pise ni se salga.
-	var buttons: Array[TouchScreenButton] = [tc._left, tc._right, tc._body, tc._jab, tc._power, tc._guard, tc._dodge]
+	var buttons: Array[TouchScreenButton] = [tc._left, tc._right, tc._jab, tc._power, tc._guard, tc._dodge]
 	var old_size: Vector2i = root.size
 	root.size = Vector2i(view)
 	tc._layout()

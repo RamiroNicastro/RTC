@@ -151,6 +151,7 @@ func _apply_hit(info: HitInfo) -> void:
 		# Que te esquiven cansa como pegarle al aire.
 		info.attacker.spend_stamina(info.move.whiff_stamina_penalty)
 	info.defender.receive_hit(info)
+	info.attacker.notify_attack_result(info)
 	if info.knockback > 0.0 and info.result != HitInfo.Result.DODGED:
 		info.defender.push_back(info.knockback)
 	stats.record_hit(info, _index_of(info.attacker))
@@ -186,6 +187,11 @@ func _impact_feel(info: HitInfo) -> void:
 				hitstop += 3
 			if info.charge_ratio >= 0.5:
 				hitstop += 3
+			if info.star:
+				hitstop += 6
+				camera.kick_zoom(0.12)
+				fx.flash(0.4)
+				sfx.play_crowd_cheer(1.0)
 			clock.freeze(hitstop)
 			camera.shake(0.1 + strength * 0.35)
 			if info.move.is_power_punch:

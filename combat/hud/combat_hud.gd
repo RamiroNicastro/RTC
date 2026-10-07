@@ -196,12 +196,28 @@ func _draw_fighter_bars(pos: Vector2, f: Fighter, trail: float, mirrored: bool) 
 	_canvas.draw_rect(Rect2(st_pos, st_size), Color(0.08, 0.15, 0.08))
 	var st_color: Color = COLOR_STAMINA_TIRED if f.is_tired() else COLOR_STAMINA
 	_canvas.draw_rect(_fill_rect(st_pos, st_size, f.stamina / f.base_max_stamina, mirrored), st_color)
+	# Medidor de estrella: tramo dorado fino debajo de la stamina; lleno, late.
+	var star_pos := Vector2(st_pos.x, st_pos.y + STAMINA_BAR_HEIGHT + 4.0)
+	var star_size := Vector2(st_size.x * 0.55, 8.0)
+	if mirrored:
+		star_pos.x = st_pos.x + st_size.x - star_size.x
+	_canvas.draw_rect(Rect2(star_pos - Vector2(2, 2), star_size + Vector2(4, 4)), Color(0, 0, 0, 0.7))
+	var star_color: Color = UIStyle.GOLD
+	if f.star_ready():
+		star_color = UIStyle.GOLD.lerp(Color.WHITE, 0.5 + 0.5 * sin(_time * 10.0))
+	_canvas.draw_rect(_fill_rect(star_pos, star_size, f.star_meter, mirrored), star_color)
+	var star_icon_x: float = star_pos.x + star_size.x + 6.0 if not mirrored else star_pos.x - 22.0
+	var star_font: Font = UIStyle.font()
+	_canvas.draw_string_outline(star_font, Vector2(star_icon_x, star_pos.y + 12.0), "★",
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 20, 5, Color.BLACK)
+	_canvas.draw_string(star_font, Vector2(star_icon_x, star_pos.y + 12.0), "★",
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 20, star_color if f.star_meter > 0.0 else Color(0.4, 0.4, 0.45))
 	if f.is_tired() and fmod(_time, 0.6) < 0.4:
 		var tired_font: Font = UIStyle.font()
 		var tired_align := HORIZONTAL_ALIGNMENT_LEFT if mirrored else HORIZONTAL_ALIGNMENT_RIGHT
-		_canvas.draw_string_outline(tired_font, st_pos + Vector2(0, STAMINA_BAR_HEIGHT + 26.0), tr("HUD_TIRED"),
+		_canvas.draw_string_outline(tired_font, st_pos + Vector2(0, STAMINA_BAR_HEIGHT + 40.0), tr("HUD_TIRED"),
 				tired_align, st_size.x, 22, 6, Color.BLACK)
-		_canvas.draw_string(tired_font, st_pos + Vector2(0, STAMINA_BAR_HEIGHT + 26.0), tr("HUD_TIRED"),
+		_canvas.draw_string(tired_font, st_pos + Vector2(0, STAMINA_BAR_HEIGHT + 40.0), tr("HUD_TIRED"),
 				tired_align, st_size.x, 22, COLOR_STAMINA_TIRED)
 	# Desde el final de la barra: primero el desgaste del cuerpo y después la fatiga.
 	var from_end: float = 0.0
@@ -215,7 +231,7 @@ func _draw_fighter_bars(pos: Vector2, f: Fighter, trail: float, mirrored: bool) 
 
 	# Nombre.
 	var font: Font = UIStyle.font()
-	var name_pos := Vector2(pos.x, st_pos.y + STAMINA_BAR_HEIGHT + 26.0)
+	var name_pos := Vector2(pos.x, st_pos.y + STAMINA_BAR_HEIGHT + 40.0)
 	var align := HORIZONTAL_ALIGNMENT_RIGHT if mirrored else HORIZONTAL_ALIGNMENT_LEFT
 	_canvas.draw_string_outline(font, name_pos, f.setup.display_name, align, BAR_SIZE.x, 24, 7, Color.BLACK)
 	_canvas.draw_string(font, name_pos, f.setup.display_name, align, BAR_SIZE.x, 24, Color.WHITE)

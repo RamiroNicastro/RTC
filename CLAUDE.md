@@ -57,6 +57,10 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
   - la IA castiga la carga y el presionador carga;
   - pausa con Esc, P, ⏸ o Atrás, y al perder el foco;
   - en el arcade: golpe propio por rival (arranque de 20 a 24), frase, desafíos, rounds 1-1-2-2-3-3 de 45 s y botón CONTINUAR.
+- **Ronda 3 (decisiones de la persona, amplían el plan):**
+  - **golpe estrella:** un medidor que llenan los counters, los fuertes limpios y los esquives. Lleno, el próximo fuerte pega ×1,6, rompe la guardia desde cualquier distancia y empuja ×1,8;
+  - **combo 1-2 adelantado:** un jab que conecta hace que el fuerte siguiente arranque 6 ticks antes, durante 24 ticks;
+  - **cuerpo en el táctil:** se desliza hacia abajo sobre JAB o FUERTE, con una ventana de 50 ms. Se sacó el botón CUERPO.
 - **Game feel:** se apaga con `FightSetup.game_feel = false` (todas las pruebas lo hacen, para contar ticks exactos).
 
 ## Forma de trabajo

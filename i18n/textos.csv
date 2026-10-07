@@ -106,3 +106,6 @@ QUOTE_MARTILLO,"Cuando cae, cae fuerte.","When it lands, it lands hard."
 QUOTE_PROFESOR,Te voy a dar una clase.,I am going to teach you a lesson.
 QUOTE_FANTASMA,No me vas a tocar.,You will not even touch me.
 ARCADE_ROUND_ONE,1 round,1 round
+FX_STAR,¡ESTRELLA!,STAR PUNCH!
+FX_ONE_TWO,¡1-2!,ONE-TWO!
+TOUCH_SWIPE_HINT,▼ cuerpo,▼ body

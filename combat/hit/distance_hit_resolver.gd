@@ -22,13 +22,17 @@ func resolve(attacker: Fighter, defender: Fighter, move: MoveData) -> HitInfo:
 			* info.momentum_mult * (1.0 + move.charge_damage_bonus * info.charge_ratio)
 	if info.counter:
 		base_damage *= attacker.setup.counter_damage_mult
+	info.star = attacker.is_star_attack()
+	info.combo = attacker.is_combo_attack()
+	if info.star:
+		base_damage *= Fighter.STAR_DAMAGE_MULT
 	info.knockback = move.knockback * (1.0 + move.charge_knockback_bonus * info.charge_ratio) \
-			* maxf(1.0, info.momentum_mult)
+			* maxf(1.0, info.momentum_mult) * (Fighter.STAR_KNOCKBACK_MULT if info.star else 1.0)
 	if defender.is_guarding():
 		info.result = HitInfo.Result.BLOCKED
 		info.damage = roundi(base_damage * (1.0 - defender.guard_damage_reduction()))
 		# El fuerte rompe la guardia solo si pega en su distancia justa (no desde la punta).
-		info.guard_broken = move.breaks_guard and info.range_mult >= 0.99
+		info.guard_broken = move.breaks_guard and (info.range_mult >= 0.99 or info.star)
 		info.knockback *= 0.5
 	else:
 		info.result = HitInfo.Result.HIT

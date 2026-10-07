@@ -20,6 +20,9 @@ var knockback: float = 0.0
 var range_mult: float = 1.0
 var momentum_mult: float = 1.0
 var charge_ratio: float = 0.0
+## Golpe estrella (medidor lleno) y segundo golpe del combo 1-2.
+var star: bool = false
+var combo: bool = false
 var move: MoveData
 var attacker: Fighter
 var defender: Fighter

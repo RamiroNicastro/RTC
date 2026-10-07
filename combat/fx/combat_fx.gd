@@ -83,7 +83,13 @@ func on_hit(info: HitInfo) -> void:
 			# Los carteles del jugador en dorado/blanco; los del rival en rojo.
 			var mine: bool = info.attacker == _player
 			var big: Color = SPARK_COLOR_COUNTER if mine else Color(1.0, 0.4, 0.3)
-			if info.counter:
+			if info.star:
+				popup(tr("FX_STAR"), point + Vector2(0, -70), Color(1.0, 0.95, 0.4) if mine else big, 52)
+				_ring(point, 200.0, Color(1.0, 0.95, 0.5))
+				_burst(point, -d.facing, 1.6, Color(1.0, 1.0, 0.7))
+			elif info.combo:
+				popup(tr("FX_ONE_TWO"), point + Vector2(0, -60), Color(0.5, 0.9, 1.0) if mine else big, 40)
+			elif info.counter:
 				popup(tr("FX_COUNTER"), point + Vector2(0, -60), big, 40)
 			elif info.charge_ratio >= 0.8:
 				popup(tr("FX_CHARGED"), point + Vector2(0, -60), Color(1.0, 0.5, 0.2) if mine else big, 40)
@@ -210,6 +216,7 @@ func _draw() -> void:
 	for f in [_player, _rival]:
 		if f != null:
 			_draw_telegraph(f)
+			_draw_star_ready(f)
 	for p in _particles:
 		var t: float = p.life / p.max_life
 		var c: Color = p.color
@@ -280,3 +287,17 @@ func _draw_telegraph(f: Fighter) -> void:
 		center + Vector2(-r, 0), center + Vector2(-r * 0.22, -r * 0.22)])
 	draw_colored_polygon(pts, color)
 	draw_circle(center, r * 0.25, Color(1, 1, 1, 0.9))
+
+
+## Estrella dorada que late sobre la cabeza del que tiene el golpe estrella listo (también la IA: hay que cuidarse).
+func _draw_star_ready(f: Fighter) -> void:
+	if not f.star_ready() or f.is_down():
+		return
+	var center := Vector2(f.position.x, -f.setup.body_height - 46.0 + 4.0 * sin(_time * 5.0))
+	var r: float = 20.0 + 3.0 * sin(_time * 10.0)
+	var pts := PackedVector2Array()
+	for i in 10:
+		var radius: float = r if i % 2 == 0 else r * 0.45
+		pts.append(center + Vector2.from_angle(-PI / 2.0 + i * TAU / 10.0) * radius)
+	draw_colored_polygon(pts, Color(1.0, 0.85, 0.2))
+	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.3, 0.2, 0.0), 3.0, true)
