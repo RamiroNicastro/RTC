@@ -26,3 +26,10 @@ RESULT_DAMAGE,Daño hecho,Damage dealt
 JUDGE_BALANCED,Juez 1 (equilibrado),Judge 1 (balanced)
 JUDGE_AGGRESSIVE,Juez 2 (agresividad),Judge 2 (aggression)
 JUDGE_TECHNICAL,Juez 3 (técnica),Judge 3 (technique)
+AI_STYLE_BALANCED,Equilibrado,Balanced
+AI_STYLE_PRESSURE,Presionador,Pressure fighter
+AI_STYLE_OUTBOXER,Técnico de distancia,Out-boxer
+AI_STYLE_COUNTER,Contragolpeador,Counter-puncher
+AI_DIFFICULTY_EASY,Fácil,Easy
+AI_DIFFICULTY_NORMAL,Normal,Normal
+AI_DIFFICULTY_HARD,Difícil,Hard

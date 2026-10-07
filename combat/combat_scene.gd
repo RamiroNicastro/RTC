@@ -133,10 +133,10 @@ func _apply_hit(info: HitInfo) -> void:
 		fight.on_knockdown(info.defender)
 
 
-## Agresividad para los jueces: ticks en que cada uno avanza hacia el rival.
+## Agresividad para los jueces: ticks en que cada uno avanza hacia el rival (también caminando con la guardia arriba).
 func _record_aggression() -> void:
 	for f in [fighter_a, fighter_b]:
-		if f.state == Fighter.State.MOVING and f.position.x * f.facing > f.previous_x * f.facing:
+		if f.state in [Fighter.State.MOVING, Fighter.State.BLOCKING] and f.position.x * f.facing > f.previous_x * f.facing:
 			stats.record_forward_tick(_index_of(f))
 
 
@@ -215,7 +215,7 @@ func _make_controller(fighter_setup: FighterSetup) -> FighterController:
 			return PlayerInput.new()
 		FighterSetup.ControllerType.AI:
 			var ai := AIInput.new()
-			ai.configure(fighter_setup.ai_seed)
+			ai.configure(fighter_setup.ai_profile, fighter_setup.ai_seed, fighter_setup.ai_difficulty)
 			return ai
 		_:
 			return DummyInput.new()

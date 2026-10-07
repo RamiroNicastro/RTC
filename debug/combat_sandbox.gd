@@ -9,7 +9,8 @@ extends Node
 ##   ESPACIO        esquive (solo protege la cabeza)
 ##   S / ↓          mantener para pegar al cuerpo (S + J = jab al cuerpo, S + K = fuerte al cuerpo)
 ##   1 / 2 / 4      el rival tira un jab / un fuerte / un jab al cuerpo
-##   3              cambiar el rival: IA → dummy (quieto, bloquea, jab, fuerte, bloquea y jab, esquiva, cuerpo) → IA
+##   3              cambiar el rival: IA presionador → técnico → contragolpeador → dummy (quieto, bloquea, jab, …) → IA
+##   8              dificultad de la IA: fácil → normal → difícil
 ##   5              el rival se levanta o no después de una caída (para probar el KO)
 ##   6              dejar al rival con 10 de vida (para probar knockdowns rápido)
 ##   7              dejar el round en 5 segundos (para probar el descanso y el final)
@@ -23,6 +24,11 @@ extends Node
 ##   R              reiniciar la escena
 
 const COMBAT_SCENE: PackedScene = preload("res://combat/combat_scene.tscn")
+const AI_PROFILES: Array[AIProfile] = [
+	preload("res://data/ai_profiles/pressure.tres"),
+	preload("res://data/ai_profiles/outboxer.tres"),
+	preload("res://data/ai_profiles/counter.tres"),
+]
 const FPS_CAPS: Array[int] = [0, 30, 144]
 
 var _fps_cap_index: int = 0
@@ -30,6 +36,10 @@ var _combat: CombatScene
 var _debug_draw: CombatDebugDraw
 var _overlay: CombatDebugOverlay
 var _mode_button: Button
+var _difficulty_button: Button
+## Qué estilo de IA tiene el rival (índice en AI_PROFILES).
+var _profile_index: int = 0
+var _difficulty: AIInput.Difficulty = AIInput.Difficulty.NORMAL
 
 
 func _ready() -> void:
@@ -60,6 +70,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_debug_draw.visible = not _debug_draw.visible
 		KEY_F3:
 			_combat.touch_controls.visible = not _combat.touch_controls.visible
+		KEY_8:
+			_cycle_difficulty()
 		KEY_7:
 			_combat.fight.round_ticks_left = mini(_combat.fight.round_ticks_left, CombatTime.seconds_to_ticks(5.0))
 		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6:
@@ -84,23 +96,41 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().reload_current_scene()
 
 
-## Rota el rival entre la IA y los modos del dummy de práctica.
+## Rota el rival: los tres estilos de IA y después los modos del dummy de práctica.
 func _cycle_dummy_mode() -> void:
 	var dummy := _combat.controller_b as DummyInput
 	if dummy == null:
-		_combat.controller_b = DummyInput.new()
+		_profile_index += 1
+		if _profile_index >= AI_PROFILES.size():
+			_combat.controller_b = DummyInput.new()
+		else:
+			_set_ai(_profile_index)
 	elif dummy.mode == DummyInput.Mode.size() - 1:
-		var ai := AIInput.new()
-		ai.configure(0)
-		_combat.controller_b = ai
+		_set_ai(0)
 	else:
 		dummy.cycle_mode()
-	_update_mode_button()
+	_update_buttons()
 
 
-func _update_mode_button() -> void:
+func _cycle_difficulty() -> void:
+	_difficulty = ((_difficulty + 1) % AIInput.Difficulty.size()) as AIInput.Difficulty
+	if _combat.controller_b is AIInput:
+		_set_ai(_profile_index)
+	_update_buttons()
+
+
+func _set_ai(index: int) -> void:
+	_profile_index = index
+	var ai := AIInput.new()
+	ai.configure(AI_PROFILES[index], 0, _difficulty)
+	_combat.controller_b = ai
+	_combat.fighter_b.setup.display_name = "Rival (%s)" % tr(AI_PROFILES[index].style_name_key)
+
+
+func _update_buttons() -> void:
 	var dummy := _combat.controller_b as DummyInput
-	_mode_button.text = "Rival: " + (dummy.mode_name() if dummy != null else "IA")
+	_mode_button.text = "Rival: " + (dummy.mode_name() if dummy != null else tr(AI_PROFILES[_profile_index].style_name_key))
+	_difficulty_button.text = tr("AI_DIFFICULTY_" + AIInput.Difficulty.keys()[_difficulty])
 
 
 func _build_touch_debug_buttons() -> void:
@@ -113,11 +143,13 @@ func _build_touch_debug_buttons() -> void:
 	row.position.y = 100.0
 	layer.add_child(row)
 
-	_mode_button = _small_button(row, "Rival: IA", _cycle_dummy_mode)
+	_mode_button = _small_button(row, "Rival", _cycle_dummy_mode)
+	_difficulty_button = _small_button(row, "Normal", _cycle_difficulty)
 	_small_button(row, "Debug", func() -> void:
 		_overlay.visible = not _overlay.visible
 		_debug_draw.visible = _overlay.visible)
 	_small_button(row, "Reiniciar", func() -> void: get_tree().reload_current_scene())
+	_update_buttons()
 	# Centrar la fila después de que calcule su tamaño.
 	row.resized.connect(func() -> void: row.position.x = (get_viewport().get_visible_rect().size.x - row.size.x) * 0.5)
 
@@ -151,8 +183,9 @@ func _make_default_setup() -> FightSetup:
 	player.color = Color(0.2, 0.55, 0.9)
 
 	var dummy := FighterSetup.new()
-	dummy.display_name = "Rival"
+	dummy.display_name = "Rival (%s)" % tr(AI_PROFILES[0].style_name_key)
 	dummy.controller_type = FighterSetup.ControllerType.AI
+	dummy.ai_profile = AI_PROFILES[0]
 	dummy.color = Color(0.85, 0.55, 0.15)
 
 	var fight := FightSetup.new()

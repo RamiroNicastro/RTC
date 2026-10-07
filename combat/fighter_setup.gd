@@ -10,6 +10,10 @@ enum ControllerType { PLAYER, DUMMY, AI }
 @export var display_name: String = "Peleador"
 @export var controller_type: ControllerType = ControllerType.DUMMY
 @export var color: Color = Color.WHITE
+@export_group("IA")
+## Estilo de la IA (data/ai_profiles/). Vacío = estilo equilibrado por defecto.
+@export var ai_profile: AIProfile
+@export var ai_difficulty: AIInput.Difficulty = AIInput.Difficulty.NORMAL
 ## Semilla del azar de la IA (0 = distinta cada pelea). Las pruebas usan semillas fijas.
 @export var ai_seed: int = 0
 

@@ -67,5 +67,6 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [x] Hito E2: rounds (3×60 s), reloj que se frena en la cuenta, descanso con recuperación parcial, salud en dos capas, TKO por round
 - [x] Hito E3: FightStats (solo eventos reales), 3 jueces con pesos distintos, decisiones, FightResult (solo datos), pantalla final
 - [x] Hito F: IA que ve con 0,2 s de retraso, mide distancia, ataca, castiga, se cubre o esquiva, cuida la stamina; primer ajuste de balance
-- [ ] **Hito G: tres perfiles de IA (AIProfile)** ← siguiente
+- [x] Hito G: AIProfile con 3 estilos (presionador, técnico, contragolpeador) y dificultad fácil/normal/difícil
+- [ ] **Ampliación estratégica (pedido de la persona): distancia justa, impulso, empuje, la IA lee patrones, fuerte cargado, Normal más fácil** ← en curso
 - [ ] Hitos H, I

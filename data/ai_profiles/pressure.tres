@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AIProfile" format=3]
+
+[ext_resource type="Script" path="res://combat/ai/ai_profile.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+style_name_key = "AI_STYLE_PRESSURE"
+reaction_ticks = 13
+decision_interval_ticks = 6
+aggression = 0.85
+approach_chance = 0.95
+retreat_chance = 0.05
+preferred_gap = 25.0
+power_chance = 0.3
+body_chance = 0.35
+step_back_after_attack = 0.0
+block_chance = 0.35
+dodge_chance = 0.06
+guard_up_chance = 0.55
+punish_chance = 0.6
+counter_with_power_chance = 0.3
+tired_caution = 0.35
+getup_taps_per_second = 6.5

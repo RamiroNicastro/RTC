@@ -77,7 +77,7 @@ func _process(_delta: float) -> void:
 	var dummy := _combat.controller_b as DummyInput
 	var lines: PackedStringArray = [
 		"J jab  K fuerte  L guardia  ESPACIO esquive  S/↓ cuerpo (mantener + golpe)",
-		"1/2/4 rival tira jab/fuerte/cuerpo   3 modo del rival   5 rival se levanta sí/no   6 rival a 10 de vida   7 quedan 5 s",
+		"3 rival (estilos de IA / dummy)  8 dificultad  |  dummy: 1/2/4 jab/fuerte/cuerpo  5 se levanta  |  6 rival a 10 de vida  7 quedan 5 s",
 		"F1 límite FPS   F2 rangos   F3 botones táctiles   R reiniciar",
 		"FPS: %d (límite: %s)   tick %d   lógico %.2f s / real %.2f s" % [
 			Engine.get_frames_per_second(), "sin límite" if max_fps == 0 else str(max_fps),
@@ -108,7 +108,8 @@ func _rival_line(dummy: DummyInput) -> String:
 		return "Rival: dummy %s   se levanta: %s" % [dummy.mode_name(), "sí" if dummy.getup_enabled else "NO"]
 	var ai := _combat.controller_b as AIInput
 	if ai != null:
-		return "Rival: IA   pensando: %s   (reacción %d ticks)" % [ai.intent, ai.reaction_ticks]
+		return "Rival: IA %s (%s)   pensando: %s   reacción %d ticks" % [
+			tr(ai.profile.style_name_key), AIInput.Difficulty.keys()[ai.difficulty], ai.intent, ai.reaction_ticks]
 	return "Rival: -"
 
 
