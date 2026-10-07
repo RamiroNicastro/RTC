@@ -11,6 +11,7 @@ extends FighterController
 ##   ESQUIVA         esquiva justo a tiempo cada golpe que le tiran (sirve para practicar el counter... y el cuerpo)
 ##   CUERPO_CADA_X   tira un jab al cuerpo cada interval_ticks
 ## La sandbox también puede pedirle un golpe puntual con queue_jab() / queue_power() / queue_body_jab().
+## Si cae, toca para levantarse (getup_enabled), a getup_taps_per_second toques por segundo.
 
 enum Mode { QUIETO, SIEMPRE_BLOQUEA, JAB_CADA_X, FUERTE_CADA_X, BLOQUEA_Y_JAB, ESQUIVA, CUERPO_CADA_X }
 
@@ -19,11 +20,14 @@ const DODGE_LEAD_TICKS: int = 3
 
 var mode: Mode = Mode.QUIETO
 var interval_ticks: int = 90
+var getup_enabled: bool = true
+var getup_taps_per_second: float = 5.0
 
 var _counter: int = 0
 var _jab_requested: bool = false
 var _power_requested: bool = false
 var _body_jab_requested: bool = false
+var _getup_counter: int = 0
 
 
 func queue_jab() -> void:
@@ -47,8 +51,13 @@ func mode_name() -> String:
 	return Mode.keys()[mode]
 
 
-func get_command(_me: Fighter, opponent: Fighter) -> FighterCommand:
+func get_command(me: Fighter, opponent: Fighter) -> FighterCommand:
 	var cmd := FighterCommand.new()
+	if me.state == Fighter.State.KNOCKDOWN:
+		_getup_counter += 1
+		var every: int = maxi(1, roundi(CombatTime.TICKS_PER_SECOND / getup_taps_per_second))
+		cmd.jab = getup_enabled and _getup_counter % every == 0
+		return cmd
 	cmd.guard = mode == Mode.SIEMPRE_BLOQUEA or mode == Mode.BLOQUEA_Y_JAB
 
 	_counter += 1

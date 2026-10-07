@@ -10,6 +10,9 @@ extends Node
 ##   S / ↓          mantener para pegar al cuerpo (S + J = jab al cuerpo, S + K = fuerte al cuerpo)
 ##   1 / 2 / 4      el rival tira un jab / un fuerte / un jab al cuerpo
 ##   3              cambiar el modo del rival (quieto, bloquea, jab, fuerte, bloquea y jab, esquiva, cuerpo)
+##   5              el rival se levanta o no después de una caída (para probar el KO)
+##   6              dejar al rival con 10 de vida (para probar knockdowns rápido)
+##   En el piso: apretá J o K repetido para levantarte.
 ##   F1             cambiar el límite de FPS (sin límite → 30 → 144) para probar que la lógica no depende de los FPS
 ##   F2             mostrar u ocultar los rangos de golpe
 ##   F3             mostrar u ocultar los botones táctiles (en la PC se usan con el mouse)
@@ -41,7 +44,7 @@ func _ready() -> void:
 	add_child(_overlay)
 	_overlay.attach(_combat)
 	# En el celular el overlay tapa mucho: arranca oculto (se muestra con el botón "Debug").
-	_overlay.visible = not DisplayServer.is_touchscreen_available()
+	_overlay.visible = not OS.has_feature("mobile")
 	_build_touch_debug_buttons()
 
 
@@ -56,7 +59,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_debug_draw.visible = not _debug_draw.visible
 		KEY_F3:
 			_combat.touch_controls.visible = not _combat.touch_controls.visible
-		KEY_1, KEY_2, KEY_3, KEY_4:
+		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6:
 			var dummy := _combat.controller_b as DummyInput
 			if dummy == null:
 				return
@@ -69,6 +72,11 @@ func _unhandled_input(event: InputEvent) -> void:
 					_cycle_dummy_mode()
 				KEY_4:
 					dummy.queue_body_jab()
+				KEY_5:
+					dummy.getup_enabled = not dummy.getup_enabled
+				KEY_6:
+					if not _combat.fighter_b.is_down():
+						_combat.fighter_b.health = mini(_combat.fighter_b.health, 10)
 		KEY_R:
 			get_tree().reload_current_scene()
 

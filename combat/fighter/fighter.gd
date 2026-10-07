@@ -15,8 +15,9 @@ signal hit_received(info: HitInfo)
 signal guard_broken()
 ## Esquivó un golpe a la cabeza: tiene un counter disponible.
 signal dodge_succeeded(info: HitInfo)
+signal knocked_down()
 
-enum State { IDLE, MOVING, ATTACKING, HITSTUN, BLOCKING, BLOCKSTUN, GUARD_BROKEN, DODGING }
+enum State { IDLE, MOVING, ATTACKING, HITSTUN, BLOCKING, BLOCKSTUN, GUARD_BROKEN, DODGING, KNOCKDOWN, KO }
 enum AttackPhase { NONE, STARTUP, ACTIVE, RECOVERY }
 
 ## Si se aprieta un golpe hasta estos ticks antes de poder actuar, igual sale (se siente más responsivo).
@@ -41,6 +42,17 @@ const TIRED_MOVE_SPEED_MULT: float = 0.8
 const EXHAUSTED_GUARD_BREAK_TICKS: int = 30
 
 const GUARD_MOVE_SPEED_MULT: float = 0.5
+
+## --- Knockdown (valores iniciales; en la carrera los modifica el Mentón) ---
+## Toques (JAB o FUERTE) para levantarse en la primera caída, y cuántos más por cada caída siguiente.
+const GETUP_BASE_TAPS: float = 8.0
+const GETUP_TAPS_PER_KNOCKDOWN: float = 6.0
+## La barra para levantarse se vacía sola a este ritmo (toques por segundo) si no se aprieta.
+const GETUP_DECAY_TAPS_PER_SECOND: float = 1.5
+## Salud al levantarse (fracción del máximo): baja en cada caída, con un mínimo.
+const RISE_HEALTH_RATIO: float = 0.35
+const RISE_HEALTH_STEP: float = 0.1
+const RISE_HEALTH_MIN_RATIO: float = 0.15
 
 var setup: FighterSetup
 ## +1 = mira a la derecha, -1 = mira a la izquierda.
@@ -74,6 +86,10 @@ var flash_left: int = 0
 var dodge_tick: int = 0
 ## Ticks que quedan para que el próximo golpe sea un COUNTER (después de un esquive exitoso).
 var counter_ready_left: int = 0
+## Caídas en la pelea (en el Hito E2, por round).
+var knockdowns: int = 0
+## Barra para levantarse: 0 = vacía, 1 = se puede levantar.
+var getup_progress: float = 0.0
 
 # Arranque y recuperación efectivos del golpe actual (más largos si está cansado).
 var _startup_ticks: int = 0
@@ -117,6 +133,10 @@ func tick(cmd: FighterCommand) -> void:
 			_tick_stun(cmd)
 		State.DODGING:
 			_tick_dodge(cmd)
+		State.KNOCKDOWN:
+			_tick_knockdown(cmd)
+		State.KO:
+			pass
 	_regen_stamina()
 	queue_redraw()
 
@@ -155,6 +175,20 @@ func ticks_until_active() -> int:
 
 func dodge_total_ticks() -> int:
 	return setup.dodge_startup_ticks + setup.dodge_invuln_ticks + setup.dodge_recovery_ticks
+
+
+func is_down() -> bool:
+	return state == State.KNOCKDOWN or state == State.KO
+
+
+## Toques necesarios para levantarse en la caída actual.
+func getup_taps_required() -> float:
+	return GETUP_BASE_TAPS + GETUP_TAPS_PER_KNOCKDOWN * maxf(0.0, knockdowns - 1)
+
+
+## true cuando llenó la barra para levantarse (FightManager decide cuándo se levanta).
+func wants_to_rise() -> bool:
+	return state == State.KNOCKDOWN and getup_progress >= 1.0
 
 
 func is_guarding() -> bool:
@@ -201,7 +235,10 @@ func receive_hit(info: HitInfo) -> void:
 			counter_ready_left = 0
 			if info.move.max_stamina_drain > 0.0:
 				_add_body_drain(info.move.max_stamina_drain)
-			_enter_stun(State.HITSTUN, info.move.hitstun_ticks)
+			if health <= 0:
+				_knockdown()
+			else:
+				_enter_stun(State.HITSTUN, info.move.hitstun_ticks)
 		HitInfo.Result.BLOCKED:
 			_take_damage(info.damage)  # daño que pasa la guardia
 			# Aguantar en los brazos cansa, pero NO genera fatiga: eso queda para lo que uno hace.
@@ -219,6 +256,21 @@ func receive_hit(info: HitInfo) -> void:
 
 
 ## causes_fatigue = false para gastos que no son esfuerzo propio (por ejemplo, golpes recibidos en la guardia).
+## FightManager: se levanta después de llenar la barra.
+func rise() -> void:
+	var ratio: float = maxf(RISE_HEALTH_MIN_RATIO, RISE_HEALTH_RATIO - RISE_HEALTH_STEP * (knockdowns - 1))
+	health = maxi(health, roundi(max_health * ratio))
+	getup_progress = 0.0
+	_clear_buffer()  # los toques para levantarse no deben convertirse en un golpe
+	_set_state(State.IDLE)
+
+
+## FightManager: no se levanta más (KO o TKO).
+func stay_down() -> void:
+	_clear_buffer()
+	_set_state(State.KO)
+
+
 func spend_stamina(amount: float, causes_fatigue: bool = true) -> void:
 	if amount <= 0.0:
 		return
@@ -372,7 +424,27 @@ func _tick_stun(cmd: FighterCommand) -> void:
 
 
 func _take_damage(amount: int) -> void:
-	health = maxi(0, health - amount)  # Llegar a 0 todavía no hace nada: knockdown en el Hito E1.
+	health = maxi(0, health - amount)
+
+
+func _knockdown() -> void:
+	knockdowns += 1
+	getup_progress = 0.0
+	dodge_tick = 0
+	stun_left = 0
+	_clear_buffer()
+	_set_state(State.KNOCKDOWN)
+	knocked_down.emit()
+
+
+## En el piso: cada toque de JAB o FUERTE llena la barra; si no se aprieta, se vacía de a poco.
+func _tick_knockdown(cmd: FighterCommand) -> void:
+	var per_tap: float = 1.0 / getup_taps_required()
+	getup_progress -= GETUP_DECAY_TAPS_PER_SECOND * per_tap * CombatTime.SECONDS_PER_TICK
+	if cmd.jab or cmd.power:
+		getup_progress += per_tap
+	getup_progress = clampf(getup_progress, 0.0, 1.0)
+	_clear_buffer()
 
 
 func _regen_stamina() -> void:
@@ -387,6 +459,8 @@ func _regen_stamina() -> void:
 			mult = REGEN_MULT_RETREAT if _last_move_dir < 0 else REGEN_MULT_ADVANCE
 		State.BLOCKING:
 			mult = REGEN_MULT_GUARD
+		State.KNOCKDOWN:
+			mult = 1.0  # en el piso se recupera el aire
 	stamina = minf(max_stamina, stamina + setup.stamina_regen * mult * CombatTime.SECONDS_PER_TICK)
 
 
@@ -433,6 +507,9 @@ func _draw() -> void:
 		return
 	var w: float = setup.body_width
 	var h: float = setup.body_height
+	if is_down():
+		_draw_down(w, h)
+		return
 	var body_color: Color = setup.color
 	var lean: float = 0.0
 	match state:
@@ -462,6 +539,20 @@ func _draw() -> void:
 		head_color.a = 0.35  # cabeza invulnerable
 	draw_circle(Vector2(lean * 1.5, -h + head_radius), head_radius, head_color)
 	_draw_gloves(w, h, head_radius)
+
+
+## Tirado en la lona, con la cabeza hacia atrás (lejos del rival).
+func _draw_down(w: float, h: float) -> void:
+	var color: Color = setup.color.darkened(0.45 if state == State.KO else 0.2)
+	var length: float = h * 0.8
+	var thickness: float = w * 0.55
+	var head_radius: float = w * 0.32
+	# Los pies quedan donde estaba parado y el cuerpo se extiende hacia atrás (lejos del rival).
+	var front: float = facing * w * 0.3
+	var back: float = front - facing * length
+	draw_rect(Rect2(Vector2(minf(front, back), -thickness), Vector2(length, thickness)), color)
+	var head_x: float = back - facing * head_radius * 0.7
+	draw_circle(Vector2(head_x, -thickness * 0.5), head_radius, color.lightened(0.2))
 
 
 func _draw_gloves(w: float, h: float, head_radius: float) -> void:

@@ -7,6 +7,8 @@ extends CanvasLayer
 ## La barra de stamina se pone naranja cuando el peleador está cansado.
 ## Al final de la barra: tramo gris = FATIGA, tramo violeta = desgaste por golpes al CUERPO.
 ## Las dos bajan el máximo y no se recuperan hasta el descanso entre rounds.
+## Al centro: carteles de la pelea (knockdown + cuenta + barra para levantarse, "¡BOXEEN!", KO).
+## Los textos salen de i18n/textos.csv con tr().
 ## En el Hito I se ancla a la safe area.
 
 const BAR_SIZE := Vector2(460.0, 26.0)
@@ -22,14 +24,16 @@ const COLOR_BODY_DRAIN := Color(0.6, 0.25, 0.75)
 
 var _a: Fighter
 var _b: Fighter
+var _fight: FightManager
 var _trail_a: float = 1.0
 var _trail_b: float = 1.0
 var _canvas: Control
 
 
-func setup(a: Fighter, b: Fighter) -> void:
+func setup(a: Fighter, b: Fighter, fight: FightManager) -> void:
 	_a = a
 	_b = b
+	_fight = fight
 
 
 func _ready() -> void:
@@ -65,6 +69,38 @@ func _on_canvas_draw() -> void:
 	var width: float = _canvas.size.x
 	_draw_fighter_bars(Vector2(MARGIN.x, MARGIN.y), _a, _trail_a, false)
 	_draw_fighter_bars(Vector2(width - MARGIN.x - BAR_SIZE.x, MARGIN.y), _b, _trail_b, true)
+	_draw_fight_messages(width)
+
+
+func _draw_fight_messages(width: float) -> void:
+	if _fight == null:
+		return
+	match _fight.phase:
+		FightManager.Phase.COUNT:
+			_draw_centered(tr("COMBAT_KNOCKDOWN"), 230.0, 44, Color(1.0, 0.85, 0.3))
+			if _fight.count > 0:
+				_draw_centered(str(_fight.count), 330.0, 96, Color.WHITE)
+			var f: Fighter = _fight.downed
+			if f != null:
+				var bar_size := Vector2(360.0, 22.0)
+				var pos := Vector2((width - bar_size.x) * 0.5, 370.0)
+				_canvas.draw_rect(Rect2(pos - Vector2(3, 3), bar_size + Vector2(6, 6)), Color(0, 0, 0, 0.75))
+				_canvas.draw_rect(Rect2(pos, Vector2(bar_size.x * f.getup_progress, bar_size.y)), Color(0.4, 0.9, 1.0))
+				_draw_centered(tr("COMBAT_GET_UP_HINT"), 430.0, 22, Color.WHITE)
+		FightManager.Phase.RESUME:
+			_draw_centered(tr("COMBAT_FIGHT"), 300.0, 72, Color(1.0, 0.85, 0.3))
+		FightManager.Phase.ENDED:
+			var title: String = tr("COMBAT_KO") if _fight.method == FightManager.Method.KO else tr("COMBAT_TKO")
+			_draw_centered(title, 290.0, 96, Color(1.0, 0.3, 0.2))
+			_draw_centered(tr("COMBAT_WINNER").format({"name": _fight.winner.setup.display_name}), 360.0, 36, Color.WHITE)
+
+
+func _draw_centered(text: String, y: float, font_size: int, color: Color) -> void:
+	var font: Font = ThemeDB.fallback_font
+	var pos := Vector2(0.0, y)
+	var width: float = _canvas.size.x
+	_canvas.draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_CENTER, width, font_size, 10, Color.BLACK)
+	_canvas.draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_CENTER, width, font_size, color)
 
 
 ## mirrored = true: las barras se vacían hacia la derecha (lado del rival).

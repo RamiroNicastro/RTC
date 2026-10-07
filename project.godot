@@ -68,6 +68,11 @@ body={
 
 pointing/emulate_touch_from_mouse=true
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://i18n/textos.es.translation", "res://i18n/textos.en.translation")
+locale/fallback="es"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

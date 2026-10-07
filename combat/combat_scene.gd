@@ -23,6 +23,8 @@ signal hit_resolved(info: HitInfo)
 @onready var touch_controls: TouchControls = $TouchControls
 
 var clock := CombatClock.new()
+## Árbitro: knockdowns, cuenta, KO y TKO (desde el Hito E2, también rounds).
+var fight := FightManager.new()
 ## Intercambiable: más adelante HitboxHitResolver, sin tocar nada más.
 var hit_resolver: HitResolver = DistanceHitResolver.new()
 
@@ -47,10 +49,12 @@ func start(fight_setup: FightSetup) -> void:
 	controller_a = _make_controller(fight_setup.fighter_a.controller_type)
 	controller_b = _make_controller(fight_setup.fighter_b.controller_type)
 
+	fight.setup(fighter_a, fighter_b)
 	camera.setup(fighter_a, fighter_b, ring.stage_half_width())
-	hud.setup(fighter_a, fighter_b)
-	# Los botones táctiles se ven solo en pantallas táctiles (en PC se pueden mostrar desde la sandbox).
-	touch_controls.visible = DisplayServer.is_touchscreen_available()
+	hud.setup(fighter_a, fighter_b, fight)
+	# Los botones táctiles se ven solo en celulares (en PC se muestran con F3 desde la sandbox).
+	# No se usa is_touchscreen_available(): con la emulación de toque por mouse da true en la PC.
+	touch_controls.visible = OS.has_feature("mobile")
 	_started = true
 
 
@@ -61,12 +65,20 @@ func _physics_process(_delta: float) -> void:
 
 	var cmd_a: FighterCommand = controller_a.get_command(fighter_a, fighter_b)
 	var cmd_b: FighterCommand = controller_b.get_command(fighter_b, fighter_a)
+	# Fuera de la pelea activa (cuenta, "¡boxeen!", final), solo el caído puede hacer algo: tocar para levantarse.
+	if not fight.is_fighting():
+		if fight.downed != fighter_a:
+			cmd_a = FighterCommand.new()
+		if fight.downed != fighter_b:
+			cmd_b = FighterCommand.new()
 
 	fighter_a.tick(cmd_a)
 	fighter_b.tick(cmd_b)
 
 	ring.resolve_positions(fighter_a, fighter_b)
-	_resolve_hits()
+	if fight.is_fighting():
+		_resolve_hits()
+	fight.tick()
 	camera.follow()
 
 
@@ -91,11 +103,16 @@ func _check_hit(attacker: Fighter, defender: Fighter) -> HitInfo:
 
 
 func _apply_hit(info: HitInfo) -> void:
+	# Si en este mismo tick ya cayó el otro (intercambio), este golpe no puede tirar a nadie más.
+	if not fight.is_fighting() and info.result == HitInfo.Result.HIT and info.damage >= info.defender.health:
+		info.damage = info.defender.health - 1
 	if info.result == HitInfo.Result.DODGED:
 		# Que te esquiven cansa como pegarle al aire.
 		info.attacker.spend_stamina(info.move.whiff_stamina_penalty)
 	info.defender.receive_hit(info)
 	hit_resolved.emit(info)
+	if info.defender.state == Fighter.State.KNOCKDOWN:
+		fight.on_knockdown(info.defender)
 
 
 func _make_controller(type: FighterSetup.ControllerType) -> FighterController:

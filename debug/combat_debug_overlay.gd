@@ -77,7 +77,7 @@ func _process(_delta: float) -> void:
 	var dummy := _combat.controller_b as DummyInput
 	var lines: PackedStringArray = [
 		"J jab  K fuerte  L guardia  ESPACIO esquive  S/↓ cuerpo (mantener + golpe)",
-		"1/2/4 rival tira jab/fuerte/cuerpo   3 modo del rival",
+		"1/2/4 rival tira jab/fuerte/cuerpo   3 modo del rival   5 rival se levanta sí/no   6 rival a 10 de vida",
 		"F1 límite FPS   F2 rangos   F3 botones táctiles   R reiniciar",
 		"FPS: %d (límite: %s)   tick %d   lógico %.2f s / real %.2f s" % [
 			Engine.get_frames_per_second(), "sin límite" if max_fps == 0 else str(max_fps),
@@ -85,7 +85,10 @@ func _process(_delta: float) -> void:
 			(Time.get_ticks_msec() - _start_msec) / 1000.0],
 		_fighter_line(a),
 		_fighter_line(b),
-		"Modo del rival: %s" % (dummy.mode_name() if dummy != null else "-"),
+		"Modo del rival: %s   se levanta: %s" % [
+			dummy.mode_name() if dummy != null else "-", ("sí" if dummy.getup_enabled else "NO") if dummy != null else "-"],
+		"Pelea: %s   cuenta %d   caídas jugador %d / rival %d" % [
+			FightManager.Phase.keys()[_combat.fight.phase], _combat.fight.count, a.knockdowns, b.knockdowns],
 		"Borde a borde: %.1f   jab %.0f → %s   fuerte %.0f → %s" % [
 			gap, a.setup.jab.reach, "EN RANGO" if gap <= a.setup.jab.reach else "fuera",
 			a.setup.power_punch.reach, "EN RANGO" if gap <= a.setup.power_punch.reach else "fuera"],
@@ -105,6 +108,8 @@ func _fighter_line(f: Fighter) -> String:
 			f.current_move.id, Fighter.AttackPhase.keys()[f.attack_phase], f.attack_tick, f.current_move_total_ticks()]
 	elif f.stun_left > 0 and f.state in [Fighter.State.HITSTUN, Fighter.State.BLOCKSTUN, Fighter.State.GUARD_BROKEN]:
 		text += " (%d ticks)" % f.stun_left
+	elif f.state == Fighter.State.KNOCKDOWN:
+		text += " (barra para levantarse %d%%, %.0f toques)" % [roundi(f.getup_progress * 100.0), f.getup_taps_required()]
 	elif f.state == Fighter.State.DODGING:
 		text += " (%d/%d%s)" % [f.dodge_tick, f.dodge_total_ticks(), " INVULNERABLE" if f.is_dodging_head() else ""]
 	if f.counter_ready_left > 0:
