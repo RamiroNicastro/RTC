@@ -26,6 +26,7 @@ func _physics_process(_delta: float) -> bool:
 		var p := FighterSetup.new()
 		p.controller_type = FighterSetup.ControllerType.PLAYER
 		var s := FightSetup.new()
+		s.start_with_intro = false
 		s.fighter_a = p
 		s.fighter_b = FighterSetup.new()
 		combat.start(s)

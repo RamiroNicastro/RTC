@@ -77,7 +77,7 @@ func _process(_delta: float) -> void:
 	var dummy := _combat.controller_b as DummyInput
 	var lines: PackedStringArray = [
 		"J jab  K fuerte  L guardia  ESPACIO esquive  S/↓ cuerpo (mantener + golpe)",
-		"1/2/4 rival tira jab/fuerte/cuerpo   3 modo del rival   5 rival se levanta sí/no   6 rival a 10 de vida",
+		"1/2/4 rival tira jab/fuerte/cuerpo   3 modo del rival   5 rival se levanta sí/no   6 rival a 10 de vida   7 quedan 5 s",
 		"F1 límite FPS   F2 rangos   F3 botones táctiles   R reiniciar",
 		"FPS: %d (límite: %s)   tick %d   lógico %.2f s / real %.2f s" % [
 			Engine.get_frames_per_second(), "sin límite" if max_fps == 0 else str(max_fps),
@@ -87,8 +87,10 @@ func _process(_delta: float) -> void:
 		_fighter_line(b),
 		"Modo del rival: %s   se levanta: %s" % [
 			dummy.mode_name() if dummy != null else "-", ("sí" if dummy.getup_enabled else "NO") if dummy != null else "-"],
-		"Pelea: %s   cuenta %d   caídas jugador %d / rival %d" % [
-			FightManager.Phase.keys()[_combat.fight.phase], _combat.fight.count, a.knockdowns, b.knockdowns],
+		"Pelea: %s   round %d/%d   quedan %d s   cuenta %d   caídas (round/total) jugador %d/%d  rival %d/%d" % [
+			FightManager.Phase.keys()[_combat.fight.phase], _combat.fight.round_number, _combat.fight.total_rounds,
+			_combat.fight.seconds_left(), _combat.fight.count,
+			a.round_knockdowns, a.knockdowns, b.round_knockdowns, b.knockdowns],
 		"Borde a borde: %.1f   jab %.0f → %s   fuerte %.0f → %s" % [
 			gap, a.setup.jab.reach, "EN RANGO" if gap <= a.setup.jab.reach else "fuera",
 			a.setup.power_punch.reach, "EN RANGO" if gap <= a.setup.power_punch.reach else "fuera"],
@@ -114,6 +116,6 @@ func _fighter_line(f: Fighter) -> String:
 		text += " (%d/%d%s)" % [f.dodge_tick, f.dodge_total_ticks(), " INVULNERABLE" if f.is_dodging_head() else ""]
 	if f.counter_ready_left > 0:
 		text += "  COUNTER LISTO"
-	return text + "   salud %d/%d   stamina %.0f/%.0f (fatiga %.1f, cuerpo %.1f)%s" % [
-		f.health, f.max_health, f.stamina, f.max_stamina, f.fatigue, f.body_drain,
+	return text + "   salud %d/%d (base %d)   stamina %.0f/%.0f (fatiga %.1f, cuerpo %.1f)%s" % [
+		f.health, f.max_health, f.base_max_health, f.stamina, f.max_stamina, f.fatigue, f.body_drain,
 		"  CANSADO" if f.is_tired() else ""]

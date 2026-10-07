@@ -54,6 +54,17 @@ const RISE_HEALTH_RATIO: float = 0.35
 const RISE_HEALTH_STEP: float = 0.1
 const RISE_HEALTH_MIN_RATIO: float = 0.15
 
+## --- Salud en dos capas y descanso entre rounds ---
+## Fracción de cada golpe recibido que es daño PROFUNDO: baja la salud máxima por el resto de la pelea.
+const DEEP_DAMAGE_RATIO: float = 0.35
+## La salud máxima nunca baja de esta fracción de la base.
+const MIN_MAX_HEALTH_RATIO: float = 0.4
+## En el descanso se recupera esta fracción de la salud perdida (hasta el máximo actual).
+const ROUND_HEAL_RATIO: float = 0.5
+## En el descanso se recupera esta fracción de la fatiga y del desgaste del cuerpo.
+const ROUND_FATIGUE_RECOVERY: float = 0.5
+const ROUND_BODY_DRAIN_RECOVERY: float = 0.5
+
 var setup: FighterSetup
 ## +1 = mira a la derecha, -1 = mira a la izquierda.
 var facing: int = 1
@@ -62,7 +73,9 @@ var state: State = State.IDLE
 var previous_x: float = 0.0
 
 var health: int = 100
+## Salud máxima ACTUAL: baja con el daño profundo y no se recupera durante la pelea.
 var max_health: int = 100
+var base_max_health: int = 100
 var stamina: float = 100.0
 ## Máximo actual = máximo base - fatiga - desgaste por golpes al cuerpo.
 var max_stamina: float = 100.0
@@ -86,8 +99,10 @@ var flash_left: int = 0
 var dodge_tick: int = 0
 ## Ticks que quedan para que el próximo golpe sea un COUNTER (después de un esquive exitoso).
 var counter_ready_left: int = 0
-## Caídas en la pelea (en el Hito E2, por round).
+## Caídas en toda la pelea (cada una hace más difícil levantarse).
 var knockdowns: int = 0
+## Caídas en el round actual (3 = KO técnico).
+var round_knockdowns: int = 0
 ## Barra para levantarse: 0 = vacía, 1 = se puede levantar.
 var getup_progress: float = 0.0
 
@@ -105,8 +120,11 @@ var _last_move_dir: int = 0
 func configure(fighter_setup: FighterSetup, facing_dir: int) -> void:
 	setup = fighter_setup
 	facing = facing_dir
-	max_health = setup.max_health
+	base_max_health = setup.max_health
+	max_health = base_max_health
 	health = max_health
+	knockdowns = 0
+	round_knockdowns = 0
 	base_max_stamina = setup.max_stamina
 	fatigue = 0.0
 	body_drain = 0.0
@@ -259,10 +277,35 @@ func receive_hit(info: HitInfo) -> void:
 ## FightManager: se levanta después de llenar la barra.
 func rise() -> void:
 	var ratio: float = maxf(RISE_HEALTH_MIN_RATIO, RISE_HEALTH_RATIO - RISE_HEALTH_STEP * (knockdowns - 1))
-	health = maxi(health, roundi(max_health * ratio))
+	health = mini(max_health, maxi(health, roundi(base_max_health * ratio)))
 	getup_progress = 0.0
 	_clear_buffer()  # los toques para levantarse no deben convertirse en un golpe
 	_set_state(State.IDLE)
+
+
+## CombatScene, en el descanso entre rounds: recupera parte de la salud, la fatiga y el cuerpo,
+## y vuelve a un estado limpio. La salud máxima perdida (daño profundo) NO se recupera.
+func recover_between_rounds() -> void:
+	health = mini(max_health, health + roundi((max_health - health) * ROUND_HEAL_RATIO))
+	recover_fatigue(ROUND_FATIGUE_RECOVERY)
+	recover_body_drain(ROUND_BODY_DRAIN_RECOVERY)
+	stamina = max_stamina
+	round_knockdowns = 0
+	reset_to_neutral()
+
+
+## Corta cualquier acción en curso y queda quieto (descanso, inicio de round).
+func reset_to_neutral() -> void:
+	_interrupt_attack()
+	_clear_buffer()
+	counter_ready_left = 0
+	stun_left = 0
+	dodge_tick = 0
+	flash_left = 0
+	getup_progress = 0.0
+	_regen_delay_left = 0
+	_set_state(State.IDLE)
+	queue_redraw()
 
 
 ## FightManager: no se levanta más (KO o TKO).
@@ -425,10 +468,15 @@ func _tick_stun(cmd: FighterCommand) -> void:
 
 func _take_damage(amount: int) -> void:
 	health = maxi(0, health - amount)
+	# Capa profunda: una parte del daño baja el máximo para el resto de la pelea.
+	var min_max: int = roundi(base_max_health * MIN_MAX_HEALTH_RATIO)
+	max_health = maxi(min_max, max_health - roundi(amount * DEEP_DAMAGE_RATIO))
+	health = mini(health, max_health)
 
 
 func _knockdown() -> void:
 	knockdowns += 1
+	round_knockdowns += 1
 	getup_progress = 0.0
 	dodge_tick = 0
 	stun_left = 0

@@ -5,3 +5,9 @@ COMBAT_FIGHT,¡BOXEEN!,FIGHT!
 COMBAT_KO,¡KO!,KO!
 COMBAT_TKO,¡KO TÉCNICO!,TECHNICAL KO!
 COMBAT_WINNER,Gana {name},{name} wins
+COMBAT_ROUND,ROUND {n},ROUND {n}
+COMBAT_ROUND_SHORT,ROUND {n}/{total},ROUND {n}/{total}
+COMBAT_ROUND_END,FIN DEL ROUND {n},END OF ROUND {n}
+COMBAT_REST,Descanso: se recupera parte de la salud y del cansancio,Rest: recovering some health and stamina
+COMBAT_FIGHT_OVER,¡FIN DE LA PELEA!,FIGHT OVER!
+COMBAT_DECISION_PENDING,Decisión de los jueces: llega en el próximo hito,Judges' decision: coming in the next milestone

@@ -10,6 +10,13 @@ extends Resource
 ## Peleador del lado derecho (mira a la izquierda).
 @export var fighter_b: FighterSetup
 
+@export_group("Rounds")
+@export var rounds: int = 3
+## Duración de cada round en segundos (arcade: más corto que los 3 minutos reales).
+@export var round_seconds: float = 60.0
+## true = la pelea arranca con el cartel "ROUND 1 — ¡BOXEEN!". Las pruebas lo apagan.
+@export var start_with_intro: bool = true
+
 @export_group("Ring")
 ## Distancia entre las cuerdas, en unidades de mundo. Es igual en todos los celulares.
 @export var ring_width: float = 1500.0

@@ -21,6 +21,8 @@ const COLOR_STAMINA := Color(0.3, 0.85, 0.4)
 const COLOR_STAMINA_TIRED := Color(1.0, 0.55, 0.1)
 const COLOR_FATIGUE := Color(0.45, 0.45, 0.48)
 const COLOR_BODY_DRAIN := Color(0.6, 0.25, 0.75)
+## Salud máxima perdida por daño profundo (no se recupera en la pelea).
+const COLOR_DEEP_DAMAGE := Color(0.1, 0.1, 0.1)
 
 var _a: Fighter
 var _b: Fighter
@@ -60,7 +62,7 @@ func _approach_trail(trail: float, real: float, delta: float) -> float:
 
 
 func _health_ratio(f: Fighter) -> float:
-	return float(f.health) / float(f.max_health)
+	return float(f.health) / float(f.base_max_health)
 
 
 func _on_canvas_draw() -> void:
@@ -69,13 +71,31 @@ func _on_canvas_draw() -> void:
 	var width: float = _canvas.size.x
 	_draw_fighter_bars(Vector2(MARGIN.x, MARGIN.y), _a, _trail_a, false)
 	_draw_fighter_bars(Vector2(width - MARGIN.x - BAR_SIZE.x, MARGIN.y), _b, _trail_b, true)
+	_draw_round_clock()
 	_draw_fight_messages(width)
+
+
+## Arriba al centro: número de round y reloj.
+func _draw_round_clock() -> void:
+	if _fight == null:
+		return
+	var round_text: String = tr("COMBAT_ROUND_SHORT").format({"n": _fight.round_number, "total": _fight.total_rounds})
+	_draw_centered(round_text, 34.0, 20, Color(0.85, 0.85, 0.85))
+	var secs: int = _fight.seconds_left()
+	var clock_color: Color = Color(1.0, 0.35, 0.3) if secs <= 10 and _fight.is_fighting() else Color.WHITE
+	_draw_centered("%d:%02d" % [secs / 60, secs % 60], 70.0, 34, clock_color)
 
 
 func _draw_fight_messages(width: float) -> void:
 	if _fight == null:
 		return
 	match _fight.phase:
+		FightManager.Phase.ROUND_INTRO:
+			_draw_centered(tr("COMBAT_ROUND").format({"n": _fight.round_number}), 270.0, 72, Color.WHITE)
+			_draw_centered(tr("COMBAT_FIGHT"), 340.0, 48, Color(1.0, 0.85, 0.3))
+		FightManager.Phase.ROUND_BREAK:
+			_draw_centered(tr("COMBAT_ROUND_END").format({"n": _fight.round_number}), 270.0, 56, Color.WHITE)
+			_draw_centered(tr("COMBAT_REST"), 320.0, 26, Color(0.8, 0.8, 0.8))
 		FightManager.Phase.COUNT:
 			_draw_centered(tr("COMBAT_KNOCKDOWN"), 230.0, 44, Color(1.0, 0.85, 0.3))
 			if _fight.count > 0:
@@ -90,9 +110,14 @@ func _draw_fight_messages(width: float) -> void:
 		FightManager.Phase.RESUME:
 			_draw_centered(tr("COMBAT_FIGHT"), 300.0, 72, Color(1.0, 0.85, 0.3))
 		FightManager.Phase.ENDED:
-			var title: String = tr("COMBAT_KO") if _fight.method == FightManager.Method.KO else tr("COMBAT_TKO")
-			_draw_centered(title, 290.0, 96, Color(1.0, 0.3, 0.2))
-			_draw_centered(tr("COMBAT_WINNER").format({"name": _fight.winner.setup.display_name}), 360.0, 36, Color.WHITE)
+			match _fight.method:
+				FightManager.Method.KO, FightManager.Method.TKO:
+					var title: String = tr("COMBAT_KO") if _fight.method == FightManager.Method.KO else tr("COMBAT_TKO")
+					_draw_centered(title, 290.0, 96, Color(1.0, 0.3, 0.2))
+					_draw_centered(tr("COMBAT_WINNER").format({"name": _fight.winner.setup.display_name}), 360.0, 36, Color.WHITE)
+				FightManager.Method.DECISION:
+					_draw_centered(tr("COMBAT_FIGHT_OVER"), 290.0, 64, Color.WHITE)
+					_draw_centered(tr("COMBAT_DECISION_PENDING"), 345.0, 26, Color(0.8, 0.8, 0.8))
 
 
 func _draw_centered(text: String, y: float, font_size: int, color: Color) -> void:
@@ -110,6 +135,13 @@ func _draw_fighter_bars(pos: Vector2, f: Fighter, trail: float, mirrored: bool) 
 	_canvas.draw_rect(Rect2(pos, BAR_SIZE), Color(0.25, 0.05, 0.05))
 	_canvas.draw_rect(_fill_rect(pos, BAR_SIZE, trail, mirrored), Color(1.0, 0.85, 0.6))
 	_canvas.draw_rect(_fill_rect(pos, BAR_SIZE, _health_ratio(f), mirrored), Color(0.9, 0.2, 0.15))
+	# Tramo oscuro al final: la salud máxima perdida por daño profundo.
+	var lost: float = float(f.base_max_health - f.max_health) / float(f.base_max_health)
+	if lost > 0.0:
+		var lost_width: float = BAR_SIZE.x * lost
+		var lx: float = pos.x if mirrored else pos.x + BAR_SIZE.x - lost_width
+		_canvas.draw_rect(Rect2(Vector2(lx, pos.y), Vector2(lost_width, BAR_SIZE.y)), COLOR_DEEP_DAMAGE)
+		_canvas.draw_rect(Rect2(Vector2(lx, pos.y), Vector2(lost_width, BAR_SIZE.y)), Color(0.5, 0.5, 0.5, 0.6), false, 1.0)
 
 	# Stamina.
 	var st_pos := Vector2(pos.x, pos.y + BAR_SIZE.y + 6.0)

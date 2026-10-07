@@ -13,6 +13,7 @@ func _initialize() -> void:
 	p.controller_type = FighterSetup.ControllerType.PLAYER
 	var d := FighterSetup.new()
 	var s := FightSetup.new()
+	s.start_with_intro = false
 	s.fighter_a = p
 	s.fighter_b = d
 	set_meta("setup", s)

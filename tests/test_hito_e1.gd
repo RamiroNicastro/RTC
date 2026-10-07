@@ -45,6 +45,7 @@ func new_combat() -> Array:
 	root.add_child(combat)
 	combat.set_physics_process(false)
 	var s := FightSetup.new()
+	s.start_with_intro = false
 	s.fighter_a = FighterSetup.new()
 	s.fighter_b = FighterSetup.new()
 	s.start_distance = 140.0

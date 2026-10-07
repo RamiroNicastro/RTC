@@ -23,8 +23,9 @@ signal hit_resolved(info: HitInfo)
 @onready var touch_controls: TouchControls = $TouchControls
 
 var clock := CombatClock.new()
-## Árbitro: knockdowns, cuenta, KO y TKO (desde el Hito E2, también rounds).
+## Árbitro: rounds, reloj, knockdowns, cuenta, KO y TKO.
 var fight := FightManager.new()
+var _setup: FightSetup
 ## Intercambiable: más adelante HitboxHitResolver, sin tocar nada más.
 var hit_resolver: HitResolver = DistanceHitResolver.new()
 
@@ -34,22 +35,18 @@ var _started: bool = false
 
 
 func start(fight_setup: FightSetup) -> void:
+	_setup = fight_setup
 	ring.configure(fight_setup.ring_width)
 
 	fighter_a.configure(fight_setup.fighter_a, 1)
 	fighter_b.configure(fight_setup.fighter_b, -1)
-	fighter_a.position = Vector2(-fight_setup.start_distance * 0.5, 0.0)
-	fighter_b.position = Vector2(fight_setup.start_distance * 0.5, 0.0)
-	fighter_a.previous_x = fighter_a.position.x
-	fighter_b.previous_x = fighter_b.position.x
-	# Evita que la interpolación "deslice" a los peleadores desde (0, 0) en el primer frame.
-	fighter_a.reset_physics_interpolation()
-	fighter_b.reset_physics_interpolation()
+	_place_fighters_at_start()
 
 	controller_a = _make_controller(fight_setup.fighter_a.controller_type)
 	controller_b = _make_controller(fight_setup.fighter_b.controller_type)
 
-	fight.setup(fighter_a, fighter_b)
+	fight.setup(fighter_a, fighter_b, fight_setup)
+	fight.round_break_started.connect(_on_round_break_started)
 	camera.setup(fighter_a, fighter_b, ring.stage_half_width())
 	hud.setup(fighter_a, fighter_b, fight)
 	# Los botones táctiles se ven solo en celulares (en PC se muestran con F3 desde la sandbox).
@@ -113,6 +110,23 @@ func _apply_hit(info: HitInfo) -> void:
 	hit_resolved.emit(info)
 	if info.defender.state == Fighter.State.KNOCKDOWN:
 		fight.on_knockdown(info.defender)
+
+
+func _place_fighters_at_start() -> void:
+	fighter_a.position = Vector2(-_setup.start_distance * 0.5, 0.0)
+	fighter_b.position = Vector2(_setup.start_distance * 0.5, 0.0)
+	fighter_a.previous_x = fighter_a.position.x
+	fighter_b.previous_x = fighter_b.position.x
+	# Evita que la interpolación "deslice" a los peleadores (al empezar y al volver a su lugar).
+	fighter_a.reset_physics_interpolation()
+	fighter_b.reset_physics_interpolation()
+
+
+## Descanso entre rounds: cada uno vuelve a su lugar y se recupera en parte.
+func _on_round_break_started(_round_number: int) -> void:
+	fighter_a.recover_between_rounds()
+	fighter_b.recover_between_rounds()
+	_place_fighters_at_start()
 
 
 func _make_controller(type: FighterSetup.ControllerType) -> FighterController:

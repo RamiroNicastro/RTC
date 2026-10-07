@@ -18,6 +18,7 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
 - **Autoloads:** solo `GameState`, `SaveManager` y `SceneRouter`, y recién en la Fase 2. **No hay EventBus**: se usan señales locales.
 - **Datos estáticos** en Resources `.tres`. **Partidas guardadas** en JSON dentro de `user://`.
 - **Textos visibles** con `tr("CLAVE")`. Se exceptúan el overlay de debug y la sandbox.
+- **Si el editor no arranca el juego** (queda gris), hay que cerrar Godot del todo y reabrirlo, o usar `jugar.bat`, que abre el juego sin el editor.
 - **Después de agregar archivos nuevos**, la persona tiene que usar *Proyecto → Recargar proyecto actual* antes de F5. Si no, el editor no ve las clases nuevas y el juego queda en gris (pausado por error). Hay que recordárselo.
 - **Placeholders** solamente: no se hace arte final antes de pasar la puerta del MVP.
 
@@ -54,5 +55,6 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [~] Hito T: botones táctiles provisorios hechos y probados con mouse. **Pendiente: prueba en un celular real** (falta instalar JDK 17, Android SDK y plantillas; ver docs/ANDROID.md)
 - [x] Hito D: esquive (solo cabeza) con counter, golpes al cuerpo con desgaste del máximo (tope 30 %), guardia más suave
 - [x] Hito E1: knockdown, cuenta (mínimo 3 para levantarse), barra para levantarse, KO/TKO, textos en i18n/
-- [ ] **Hito E2: rounds, reloj, descanso, salud en dos capas** ← siguiente
-- [ ] Hitos E3, F, G, H, I
+- [x] Hito E2: rounds (3×60 s), reloj que se frena en la cuenta, descanso con recuperación parcial, salud en dos capas, TKO por round
+- [ ] **Hito E3: FightStats, jueces, FightResult, pantalla final** ← siguiente
+- [ ] Hitos F, G, H, I

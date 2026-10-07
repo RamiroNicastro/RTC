@@ -41,6 +41,7 @@ func new_combat(gap: float, b_reach: float = 110.0) -> Array:
 	root.add_child(combat)
 	combat.set_physics_process(false)  # avanzamos los ticks a mano
 	var s := FightSetup.new()
+	s.start_with_intro = false
 	s.fighter_a = FighterSetup.new()
 	s.fighter_b = FighterSetup.new()
 	if b_reach != 110.0:
