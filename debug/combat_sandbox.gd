@@ -3,23 +3,32 @@ extends Node
 ##
 ## Controles:
 ##   ← / → o A / D  moverse
+##   J              jab
+##   L              el rival tira un jab (para probar castigar su recuperación)
 ##   F1             cambiar el límite de FPS (sin límite → 30 → 144) para probar que la lógica no depende de los FPS
+##   F2             mostrar u ocultar los rangos de golpe
 ##   R              reiniciar la escena
 
 const COMBAT_SCENE: PackedScene = preload("res://combat/combat_scene.tscn")
 const FPS_CAPS: Array[int] = [0, 30, 144]
 
 var _fps_cap_index: int = 0
+var _combat: CombatScene
+var _debug_draw: CombatDebugDraw
 
 
 func _ready() -> void:
-	var combat: CombatScene = COMBAT_SCENE.instantiate()
-	add_child(combat)
-	combat.start(_make_default_setup())
+	_combat = COMBAT_SCENE.instantiate()
+	add_child(_combat)
+	_combat.start(_make_default_setup())
+
+	_debug_draw = CombatDebugDraw.new()
+	_combat.add_child(_debug_draw)
+	_debug_draw.attach(_combat.fighter_a, _combat.fighter_b)
 
 	var overlay := CombatDebugOverlay.new()
 	add_child(overlay)
-	overlay.attach(combat)
+	overlay.attach(_combat)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -29,6 +38,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	match key.physical_keycode:
 		KEY_F1:
 			_cycle_fps_cap()
+		KEY_F2:
+			_debug_draw.visible = not _debug_draw.visible
+		KEY_L:
+			var dummy := _combat.controller_b as DummyInput
+			if dummy != null:
+				dummy.queue_jab()
 		KEY_R:
 			get_tree().reload_current_scene()
 

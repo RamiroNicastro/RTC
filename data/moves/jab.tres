@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://combat/moves/move_data.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"jab"
+startup_ticks = 6
+active_ticks = 2
+recovery_ticks = 10
+reach = 110.0
+zone = 0
+damage = 6
+hitstun_ticks = 14

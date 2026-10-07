@@ -31,12 +31,16 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
 GODOT="$HOME/Downloads/Godot_v4.7.2-stable_win64.exe/Godot_v4.7.2-stable_win64_console.exe"
 "$GODOT" --headless --path . --import                 # importar y regenerar el caché de clases
 "$GODOT" --headless --path . --quit-after 300         # correr la sandbox unos segundos y ver errores
+bash tests/run_all.sh                                 # pruebas automáticas (todas tienen que dar OK)
 ```
+
+Las pruebas de `tests/` reemplazan los controladores por controladores guionados (algo que R1 permite) y avanzan los ticks a mano con `_physics_process(0.0)`. Cada hito nuevo suma su propio `tests/test_hito_X.gd`.
 
 ## Estado actual
 
 - [x] Fase 0: proyecto configurado (1280×720, canvas_items + expand, sensor_landscape, 60 Hz, interpolación de física), git, docs.
 - [ ] Fase 0: exportación a Android (la configura la persona; los pasos están en docs/ANDROID.md).
 - [x] Hito A: movimiento, Fighter, rival quieto y cámara con zoom suave
-- [ ] **Hito B: jab, timing, impacto y daño** ← siguiente
-- [ ] Hitos C, T, D, E1, E2, E3, F, G, H, I
+- [x] Hito B: jab (MoveData en ticks), HitResolver por distancia, salud, hitstun, HUD, rangos en debug
+- [ ] **Hito C: stamina, golpe fuerte y guardia** ← siguiente
+- [ ] Hitos T, D, E1, E2, E3, F, G, H, I

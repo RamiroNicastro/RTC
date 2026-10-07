@@ -15,6 +15,12 @@ enum ControllerType { PLAYER, DUMMY }
 @export var body_width: float = 90.0
 @export var body_height: float = 250.0
 
+@export_group("Salud")
+@export var max_health: int = 100
+
+@export_group("Golpes")
+@export var jab: MoveData = preload("res://data/moves/jab.tres")
+
 @export_group("Movimiento")
 ## Unidades de mundo por segundo al avanzar hacia el rival.
 @export var forward_speed: float = 260.0
