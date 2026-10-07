@@ -20,6 +20,7 @@ signal hit_resolved(info: HitInfo)
 @onready var fighter_b: Fighter = $FighterB
 @onready var camera: CombatCamera = $CombatCamera
 @onready var hud: CombatHUD = $CombatHUD
+@onready var touch_controls: TouchControls = $TouchControls
 
 var clock := CombatClock.new()
 ## Intercambiable: más adelante HitboxHitResolver, sin tocar nada más.
@@ -48,6 +49,8 @@ func start(fight_setup: FightSetup) -> void:
 
 	camera.setup(fighter_a, fighter_b, ring.stage_half_width())
 	hud.setup(fighter_a, fighter_b)
+	# Los botones táctiles se ven solo en pantallas táctiles (en PC se pueden mostrar desde la sandbox).
+	touch_controls.visible = DisplayServer.is_touchscreen_available()
 	_started = true
 
 

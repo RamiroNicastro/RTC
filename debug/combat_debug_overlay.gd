@@ -51,7 +51,7 @@ func _on_hit(info: HitInfo) -> void:
 
 func _ready() -> void:
 	_label = Label.new()
-	_label.position = Vector2(16, 100)
+	_label.position = Vector2(16, 170)
 	_label.add_theme_font_size_override("font_size", 16)
 	_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_label.add_theme_constant_override("outline_size", 6)
@@ -68,7 +68,7 @@ func _process(_delta: float) -> void:
 	var dummy := _combat.controller_b as DummyInput
 	var lines: PackedStringArray = [
 		"J jab   K fuerte   L guardia (mantener)   |   1/2 rival tira jab/fuerte   3 modo del rival",
-		"F1 límite FPS   F2 rangos   R reiniciar",
+		"F1 límite FPS   F2 rangos   F3 botones táctiles   R reiniciar",
 		"FPS: %d (límite: %s)   tick %d   lógico %.2f s / real %.2f s" % [
 			Engine.get_frames_per_second(), "sin límite" if max_fps == 0 else str(max_fps),
 			_combat.clock.tick, CombatTime.ticks_to_seconds(_combat.clock.tick),

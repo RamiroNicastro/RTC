@@ -48,5 +48,6 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [x] Hito A: movimiento, Fighter, rival quieto y cámara con zoom suave
 - [x] Hito B: jab (MoveData en ticks), HitResolver por distancia, salud, hitstun, HUD, rangos en debug
 - [x] Hito C: stamina arcade + fatiga ligera, golpe fuerte, guardia y ruptura de guardia, modos del dummy
-- [ ] **Hito T: prueba táctil temprana** ← siguiente
-- [ ] Hitos D, E1, E2, E3, F, G, H, I
+- [~] Hito T: botones táctiles provisorios hechos y probados con mouse. **Pendiente: prueba en un celular real** (falta instalar JDK 17, Android SDK y plantillas; ver docs/ANDROID.md)
+- [ ] **Hito D: esquive y golpe al cuerpo** ← siguiente
+- [ ] Hitos E1, E2, E3, F, G, H, I
