@@ -52,8 +52,8 @@ func start(fight_setup: FightSetup) -> void:
 	fighter_b.configure(fight_setup.fighter_b, -1)
 	_place_fighters_at_start()
 
-	controller_a = _make_controller(fight_setup.fighter_a.controller_type)
-	controller_b = _make_controller(fight_setup.fighter_b.controller_type)
+	controller_a = _make_controller(fight_setup.fighter_a)
+	controller_b = _make_controller(fight_setup.fighter_b)
 
 	fighter_a.attack_started.connect(func(_m: MoveData) -> void: stats.record_attack_started(0))
 	fighter_b.attack_started.connect(func(_m: MoveData) -> void: stats.record_attack_started(1))
@@ -209,9 +209,13 @@ func _on_round_break_started(_round_number: int) -> void:
 	_place_fighters_at_start()
 
 
-func _make_controller(type: FighterSetup.ControllerType) -> FighterController:
-	match type:
+func _make_controller(fighter_setup: FighterSetup) -> FighterController:
+	match fighter_setup.controller_type:
 		FighterSetup.ControllerType.PLAYER:
 			return PlayerInput.new()
+		FighterSetup.ControllerType.AI:
+			var ai := AIInput.new()
+			ai.configure(fighter_setup.ai_seed)
+			return ai
 		_:
 			return DummyInput.new()

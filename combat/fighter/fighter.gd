@@ -47,12 +47,14 @@ const GUARD_MOVE_SPEED_MULT: float = 0.5
 ## Toques (JAB o FUERTE) para levantarse en la primera caída, y cuántos más por cada caída siguiente.
 const GETUP_BASE_TAPS: float = 8.0
 const GETUP_TAPS_PER_KNOCKDOWN: float = 6.0
+## Toques extra según el castigo acumulado: con TODA la salud máxima perdida se suman estos toques.
+const GETUP_TAPS_PER_DEEP_DAMAGE: float = 30.0
 ## La barra para levantarse se vacía sola a este ritmo (toques por segundo) si no se aprieta.
-const GETUP_DECAY_TAPS_PER_SECOND: float = 1.5
+const GETUP_DECAY_TAPS_PER_SECOND: float = 3.0
 ## Salud al levantarse (fracción del máximo): baja en cada caída, con un mínimo.
-const RISE_HEALTH_RATIO: float = 0.35
+const RISE_HEALTH_RATIO: float = 0.4
 const RISE_HEALTH_STEP: float = 0.1
-const RISE_HEALTH_MIN_RATIO: float = 0.15
+const RISE_HEALTH_MIN_RATIO: float = 0.25
 
 ## --- Salud en dos capas y descanso entre rounds ---
 ## Fracción de cada golpe recibido que es daño PROFUNDO: baja la salud máxima por el resto de la pelea.
@@ -201,7 +203,8 @@ func is_down() -> bool:
 
 ## Toques necesarios para levantarse en la caída actual.
 func getup_taps_required() -> float:
-	return GETUP_BASE_TAPS + GETUP_TAPS_PER_KNOCKDOWN * maxf(0.0, knockdowns - 1)
+	var battered: float = 1.0 - float(max_health) / float(base_max_health)
+	return GETUP_BASE_TAPS + GETUP_TAPS_PER_KNOCKDOWN * maxf(0.0, knockdowns - 1) 			+ GETUP_TAPS_PER_DEEP_DAMAGE * battered
 
 
 ## true cuando llenó la barra para levantarse (FightManager decide cuándo se levanta).

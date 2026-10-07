@@ -106,8 +106,8 @@ func test_hit_once_and_advantage() -> void:
 	print("En rango: golpes=%d  salud rival=%d  hitstun=%d ticks  ventaja al conectar=%+d" % [
 		hits[0], b.health, hitstun_ticks, b_free_at - a_free_at])
 	check(hits[0] == 1, "el jab debería conectar exactamente 1 vez (2 ticks activos)")
-	check(b.health == 94, "el daño debería ser 6 una sola vez")
-	check(hitstun_ticks == 14, "hitstun debería durar 14 ticks")
+	check(b.health == 96, "el daño debería ser 4 una sola vez")
+	check(hitstun_ticks == 12, "hitstun debería durar 12 ticks")
 	root.remove_child(combat)
 	combat.free()
 
@@ -158,6 +158,6 @@ func test_trade() -> void:
 	r[2].jab_next = true
 	step(combat, 10)
 	print("Intercambio: salud A=%d  salud B=%d" % [combat.fighter_a.health, combat.fighter_b.health])
-	check(combat.fighter_a.health == 94 and combat.fighter_b.health == 94, "golpes simultáneos deberían intercambiarse")
+	check(combat.fighter_a.health == 96 and combat.fighter_b.health == 96, "golpes simultáneos deberían intercambiarse")
 	root.remove_child(combat)
 	combat.free()

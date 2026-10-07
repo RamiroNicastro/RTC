@@ -76,10 +76,10 @@ func test_two_layer_health() -> void:
 	var r := new_combat()
 	var combat: CombatScene = r[0]
 	var b := combat.fighter_b
-	r[1].power_next = true      # 16 de daño
+	r[1].power_next = true      # 14 de daño
 	step(combat, 25)
-	print("Fuerte de 16: salud %d, salud máxima %d (esperado 84 y 94)" % [b.health, b.max_health])
-	check(b.health == 84 and b.max_health == 94, "el 35 % del daño debería bajar la salud máxima")
+	print("Fuerte de 14: salud %d, salud máxima %d (esperado 86 y 95)" % [b.health, b.max_health])
+	check(b.health == 86 and b.max_health == 95, "el 35 % del daño debería bajar la salud máxima")
 	dispose(combat)
 
 
@@ -124,7 +124,7 @@ func test_rounds_and_break() -> void:
 func test_clock_stops_during_count() -> void:
 	var r := new_combat()
 	var combat: CombatScene = r[0]
-	combat.fighter_b.health = 5
+	combat.fighter_b.health = 3
 	r[1].jab_next = true
 	step(combat, 8)
 	var left: int = combat.fight.round_ticks_left
@@ -143,7 +143,7 @@ func test_tko_counts_per_round() -> void:
 	var fight := combat.fight
 	# Dos caídas en el round 1.
 	for i in 2:
-		b.health = 5
+		b.health = 3
 		sa.jab_next = true
 		step(combat, 8)
 		while fight.phase != FightManager.Phase.FIGHTING:
@@ -153,12 +153,12 @@ func test_tko_counts_per_round() -> void:
 	while not (fight.phase == FightManager.Phase.FIGHTING and fight.round_number == 2):
 		step(combat)
 	# Una caída en el round 2: no debería ser TKO (las del round 1 no cuentan).
-	b.health = 5
+	b.health = 3
 	sa.jab_next = true
 	step(combat, 8)
 	print("Caídas: total %d, en este round %d → fase %s" % [b.knockdowns, b.round_knockdowns, FightManager.Phase.keys()[fight.phase]])
 	check(fight.phase == FightManager.Phase.COUNT, "con 2 caídas en el round 1 y 1 en el round 2 no es TKO")
-	check(b.getup_taps_required() == 20.0, "levantarse cuesta más según las caídas de toda la pelea (8 + 6×2)")
+	check(b.getup_taps_required() >= 20.0, "levantarse cuesta más según las caídas de toda la pelea (8 + 6×2 + castigo)")
 	dispose(combat)
 
 

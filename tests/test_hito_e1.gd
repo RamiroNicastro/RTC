@@ -69,7 +69,7 @@ func dispose(combat: CombatScene) -> void:
 
 ## Deja al rival con poca vida y lo tira con un jab.
 func knock_down_b(combat: CombatScene, sa: Scripted) -> void:
-	combat.fighter_b.health = 5
+	combat.fighter_b.health = 3
 	sa.jab_next = true
 	step(combat, 8)
 
@@ -99,7 +99,7 @@ func test_knockdown_and_rise() -> void:
 			break
 	print("Knockdown: se levantó a la cuenta de %d con %d de vida (caídas: %d)" % [combat.fight.count, b.health, b.knockdowns])
 	check(rose_at >= 0, "tocando rápido debería levantarse")
-	check(b.health == 35, "la primera vez se levanta con 35 de vida")
+	check(b.health == 40, "la primera vez se levanta con 40 de vida")
 	check(combat.fight.count >= FightManager.MIN_COUNT_TO_RISE, "no se levanta antes de la cuenta mínima")
 	check(combat.fight.phase == FightManager.Phase.RESUME, "después de levantarse viene el cartel de ¡boxeen!")
 	step(combat, FightManager.RESUME_TICKS + 1)

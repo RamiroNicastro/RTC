@@ -99,8 +99,8 @@ func test_dodge_beats_power_and_counter() -> void:
 	sa.jab_next = true            # counter: el rival está en la recuperación de su fuerte
 	step(combat, 8)
 	var last: HitInfo = infos.back()
-	print("Counter: %s, counter=%s, daño %d (normal 6)" % [HitInfo.Result.keys()[last.result], last.counter, last.damage])
-	check(last.result == HitInfo.Result.HIT and last.counter and last.damage == 9, "el jab de counter debería hacer 9")
+	print("Counter: %s, counter=%s, daño %d (normal 4)" % [HitInfo.Result.keys()[last.result], last.counter, last.damage])
+	check(last.result == HitInfo.Result.HIT and last.counter and last.damage == 6, "el jab de counter debería hacer 6 (4 × 1,5)")
 	dispose(combat)
 
 
@@ -132,7 +132,7 @@ func test_whiffed_dodge_is_punishable() -> void:
 	r[2].jab_next = true          # el jab del rival llega en su tick 7 → tick 16 del esquive (recuperación)
 	step(combat, 8)
 	print("Esquive al aire castigado: estado %s, salud %d" % [Fighter.State.keys()[a.state], a.health])
-	check(a.state == Fighter.State.HITSTUN and a.health == 94, "un esquive al aire debería poder castigarse en su recuperación")
+	check(a.state == Fighter.State.HITSTUN and a.health == 96, "un esquive al aire debería poder castigarse en su recuperación")
 	dispose(combat)
 
 

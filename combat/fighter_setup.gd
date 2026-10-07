@@ -5,11 +5,13 @@ extends Resource
 ## Lo arma quien lanza el combate (hoy la sandbox; en la Fase 2, la carrera a partir de FighterData).
 ## Llega con los valores ya calculados: el combate no sabe nada de estadísticas, edad ni compras.
 
-enum ControllerType { PLAYER, DUMMY }
+enum ControllerType { PLAYER, DUMMY, AI }
 
 @export var display_name: String = "Peleador"
 @export var controller_type: ControllerType = ControllerType.DUMMY
 @export var color: Color = Color.WHITE
+## Semilla del azar de la IA (0 = distinta cada pelea). Las pruebas usan semillas fijas.
+@export var ai_seed: int = 0
 
 @export_group("Cuerpo")
 @export var body_width: float = 90.0

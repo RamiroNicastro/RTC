@@ -85,8 +85,7 @@ func _process(_delta: float) -> void:
 			(Time.get_ticks_msec() - _start_msec) / 1000.0],
 		_fighter_line(a),
 		_fighter_line(b),
-		"Modo del rival: %s   se levanta: %s" % [
-			dummy.mode_name() if dummy != null else "-", ("sí" if dummy.getup_enabled else "NO") if dummy != null else "-"],
+		_rival_line(dummy),
 		"Pelea: %s   round %d/%d   quedan %d s   cuenta %d   caídas (round/total) jugador %d/%d  rival %d/%d" % [
 			FightManager.Phase.keys()[_combat.fight.phase], _combat.fight.round_number, _combat.fight.total_rounds,
 			_combat.fight.seconds_left(), _combat.fight.count,
@@ -102,6 +101,15 @@ func _process(_delta: float) -> void:
 		"Último: %s" % _last_event,
 	]
 	_label.text = "\n".join(lines)
+
+
+func _rival_line(dummy: DummyInput) -> String:
+	if dummy != null:
+		return "Rival: dummy %s   se levanta: %s" % [dummy.mode_name(), "sí" if dummy.getup_enabled else "NO"]
+	var ai := _combat.controller_b as AIInput
+	if ai != null:
+		return "Rival: IA   pensando: %s   (reacción %d ticks)" % [ai.intent, ai.reaction_ticks]
+	return "Rival: -"
 
 
 ## Cómo va el round actual para cada juez (puntos de este round) y las tarjetas hasta ahora.

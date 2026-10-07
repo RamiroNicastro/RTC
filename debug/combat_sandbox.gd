@@ -9,7 +9,7 @@ extends Node
 ##   ESPACIO        esquive (solo protege la cabeza)
 ##   S / ↓          mantener para pegar al cuerpo (S + J = jab al cuerpo, S + K = fuerte al cuerpo)
 ##   1 / 2 / 4      el rival tira un jab / un fuerte / un jab al cuerpo
-##   3              cambiar el modo del rival (quieto, bloquea, jab, fuerte, bloquea y jab, esquiva, cuerpo)
+##   3              cambiar el rival: IA → dummy (quieto, bloquea, jab, fuerte, bloquea y jab, esquiva, cuerpo) → IA
 ##   5              el rival se levanta o no después de una caída (para probar el KO)
 ##   6              dejar al rival con 10 de vida (para probar knockdowns rápido)
 ##   7              dejar el round en 5 segundos (para probar el descanso y el final)
@@ -84,12 +84,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().reload_current_scene()
 
 
+## Rota el rival entre la IA y los modos del dummy de práctica.
 func _cycle_dummy_mode() -> void:
 	var dummy := _combat.controller_b as DummyInput
 	if dummy == null:
-		return
-	dummy.cycle_mode()
-	_mode_button.text = "Rival: " + dummy.mode_name()
+		_combat.controller_b = DummyInput.new()
+	elif dummy.mode == DummyInput.Mode.size() - 1:
+		var ai := AIInput.new()
+		ai.configure(0)
+		_combat.controller_b = ai
+	else:
+		dummy.cycle_mode()
+	_update_mode_button()
+
+
+func _update_mode_button() -> void:
+	var dummy := _combat.controller_b as DummyInput
+	_mode_button.text = "Rival: " + (dummy.mode_name() if dummy != null else "IA")
 
 
 func _build_touch_debug_buttons() -> void:
@@ -102,7 +113,7 @@ func _build_touch_debug_buttons() -> void:
 	row.position.y = 100.0
 	layer.add_child(row)
 
-	_mode_button = _small_button(row, "Rival: QUIETO", _cycle_dummy_mode)
+	_mode_button = _small_button(row, "Rival: IA", _cycle_dummy_mode)
 	_small_button(row, "Debug", func() -> void:
 		_overlay.visible = not _overlay.visible
 		_debug_draw.visible = _overlay.visible)
@@ -140,8 +151,8 @@ func _make_default_setup() -> FightSetup:
 	player.color = Color(0.2, 0.55, 0.9)
 
 	var dummy := FighterSetup.new()
-	dummy.display_name = "Rival (quieto)"
-	dummy.controller_type = FighterSetup.ControllerType.DUMMY
+	dummy.display_name = "Rival"
+	dummy.controller_type = FighterSetup.ControllerType.AI
 	dummy.color = Color(0.85, 0.55, 0.15)
 
 	var fight := FightSetup.new()

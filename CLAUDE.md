@@ -29,6 +29,15 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
 
 - **Hito D, guardia más suave:** un jab bloqueado saca solo 1 de stamina. El fuerte bloqueado saca 15 y rompe la guardia. Bloquear **no genera fatiga**: la fatiga sale solo del esfuerzo propio (pegar, fallar, esquivar).
 
+- **Hito F, balance arcade:** objetivo con IA contra IA: alrededor del 30 % de las peleas termina por KO o TKO, el resto por decisión, y casi ninguna se define en el round 1. Los valores actuales:
+  - jab 4, fuerte 14, cuerpo 3 y 10;
+  - el jab que conecta no da ventaja para encadenar;
+  - al levantarse se recupera el 40 %;
+  - levantarse cuesta más cuanto más salud máxima se perdió;
+  - la barra para levantarse se vacía a 3 toques por segundo.
+
+  Se mide con `godot --headless --path . -s res://tests/balance_report.gd` (20 peleas IA contra IA).
+
 ## Forma de trabajo
 
 - **Un hito por sesión.** Un hito se commitea solo después de que la persona lo probó en Godot y cumple el criterio de la sección 16 del plan.
@@ -57,5 +66,6 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [x] Hito E1: knockdown, cuenta (mínimo 3 para levantarse), barra para levantarse, KO/TKO, textos en i18n/
 - [x] Hito E2: rounds (3×60 s), reloj que se frena en la cuenta, descanso con recuperación parcial, salud en dos capas, TKO por round
 - [x] Hito E3: FightStats (solo eventos reales), 3 jueces con pesos distintos, decisiones, FightResult (solo datos), pantalla final
-- [ ] **Hito F: primera IA funcional** ← siguiente
-- [ ] Hitos G, H, I
+- [x] Hito F: IA que ve con 0,2 s de retraso, mide distancia, ataca, castiga, se cubre o esquiva, cuida la stamina; primer ajuste de balance
+- [ ] **Hito G: tres perfiles de IA (AIProfile)** ← siguiente
+- [ ] Hitos H, I

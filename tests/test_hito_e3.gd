@@ -88,7 +88,7 @@ func test_stats_count_real_events() -> void:
 	var a: FightStats.FighterRoundStats = combat.stats.current(0)
 	print("Registro: tirados %d, conectados %d, de poder %d, daño %d" % [a.thrown, a.landed, a.landed_power, a.damage_dealt])
 	check(a.thrown == 5 and a.landed == 4 and a.landed_power == 1, "debería registrar 5 tirados, 4 conectados, 1 de poder")
-	check(a.damage_dealt == 3 * 6 + 16, "el daño registrado debería ser 34")
+	check(a.damage_dealt == 3 * 4 + 14, "el daño registrado debería ser 26")
 	dispose(combat)
 
 
@@ -153,7 +153,7 @@ func test_ko_result() -> void:
 	var results: Array = []
 	combat.fight_finished.connect(func(res: FightResult) -> void: results.append(res))
 	(r[1] as Scripted).jab_next = true
-	combat.fighter_b.health = 5
+	combat.fighter_b.health = 3
 	step(combat, 8)
 	step(combat, FightManager.COUNT_TICKS_PER_NUMBER * FightManager.COUNT_OUT + 5)
 	check(results.size() == 1, "debería haber un resultado")

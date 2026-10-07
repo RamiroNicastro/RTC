@@ -167,8 +167,8 @@ func test_power_hit() -> void:
 	var combat: CombatScene = r[0]
 	r[1].power_next = true
 	step(combat, 25)
-	print("Fuerte sin guardia: salud del rival %d (esperado 84)" % combat.fighter_b.health)
-	check(combat.fighter_b.health == 84, "el fuerte debería hacer 16")
+	print("Fuerte sin guardia: salud del rival %d (esperado 86)" % combat.fighter_b.health)
+	check(combat.fighter_b.health == 86, "el fuerte debería hacer 14")
 	dispose(combat)
 
 
@@ -182,7 +182,7 @@ func test_jab_interrupts_power() -> void:
 	print("Jab vs arranque del fuerte: salud jugador %d, salud rival %d" % [
 		combat.fighter_a.health, combat.fighter_b.health])
 	check(combat.fighter_a.health == 100, "el jab debería interrumpir el fuerte antes de que pegue")
-	check(combat.fighter_b.health == 94, "el jab debería conectar")
+	check(combat.fighter_b.health == 96, "el jab debería conectar")
 	dispose(combat)
 
 
