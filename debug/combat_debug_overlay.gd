@@ -15,6 +15,8 @@ var _landed: int = 0
 var _blocked: int = 0
 var _whiffed: int = 0
 var _guard_breaks: int = 0
+var _dodges: int = 0
+var _counters: int = 0
 var _damage_dealt: int = 0
 var _last_event: String = "-"
 
@@ -33,13 +35,20 @@ func _on_whiff(move: MoveData) -> void:
 
 
 func _on_hit(info: HitInfo) -> void:
-	var what: String = "conectó"
-	if info.result == HitInfo.Result.BLOCKED:
-		what = "ROMPIÓ LA GUARDIA" if info.guard_broken else "fue bloqueado"
+	var what: String = "COUNTER" if info.counter else "conectó"
+	match info.result:
+		HitInfo.Result.BLOCKED:
+			what = "ROMPIÓ LA GUARDIA" if info.guard_broken else "fue bloqueado"
+		HitInfo.Result.DODGED:
+			what = "fue ESQUIVADO"
 	_last_event = "tick %d: %s de %s %s (%d de daño)" % [
 		_combat.clock.tick, info.move.id, info.attacker.setup.display_name, what, info.damage]
-	if info.attacker != _combat.fighter_a:
+	if info.defender == _combat.fighter_a and info.result == HitInfo.Result.DODGED:
+		_dodges += 1
+	if info.attacker != _combat.fighter_a or info.result == HitInfo.Result.DODGED:
 		return
+	if info.counter:
+		_counters += 1
 	_damage_dealt += info.damage
 	if info.result == HitInfo.Result.HIT:
 		_landed += 1
@@ -67,7 +76,8 @@ func _process(_delta: float) -> void:
 	var gap: float = DistanceHitResolver.edge_gap(a, b)
 	var dummy := _combat.controller_b as DummyInput
 	var lines: PackedStringArray = [
-		"J jab   K fuerte   L guardia (mantener)   |   1/2 rival tira jab/fuerte   3 modo del rival",
+		"J jab  K fuerte  L guardia  ESPACIO esquive  S/↓ cuerpo (mantener + golpe)",
+		"1/2/4 rival tira jab/fuerte/cuerpo   3 modo del rival",
 		"F1 límite FPS   F2 rangos   F3 botones táctiles   R reiniciar",
 		"FPS: %d (límite: %s)   tick %d   lógico %.2f s / real %.2f s" % [
 			Engine.get_frames_per_second(), "sin límite" if max_fps == 0 else str(max_fps),
@@ -82,6 +92,7 @@ func _process(_delta: float) -> void:
 		"Cámara: x=%.1f   zoom=%.3f" % [_combat.camera.position.x, _combat.camera.zoom.x],
 		"Jugador: tirados %d  conectados %d  bloqueados %d  guardias rotas %d  fallados %d  daño %d" % [
 			_thrown, _landed, _blocked, _guard_breaks, _whiffed, _damage_dealt],
+		"Jugador: esquives exitosos %d   counters %d" % [_dodges, _counters],
 		"Último: %s" % _last_event,
 	]
 	_label.text = "\n".join(lines)
@@ -94,5 +105,10 @@ func _fighter_line(f: Fighter) -> String:
 			f.current_move.id, Fighter.AttackPhase.keys()[f.attack_phase], f.attack_tick, f.current_move_total_ticks()]
 	elif f.stun_left > 0 and f.state in [Fighter.State.HITSTUN, Fighter.State.BLOCKSTUN, Fighter.State.GUARD_BROKEN]:
 		text += " (%d ticks)" % f.stun_left
-	return text + "   salud %d/%d   stamina %.0f/%.0f (fatiga %.1f)%s" % [
-		f.health, f.max_health, f.stamina, f.max_stamina, f.fatigue, "  CANSADO" if f.is_tired() else ""]
+	elif f.state == Fighter.State.DODGING:
+		text += " (%d/%d%s)" % [f.dodge_tick, f.dodge_total_ticks(), " INVULNERABLE" if f.is_dodging_head() else ""]
+	if f.counter_ready_left > 0:
+		text += "  COUNTER LISTO"
+	return text + "   salud %d/%d   stamina %.0f/%.0f (fatiga %.1f, cuerpo %.1f)%s" % [
+		f.health, f.max_health, f.stamina, f.max_stamina, f.fatigue, f.body_drain,
+		"  CANSADO" if f.is_tired() else ""]

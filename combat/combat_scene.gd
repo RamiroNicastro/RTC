@@ -12,7 +12,7 @@ extends Node2D
 ##   4. resolver los golpes de AMBOS y recién después aplicarlos (si conectan en el mismo tick, es un intercambio);
 ##   5. mover la cámara.
 
-## Se emite por cada golpe que llegó al rival (HIT o BLOCKED).
+## Se emite por cada golpe que llegó al rival (HIT, BLOCKED o DODGED).
 signal hit_resolved(info: HitInfo)
 
 @onready var ring: Ring = $Ring
@@ -91,6 +91,9 @@ func _check_hit(attacker: Fighter, defender: Fighter) -> HitInfo:
 
 
 func _apply_hit(info: HitInfo) -> void:
+	if info.result == HitInfo.Result.DODGED:
+		# Que te esquiven cansa como pegarle al aire.
+		info.attacker.spend_stamina(info.move.whiff_stamina_penalty)
 	info.defender.receive_hit(info)
 	hit_resolved.emit(info)
 

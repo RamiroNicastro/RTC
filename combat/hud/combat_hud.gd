@@ -5,7 +5,8 @@ extends CanvasLayer
 ## Solo LEE el estado de los Fighters; nunca lo modifica.
 ## La parte clara de la barra de salud muestra el daño reciente y baja con retraso (es solo visual).
 ## La barra de stamina se pone naranja cuando el peleador está cansado.
-## El tramo gris del final es la FATIGA: stamina que no se puede recuperar hasta el descanso.
+## Al final de la barra: tramo gris = FATIGA, tramo violeta = desgaste por golpes al CUERPO.
+## Las dos bajan el máximo y no se recuperan hasta el descanso entre rounds.
 ## En el Hito I se ancla a la safe area.
 
 const BAR_SIZE := Vector2(460.0, 26.0)
@@ -17,6 +18,7 @@ const TRAIL_SPEED: float = 0.6
 const COLOR_STAMINA := Color(0.3, 0.85, 0.4)
 const COLOR_STAMINA_TIRED := Color(1.0, 0.55, 0.1)
 const COLOR_FATIGUE := Color(0.45, 0.45, 0.48)
+const COLOR_BODY_DRAIN := Color(0.6, 0.25, 0.75)
 
 var _a: Fighter
 var _b: Fighter
@@ -80,11 +82,15 @@ func _draw_fighter_bars(pos: Vector2, f: Fighter, trail: float, mirrored: bool) 
 	_canvas.draw_rect(Rect2(st_pos, st_size), Color(0.08, 0.15, 0.08))
 	var st_color: Color = COLOR_STAMINA_TIRED if f.is_tired() else COLOR_STAMINA
 	_canvas.draw_rect(_fill_rect(st_pos, st_size, f.stamina / f.base_max_stamina, mirrored), st_color)
-	if f.fatigue > 0.0:
-		var fatigue_ratio: float = f.fatigue / f.base_max_stamina
-		var fatigue_width: float = st_size.x * fatigue_ratio
-		var fx: float = st_pos.x if mirrored else st_pos.x + st_size.x - fatigue_width
-		_canvas.draw_rect(Rect2(Vector2(fx, st_pos.y), Vector2(fatigue_width, st_size.y)), COLOR_FATIGUE)
+	# Desde el final de la barra: primero el desgaste del cuerpo y después la fatiga.
+	var from_end: float = 0.0
+	for segment in [[f.body_drain, COLOR_BODY_DRAIN], [f.fatigue, COLOR_FATIGUE]]:
+		var width: float = st_size.x * float(segment[0]) / f.base_max_stamina
+		if width <= 0.0:
+			continue
+		var x: float = st_pos.x + from_end if mirrored else st_pos.x + st_size.x - from_end - width
+		_canvas.draw_rect(Rect2(Vector2(x, st_pos.y), Vector2(width, st_size.y)), segment[1])
+		from_end += width
 
 	# Nombre.
 	var font: Font = ThemeDB.fallback_font

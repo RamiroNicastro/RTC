@@ -25,6 +25,8 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
 - **Hito C, tono:** el combate es realista pero **arcade**. El spam se castiga claramente, y frenar recupera rápido.
 - **Hito C, fatiga ligera:** el 15 % de la stamina gastada se vuelve fatiga y baja el máximo (con tope del 25 %). Se ve como un tramo gris en la barra. En el Hito E2, el descanso entre rounds recupera una parte con `recover_fatigue()`. Se suma a la reducción del máximo por golpes al cuerpo (Hito D).
 
+- **Hito D, guardia más suave:** un jab bloqueado saca solo 1 de stamina. El fuerte bloqueado saca 15 y rompe la guardia. Bloquear **no genera fatiga**: la fatiga sale solo del esfuerzo propio (pegar, fallar, esquivar).
+
 ## Forma de trabajo
 
 - **Un hito por sesión.** Un hito se commitea solo después de que la persona lo probó en Godot y cumple el criterio de la sección 16 del plan.
@@ -49,5 +51,6 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [x] Hito B: jab (MoveData en ticks), HitResolver por distancia, salud, hitstun, HUD, rangos en debug
 - [x] Hito C: stamina arcade + fatiga ligera, golpe fuerte, guardia y ruptura de guardia, modos del dummy
 - [~] Hito T: botones táctiles provisorios hechos y probados con mouse. **Pendiente: prueba en un celular real** (falta instalar JDK 17, Android SDK y plantillas; ver docs/ANDROID.md)
-- [ ] **Hito D: esquive y golpe al cuerpo** ← siguiente
-- [ ] Hitos E1, E2, E3, F, G, H, I
+- [x] Hito D: esquive (solo cabeza) con counter, golpes al cuerpo con desgaste del máximo (tope 30 %), guardia más suave
+- [ ] **Hito E1: knockdown, cuenta, levantarse, KO/TKO** ← siguiente
+- [ ] Hitos E2, E3, F, G, H, I

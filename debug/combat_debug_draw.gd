@@ -33,6 +33,8 @@ func _draw() -> void:
 		var y: float = -f.setup.body_height * 0.75 + 8.0
 		var front: float = f.position.x + f.half_width() * f.facing
 		if f.state == Fighter.State.ATTACKING and f.current_move != null:
+			if f.current_move.zone == MoveData.Zone.BODY:
+				y = -f.setup.body_height * 0.5 + 8.0
 			var color: Color = COLOR_STARTUP
 			match f.attack_phase:
 				Fighter.AttackPhase.ACTIVE:

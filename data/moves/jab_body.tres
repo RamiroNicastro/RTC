@@ -4,14 +4,15 @@
 
 [resource]
 script = ExtResource("1_move")
-id = &"jab"
-startup_ticks = 6
+id = &"jab_cuerpo"
+startup_ticks = 7
 active_ticks = 2
-recovery_ticks = 10
-reach = 110.0
-zone = 0
-damage = 6
+recovery_ticks = 11
+reach = 95.0
+zone = 1
+damage = 4
 hitstun_ticks = 14
+max_stamina_drain = 5.0
 stamina_cost = 7.0
 whiff_stamina_penalty = 4.0
 block_stamina_damage = 1.0

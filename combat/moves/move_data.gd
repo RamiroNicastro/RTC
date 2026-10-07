@@ -25,6 +25,8 @@ enum Zone { HEAD, BODY }
 @export var damage: int = 6
 ## Ticks que el rival queda aturdido si el golpe conecta.
 @export var hitstun_ticks: int = 14
+## Golpes al cuerpo: cuánto baja la stamina MÁXIMA del rival si conecta (con tope por pelea).
+@export var max_stamina_drain: float = 0.0
 
 @export_group("Stamina")
 ## Lo que cuesta tirarlo.

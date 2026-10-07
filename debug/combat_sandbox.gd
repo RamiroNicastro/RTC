@@ -6,8 +6,10 @@ extends Node
 ##   J              jab
 ##   K              golpe fuerte
 ##   L (mantener)   guardia
-##   1 / 2          el rival tira un jab / un fuerte (para probar castigos y guardia)
-##   3              cambiar el modo del rival (quieto, siempre bloquea, jab cada X, fuerte cada X, bloquea y jab)
+##   ESPACIO        esquive (solo protege la cabeza)
+##   S / ↓          mantener para pegar al cuerpo (S + J = jab al cuerpo, S + K = fuerte al cuerpo)
+##   1 / 2 / 4      el rival tira un jab / un fuerte / un jab al cuerpo
+##   3              cambiar el modo del rival (quieto, bloquea, jab, fuerte, bloquea y jab, esquiva, cuerpo)
 ##   F1             cambiar el límite de FPS (sin límite → 30 → 144) para probar que la lógica no depende de los FPS
 ##   F2             mostrar u ocultar los rangos de golpe
 ##   F3             mostrar u ocultar los botones táctiles (en la PC se usan con el mouse)
@@ -54,7 +56,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_debug_draw.visible = not _debug_draw.visible
 		KEY_F3:
 			_combat.touch_controls.visible = not _combat.touch_controls.visible
-		KEY_1, KEY_2, KEY_3:
+		KEY_1, KEY_2, KEY_3, KEY_4:
 			var dummy := _combat.controller_b as DummyInput
 			if dummy == null:
 				return
@@ -65,6 +67,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					dummy.queue_power()
 				KEY_3:
 					_cycle_dummy_mode()
+				KEY_4:
+					dummy.queue_body_jab()
 		KEY_R:
 			get_tree().reload_current_scene()
 

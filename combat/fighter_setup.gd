@@ -26,6 +26,8 @@ enum ControllerType { PLAYER, DUMMY }
 @export var fatigue_ratio: float = 0.15
 ## La fatiga nunca baja el máximo más que esta fracción del máximo base.
 @export var max_fatigue_ratio: float = 0.25
+## Los golpes al cuerpo nunca bajan el máximo más que esta fracción del máximo base.
+@export var body_drain_cap_ratio: float = 0.3
 
 @export_group("Guardia")
 ## Fracción del daño que absorbe la guardia (0.85 = pasa el 15 %).
@@ -33,9 +35,22 @@ enum ControllerType { PLAYER, DUMMY }
 ## Lo mismo, pero con poca stamina (la guardia se vuelve más débil).
 @export var tired_guard_damage_reduction: float = 0.6
 
+@export_group("Esquive")
+@export var dodge_startup_ticks: int = 2
+## Ticks en los que la CABEZA es invulnerable (el cuerpo nunca lo es).
+@export var dodge_invuln_ticks: int = 10
+## Ticks expuesto si el esquive no esquivó nada.
+@export var dodge_recovery_ticks: int = 12
+@export var dodge_stamina_cost: float = 8.0
+## Después de un esquive exitoso, ticks en los que el siguiente golpe es un COUNTER.
+@export var counter_window_ticks: int = 30
+@export var counter_damage_mult: float = 1.5
+
 @export_group("Golpes")
 @export var jab: MoveData = preload("res://data/moves/jab.tres")
 @export var power_punch: MoveData = preload("res://data/moves/power.tres")
+@export var jab_body: MoveData = preload("res://data/moves/jab_body.tres")
+@export var power_body: MoveData = preload("res://data/moves/power_body.tres")
 
 @export_group("Movimiento")
 ## Unidades de mundo por segundo al avanzar hacia el rival.

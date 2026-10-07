@@ -127,6 +127,8 @@ func test_guard_stops_jab() -> void:
 		check(infos[0].result == HitInfo.Result.BLOCKED, "la guardia debería bloquear el jab")
 		check(infos[0].damage == 1, "por la guardia debería pasar 1 de daño")
 		check(b.state == Fighter.State.BLOCKSTUN, "el rival debería quedar en blockstun")
+		check(is_equal_approx(b.stamina, 99.0), "un jab bloqueado debería sacar solo 1 de stamina")
+		check(b.fatigue == 0.0, "bloquear no debería generar fatiga")
 	step(combat, 10)
 	check(b.state == Fighter.State.BLOCKING, "después del blockstun vuelve a la guardia")
 	dispose(combat)
@@ -189,7 +191,7 @@ func test_exhausted_guard_breaks() -> void:
 	var b := combat.fighter_b
 	r[2].guard = true
 	step(combat, 2)
-	b.spend_stamina(b.stamina - 3.0)
+	b.spend_stamina(b.stamina - 1.0)
 	r[1].jab_next = true
 	step(combat, 8)
 	print("Guardia sin stamina contra un jab: estado %s, stamina %.0f" % [Fighter.State.keys()[b.state], b.stamina])
