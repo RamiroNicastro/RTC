@@ -16,6 +16,8 @@ extends Node2D
 signal hit_resolved(info: HitInfo)
 ## Salida del combate (R2): se emite una sola vez, cuando termina la pelea.
 signal fight_finished(result: FightResult)
+## El jugador eligió "salir" en la pausa (el modo que lanzó el combate decide qué hacer).
+signal quit_requested()
 
 @onready var ring: Ring = $Ring
 @onready var fighter_a: Fighter = $FighterA
@@ -26,6 +28,7 @@ signal fight_finished(result: FightResult)
 @onready var result_screen: ResultScreen = $ResultScreen
 @onready var fx: CombatFX = $CombatFX
 @onready var sfx: CombatSfx = $CombatSfx
+@onready var pause_menu: PauseMenu = $PauseMenu
 
 var clock := CombatClock.new()
 ## Árbitro: rounds, reloj, knockdowns, cuenta, KO y TKO.
@@ -62,6 +65,10 @@ func start(fight_setup: FightSetup) -> void:
 	fighter_b.attack_started.connect(func(_m: MoveData) -> void: stats.record_attack_started(1))
 	for f in [fighter_a, fighter_b]:
 		f.attack_whiffed.connect(func(m: MoveData) -> void: sfx.play_whoosh(0.8 if m.is_power_punch else 0.3))
+		# Aviso sonoro del fuerte (acompaña el destello del guante).
+		f.attack_started.connect(func(m: MoveData) -> void:
+			if m.is_power_punch:
+				sfx.play_whoosh(0.1))
 
 	# Conectar ANTES de fight.setup(): si la pelea arranca sin cartel, el round 1 empieza ahí mismo.
 	fight.round_started.connect(func(_n: int) -> void: stats.start_round())
@@ -75,6 +82,8 @@ func start(fight_setup: FightSetup) -> void:
 	fight.setup(fighter_a, fighter_b, fight_setup)
 
 	camera.setup(fighter_a, fighter_b, ring.stage_half_width())
+	fx.setup(fighter_a, fighter_b)
+	pause_menu.setup(self)
 	hud.setup(fighter_a, fighter_b, fight)
 	# Los botones táctiles se ven solo en celulares (en PC se muestran con F3 desde la sandbox).
 	# No se usa is_touchscreen_available(): con la emulación de toque por mouse da true en la PC.
@@ -86,6 +95,10 @@ func start(fight_setup: FightSetup) -> void:
 func _physics_process(_delta: float) -> void:
 	if not _started:
 		return
+	# Los toques del jugador se guardan en CADA tick, aunque la lógica esté congelada (hitstop, cámara lenta).
+	for c in [controller_a, controller_b]:
+		if c is PlayerInput:
+			(c as PlayerInput).poll()
 	if not clock.advance():
 		camera.follow()  # durante el hitstop la lógica se congela, pero la sacudida sigue
 		return
@@ -133,7 +146,7 @@ func _check_hit(attacker: Fighter, defender: Fighter) -> HitInfo:
 func _apply_hit(info: HitInfo) -> void:
 	# Si en este mismo tick ya cayó el otro (intercambio), este golpe no puede tirar a nadie más.
 	if not fight.is_fighting() and info.result == HitInfo.Result.HIT and info.damage >= info.defender.health:
-		info.damage = info.defender.health - 1
+		info.damage = maxi(0, info.defender.health - 1)
 	if info.result == HitInfo.Result.DODGED:
 		# Que te esquiven cansa como pegarle al aire.
 		info.attacker.spend_stamina(info.move.whiff_stamina_penalty)
@@ -294,6 +307,38 @@ func _on_round_break_started(_round_number: int) -> void:
 	fighter_a.recover_between_rounds()
 	fighter_b.recover_between_rounds()
 	_place_fighters_at_start()
+
+
+# --- Pausa ---
+
+## Pausa la lógica del combate (los toques no avanzan nada) y avisa a quien quiera mostrar un menú.
+signal pause_changed(paused: bool)
+
+
+func set_paused(value: bool) -> void:
+	if not _started or result != null:
+		return
+	clock.paused = value
+	pause_changed.emit(value)
+
+
+func is_paused() -> bool:
+	return clock.paused
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key != null and key.pressed and not key.echo and key.physical_keycode in [KEY_ESCAPE, KEY_P]:
+		set_paused(not is_paused())
+		get_viewport().set_input_as_handled()
+
+
+func _notification(what: int) -> void:
+	# Si la app pierde el foco (llamada, minimizar) o se toca "Atrás" en Android: pausa.
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
+		set_paused(true)
+	elif what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		set_paused(not is_paused())
 
 
 func _make_controller(fighter_setup: FighterSetup) -> FighterController:

@@ -145,6 +145,8 @@ func test_body_drain_cap_and_guard() -> void:
 	var b := combat.fighter_b
 	sa.body = true
 	for i in 6:
+		# Cada golpe empuja: se reacomoda la distancia antes del siguiente.
+		combat.fighter_b.position.x = combat.fighter_a.position.x + 130.0
 		sa.power_next = true      # fuerte al cuerpo: 12 de desgaste cada uno
 		step(combat, 70)
 	print("Seis fuertes al cuerpo: desgaste %.0f (tope 30), stamina máx %.0f" % [b.body_drain, b.max_stamina])

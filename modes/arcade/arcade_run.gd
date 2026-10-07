@@ -5,12 +5,15 @@ extends Node
 ##                    → (pierde) GAME OVER: continuar (−50 % de puntos) o menú
 ##                    → (empate) revancha contra el mismo rival
 ## Usa el combate tal cual (R2): arma un FightSetup y escucha fight_finished(FightResult).
-## Teclado: Enter/J aceptan, Esc vuelve al menú.
+## Teclado: Enter/J aceptan, Esc vuelve al menú (en la pelea, Esc es pausa).
+## Ritmo arcade: rounds cortos (ROUND_SECONDS) y, al terminar cada pelea, un botón CONTINUAR
+## (el jugador decide cuándo seguir; así puede mirar la pantalla de resultado).
 
 const COMBAT_SCENE: PackedScene = preload("res://combat/combat_scene.tscn")
 const TITLE_SCENE: String = "res://ui/title/title_screen.tscn"
-## Tiempo para ver el KO y la pantalla de resultado antes del conteo.
-const AFTER_FIGHT_SECONDS: float = 4.0
+## Segundos después del final para mostrar el botón CONTINUAR (primero se ve el KO y el resultado).
+const CONTINUE_BUTTON_DELAY: float = 2.5
+const ROUND_SECONDS: float = 45.0
 const CONTINUE_PENALTY: float = 0.5
 
 var _ladder: Array[ArcadeRivals.Rival] = ArcadeRivals.ladder()
@@ -20,6 +23,8 @@ var _records: ArcadeRecords = ArcadeRecords.load_records()
 var _combat: CombatScene
 var _ui: CanvasLayer
 var _bg: ColorRect
+## La partida ya se contó en los récords (para no contarla dos veces si continúa).
+var _run_counted: bool = false
 
 
 func _ready() -> void:
@@ -31,7 +36,8 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key != null and key.pressed and not key.echo and key.physical_keycode == KEY_ESCAPE:
+	# Durante la pelea, Esc lo maneja el combate (pausa). En las demás pantallas vuelve al menú.
+	if key != null and key.pressed and not key.echo and key.physical_keycode == KEY_ESCAPE and _combat == null:
 		get_tree().change_scene_to_file(TITLE_SCENE)
 
 
@@ -55,8 +61,12 @@ func _show_vs() -> void:
 	box.add_child(UIStyle.label("%s  ·  %s  ·  %s" % [
 		tr(rival.profile.style_name_key),
 		tr("AI_DIFFICULTY_" + AIInput.Difficulty.keys()[rival.difficulty]),
-		tr("ARCADE_ROUNDS").format({"n": rival.rounds})], 26, UIStyle.TEXT))
+		tr("ARCADE_ROUND_ONE") if rival.rounds == 1 else tr("ARCADE_ROUNDS").format({"n": rival.rounds})], 26, UIStyle.TEXT))
+	box.add_child(UIStyle.label("“%s”" % tr(rival.quote_key), 26, rival.color.lightened(0.35), 6))
 	box.add_child(UIStyle.label(_style_tip(rival.profile), 22, UIStyle.MUTED, 5))
+	for c in rival.challenges:
+		box.add_child(UIStyle.label(tr("CHALLENGE_LINE").format({"text": tr(ArcadeRivals.challenge_key(c)),
+				"bonus": ArcadeRivals.CHALLENGE_BONUS}), 22, UIStyle.GOLD, 5))
 	box.add_child(UIStyle.label(tr("ARCADE_SCORE_LINE").format({"score": _score, "best": _records.best_score}), 24, UIStyle.GOLD, 6))
 	var go := UIStyle.button(tr("ARCADE_FIGHT"), _start_fight)
 	box.add_child(go)
@@ -76,19 +86,36 @@ func _start_fight() -> void:
 	enemy.ai_profile = rival.profile
 	enemy.ai_difficulty = rival.difficulty
 	enemy.color = rival.color
+	enemy.power_punch = rival.signature
 	var setup := FightSetup.new()
 	setup.fighter_a = player
 	setup.fighter_b = enemy
 	setup.rounds = rival.rounds
+	setup.round_seconds = ROUND_SECONDS
 	_combat = COMBAT_SCENE.instantiate()
 	add_child(_combat)
 	_combat.start(setup)
 	_combat.touch_controls.visible = OS.has_feature("mobile")
 	_combat.fight_finished.connect(_on_fight_finished)
+	_combat.quit_requested.connect(func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))
 
 
 func _on_fight_finished(r: FightResult) -> void:
-	await get_tree().create_timer(AFTER_FIGHT_SECONDS).timeout
+	await get_tree().create_timer(CONTINUE_BUTTON_DELAY).timeout
+	# Botón CONTINUAR abajo al centro, encima del combate (que sigue visible con su resultado).
+	var holder := Control.new()
+	holder.set_anchors_preset(Control.PRESET_FULL_RECT)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(holder)
+	var cont := UIStyle.button(tr("ARCADE_CONTINUE_FIGHT"), func() -> void: _after_fight(r))
+	holder.add_child(cont)
+	var view: Vector2 = get_viewport().get_visible_rect().size
+	cont.position = Vector2((view.x - cont.custom_minimum_size.x) * 0.5, view.y - cont.custom_minimum_size.y - 24.0)
+	UIStyle.pop_in(cont)
+	cont.grab_focus()
+
+
+func _after_fight(r: FightResult) -> void:
 	if r.winner_index == 0:
 		_show_tally(r)
 	elif r.is_draw():
@@ -101,6 +128,10 @@ func _show_tally(r: FightResult) -> void:
 	_clear()
 	var rival: ArcadeRivals.Rival = _ladder[_stage]
 	var lines: Array = ArcadeScore.breakdown(r, 0, rival.score_mult)
+	# Desafíos: los cumplidos suman bonus; los fallados se muestran en 0 (para que den ganas de volver).
+	for c in rival.challenges:
+		var done: bool = ArcadeRivals.challenge_done(c, r, 0)
+		lines.append([ArcadeRivals.challenge_key(c), ArcadeRivals.CHALLENGE_BONUS if done else 0, done])
 	var gained: int = ArcadeScore.total(lines, rival.score_mult)
 	var box := _screen()
 	box.add_child(UIStyle.label(tr("ARCADE_VICTORY"), 72, UIStyle.GOLD, 14))
@@ -117,7 +148,13 @@ func _show_tally(r: FightResult) -> void:
 	# Conteo línea por línea, con un ritmo que se disfruta.
 	for l in lines:
 		await get_tree().create_timer(0.28).timeout
-		var row := UIStyle.label("%s   %+d" % [tr(l[0]), int(l[1])], 28, UIStyle.TEXT if int(l[1]) >= 0 else UIStyle.RED, 6)
+		var is_challenge: bool = l.size() > 2
+		var text: String = tr(l[0])
+		var color: Color = UIStyle.TEXT if int(l[1]) >= 0 else UIStyle.RED
+		if is_challenge:
+			text = ("✓ " if l[2] else "✗ ") + text
+			color = UIStyle.GOLD if l[2] else UIStyle.MUTED
+		var row := UIStyle.label("%s   %+d" % [text, int(l[1])], 28, color, 6)
 		list.add_child(row)
 		UIStyle.pop_in(row)
 	await get_tree().create_timer(0.3).timeout
@@ -154,7 +191,8 @@ func _show_draw() -> void:
 
 func _show_game_over() -> void:
 	_clear()
-	var is_record: bool = _records.register_run(_score, _stage + 1, false)
+	var is_record: bool = _records.register_run(_score, _stage + 1, false, not _run_counted)
+	_run_counted = true
 	var box := _screen()
 	box.add_child(UIStyle.label(tr("ARCADE_GAME_OVER"), 90, UIStyle.RED, 14))
 	box.add_child(UIStyle.label(tr("ARCADE_REACHED").format({"n": _stage + 1, "total": _ladder.size(), "score": _score}), 30, UIStyle.TEXT))
@@ -172,7 +210,8 @@ func _show_game_over() -> void:
 
 func _show_champion() -> void:
 	_clear()
-	var is_record: bool = _records.register_run(_score, _ladder.size() + 1, true)
+	var is_record: bool = _records.register_run(_score, _ladder.size() + 1, true, not _run_counted)
+	_run_counted = true
 	var box := _screen()
 	box.add_child(UIStyle.label(tr("ARCADE_CHAMPION"), 100, UIStyle.GOLD, 16))
 	box.add_child(UIStyle.label(tr("ARCADE_FINAL_SCORE").format({"score": _score}), 40, UIStyle.TEXT))
@@ -181,6 +220,7 @@ func _show_champion() -> void:
 	var again := UIStyle.button(tr("ARCADE_PLAY_AGAIN"), func() -> void:
 		_stage = 0
 		_score = 0
+		_run_counted = false
 		_show_vs())
 	box.add_child(again)
 	box.add_child(UIStyle.button(tr("ARCADE_MENU"), func() -> void: get_tree().change_scene_to_file(TITLE_SCENE), false))

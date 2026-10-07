@@ -47,6 +47,16 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
   - **Normal más fácil:** +3 ticks de reacción y −15 % de defensa sobre el perfil.
 
 - **Pedido de la persona: "que sea un vicio".** Se agregó un **Modo Arcade de prueba** (escalera de rivales con puntaje y récords) como capa sobre el combate, para la puerta del MVP. **No es la carrera**: la carrera sigue siendo la Fase 2 y va a reemplazar o convivir con este modo.
+- **Ronda 2 (revisión crítica):**
+  - los toques del jugador se guardan durante el hitstop (`PlayerInput.poll()`);
+  - el fuerte avisa con un destello (amarillo a la cabeza, violeta al cuerpo) y un soplido;
+  - aparece una marca de distancia justa bajo el rival;
+  - carteles "ATORADO" y "CON IMPULSO";
+  - la carga tiene zona muerta (`CHARGE_HOLD_TICK = 8`);
+  - la guardia solo se rompe en la zona justa del fuerte, y el fuerte llega a 100;
+  - la IA castiga la carga y el presionador carga;
+  - pausa con Esc, P, ⏸ o Atrás, y al perder el foco;
+  - en el arcade: golpe propio por rival (arranque de 20 a 24), frase, desafíos, rounds 1-1-2-2-3-3 de 45 s y botón CONTINUAR.
 - **Game feel:** se apaga con `FightSetup.game_feel = false` (todas las pruebas lo hacen, para contar ticks exactos).
 
 ## Forma de trabajo

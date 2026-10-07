@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_move")
-id = &"fuerte"
+id = &"recto_del_pibe"
 is_power_punch = true
 sweet_gap_min = 0.0
 sweet_gap_max = 75.0
@@ -13,12 +13,12 @@ at_tip_damage_mult = 0.5
 lunge = 30.0
 knockback = 45.0
 can_charge = true
-startup_ticks = 16
+startup_ticks = 20
 active_ticks = 3
 recovery_ticks = 20
-reach = 100.0
+reach = 105.0
 zone = 0
-damage = 14
+damage = 12
 hitstun_ticks = 22
 stamina_cost = 18.0
 whiff_stamina_penalty = 8.0

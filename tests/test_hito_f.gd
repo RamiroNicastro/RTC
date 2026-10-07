@@ -57,6 +57,11 @@ func new_combat(type_a: FighterSetup.ControllerType, type_b: FighterSetup.Contro
 	s.fighter_b = FighterSetup.new()
 	s.fighter_b.controller_type = type_b
 	s.fighter_b.ai_seed = seed_b
+	# Sin lectura de patrones: estas pruebas miden reflejos y pelea "en frío" (la lectura tiene su propia prueba).
+	var no_read := AIProfile.new()
+	no_read.read_skill = 0.0
+	if type_b == FighterSetup.ControllerType.AI:
+		s.fighter_b.ai_profile = no_read
 	combat.start(s)
 	return combat
 

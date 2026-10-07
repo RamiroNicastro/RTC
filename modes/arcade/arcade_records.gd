@@ -48,8 +48,10 @@ func save() -> void:
 
 
 ## Registra el final de una partida. Devuelve true si es un récord nuevo de puntaje.
-func register_run(score: int, stage_reached: int, champion: bool) -> bool:
-	runs_played += 1
+## count_run = false para actualizar récords de una partida ya contada (por ejemplo, después de "continuar").
+func register_run(score: int, stage_reached: int, champion: bool, count_run: bool = true) -> bool:
+	if count_run:
+		runs_played += 1
 	if champion:
 		championships += 1
 	best_stage = maxi(best_stage, stage_reached)

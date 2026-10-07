@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_move")
-id = &"fuerte"
+id = &"cruzado_profesor"
 is_power_punch = true
 sweet_gap_min = 0.0
 sweet_gap_max = 75.0
@@ -13,10 +13,10 @@ at_tip_damage_mult = 0.5
 lunge = 30.0
 knockback = 45.0
 can_charge = true
-startup_ticks = 16
+startup_ticks = 20
 active_ticks = 3
-recovery_ticks = 20
-reach = 100.0
+recovery_ticks = 16
+reach = 108.0
 zone = 0
 damage = 14
 hitstun_ticks = 22

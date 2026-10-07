@@ -58,6 +58,8 @@ var _dodge_in: int = -1
 var _idle_guard: bool = false
 ## Ticks que le quedan saliendo hacia atrás después de atacar ("pegar y salir").
 var _step_back_left: int = 0
+## Ticks que le quedan manteniendo el botón del fuerte (carga).
+var _charge_hold_left: int = 0
 ## Cuándo empezó (en ticks de la IA) el último golpe del rival que anotó y al que reaccionó.
 var _registered_start: int = -1
 var _reacted_start: int = -1
@@ -135,6 +137,14 @@ func get_command(me: Fighter, opponent: Fighter) -> FighterCommand:
 		intent = "cubrirse"
 		return cmd
 
+	# Sigue cargando el fuerte que decidió cargar.
+	if _charge_hold_left > 0 and me.state == Fighter.State.ATTACKING:
+		_charge_hold_left -= 1
+		cmd.power_held = true
+		intent = "cargar"
+		return cmd
+	_charge_hold_left = 0
+
 	if not can_act:
 		return cmd
 
@@ -148,9 +158,9 @@ func get_command(me: Fighter, opponent: Fighter) -> FighterCommand:
 			cmd.jab = true
 		return cmd
 
-	# Castigar al rival expuesto.
+	# Castigar al rival expuesto (también mientras carga un fuerte: está quieto y abierto).
 	var exposed: bool = (seen.state == Fighter.State.ATTACKING and seen.phase == Fighter.AttackPhase.RECOVERY) \
-			or seen.state == Fighter.State.GUARD_BROKEN or seen.state == Fighter.State.DODGING
+			or seen.state == Fighter.State.GUARD_BROKEN or seen.state == Fighter.State.DODGING or seen.charging
 	if exposed and gap <= jab_reach and _t % 3 == 0 and _rng.randf() < profile.punish_chance * 0.5:
 		intent = "castigar"
 		_attack(cmd, me, seen, gap)
@@ -218,6 +228,9 @@ func _choose_attack(cmd: FighterCommand, me: Fighter, seen: Snapshot, gap: float
 	if not low_stamina and gap <= me.setup.power_punch.reach and roll < profile.power_chance + power_bonus:
 		cmd.power = true
 		cmd.body = _rng.randf() < profile.body_chance
+		if _rng.randf() < profile.charge_chance:
+			cmd.power_held = true
+			_charge_hold_left = _rng.randi_range(15, 45)
 	elif gap <= me.setup.jab_body.reach and roll < profile.power_chance + power_bonus + profile.body_chance:
 		cmd.jab = true
 		cmd.body = true

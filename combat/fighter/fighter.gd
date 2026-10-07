@@ -75,8 +75,9 @@ const MOMENTUM_FORWARD_BONUS: float = 0.3
 const MOMENTUM_BACKWARD_PENALTY: float = 0.4
 ## El empuje se reparte en varios ticks: cada tick se aplica esta fracción de lo que falta.
 const KNOCKBACK_STEP: float = 0.3
-## Tick del arranque en el que se "congela" el golpe mientras se carga.
-const CHARGE_HOLD_TICK: int = 3
+## Tick del arranque en el que se "congela" el golpe mientras se carga. Es la "zona muerta":
+## un toque corto (en el celular dura 80–120 ms) se suelta antes de este tick y sale un fuerte normal, sin demora.
+const CHARGE_HOLD_TICK: int = 8
 ## Stamina que cuesta cada tick de carga.
 const CHARGE_STAMINA_PER_TICK: float = 0.2
 
@@ -303,7 +304,8 @@ func receive_hit(info: HitInfo) -> void:
 			else:
 				_enter_stun(State.HITSTUN, info.move.hitstun_ticks)
 		HitInfo.Result.BLOCKED:
-			_take_damage(info.damage)  # daño que pasa la guardia
+			# El daño que pasa la guardia nunca tumba: deja como mínimo 1 de salud.
+			_take_damage(mini(info.damage, maxi(0, health - 1)))
 			# Aguantar en los brazos cansa, pero NO genera fatiga: eso queda para lo que uno hace.
 			spend_stamina(info.move.block_stamina_damage, false)
 			if info.guard_broken:

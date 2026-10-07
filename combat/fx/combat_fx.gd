@@ -41,6 +41,16 @@ var _combo_owner: Fighter
 var _combo: int = 0
 var _flash_layer: CanvasLayer
 var _flash_rect: ColorRect
+## El peleador del jugador (fighter_a por convención) y su rival: para la marca de distancia justa
+## y para pintar distinto los carteles de cada uno.
+var _player: Fighter
+var _rival: Fighter
+var _time: float = 0.0
+
+
+func setup(player: Fighter, rival: Fighter) -> void:
+	_player = player
+	_rival = rival
 
 
 func _ready() -> void:
@@ -70,12 +80,21 @@ func on_hit(info: HitInfo) -> void:
 			_burst(point, -d.facing, strength, color)
 			_ring(point, 30.0 + strength * 60.0, color)
 			_track_combo(info.attacker)
+			# Los carteles del jugador en dorado/blanco; los del rival en rojo.
+			var mine: bool = info.attacker == _player
+			var big: Color = SPARK_COLOR_COUNTER if mine else Color(1.0, 0.4, 0.3)
 			if info.counter:
-				popup(tr("FX_COUNTER"), point + Vector2(0, -60), SPARK_COLOR_COUNTER, 40)
+				popup(tr("FX_COUNTER"), point + Vector2(0, -60), big, 40)
 			elif info.charge_ratio >= 0.8:
-				popup(tr("FX_CHARGED"), point + Vector2(0, -60), Color(1.0, 0.5, 0.2), 40)
+				popup(tr("FX_CHARGED"), point + Vector2(0, -60), Color(1.0, 0.5, 0.2) if mine else big, 40)
 			elif info.move.is_power_punch and info.range_mult >= 0.99 and info.momentum_mult >= 1.12:
-				popup(tr("FX_CLEAN"), point + Vector2(0, -60), Color(1, 1, 1), 34)
+				popup(tr("FX_CLEAN"), point + Vector2(0, -60), Color(1, 1, 1) if mine else big, 34)
+			elif mine:
+				# Calificaciones chicas que ENSEÑAN la capa estratégica (solo para los golpes del jugador).
+				if info.range_mult < 0.6:
+					popup(tr("FX_JAMMED"), point + Vector2(0, -50), Color(0.65, 0.65, 0.7), 22)
+				elif info.momentum_mult >= 1.15:
+					popup(tr("FX_MOMENTUM"), point + Vector2(0, -50), Color(0.95, 0.95, 1.0), 22)
 			if strength >= 0.9:
 				flash(0.18)
 		HitInfo.Result.BLOCKED:
@@ -169,6 +188,7 @@ func _ring(point: Vector2, radius: float, color: Color) -> void:
 
 
 func _process(delta: float) -> void:
+	_time += delta
 	for p in _particles:
 		p.life -= delta
 		p.pos += p.vel * delta
@@ -186,6 +206,10 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	_draw_sweet_spot_marker()
+	for f in [_player, _rival]:
+		if f != null:
+			_draw_telegraph(f)
 	for p in _particles:
 		var t: float = p.life / p.max_life
 		var c: Color = p.color
@@ -209,3 +233,50 @@ func _draw() -> void:
 		var pos := Vector2(p.pos.x - width * 0.5, p.pos.y)
 		draw_string_outline(font, pos, p.text, HORIZONTAL_ALIGNMENT_CENTER, width, size, 10, Color(0, 0, 0, c.a))
 		draw_string(font, pos, p.text, HORIZONTAL_ALIGNMENT_CENTER, width, size, c)
+
+
+## Marca en el piso, bajo los pies del rival, cuando está en la distancia justa de un golpe del jugador:
+## blanca = zona del jab, naranja = zona del fuerte. Enseña a pelear a la distancia correcta.
+func _draw_sweet_spot_marker() -> void:
+	if _player == null or _rival == null or _player.setup == null or _player.is_down() or _rival.is_down():
+		return
+	var gap: float = DistanceHitResolver.edge_gap(_player, _rival)
+	var jab: MoveData = _player.setup.jab
+	var power: MoveData = _player.setup.power_punch
+	var color := Color(0, 0, 0, 0)
+	if gap >= power.sweet_gap_min and gap <= power.sweet_gap_max:
+		color = Color(1.0, 0.6, 0.2, 0.55)
+	elif gap >= jab.sweet_gap_min and gap <= jab.sweet_gap_max:
+		color = Color(1.0, 1.0, 1.0, 0.45)
+	if color.a <= 0.0:
+		return
+	var pulse: float = 1.0 + 0.08 * sin(_time * 8.0)
+	draw_set_transform(Vector2(_rival.position.x, 2.0), 0.0, Vector2(1.0, 0.22))
+	draw_arc(Vector2.ZERO, 70.0 * pulse, 0.0, TAU, 40, color, 7.0, true)
+	draw_set_transform(Vector2.ZERO)
+
+
+## Aviso de golpe fuerte: un destello en el guante al empezar el arranque (y mientras carga).
+## Amarillo = a la cabeza, violeta = al cuerpo. Le da al que defiende tiempo de leerlo.
+func _draw_telegraph(f: Fighter) -> void:
+	if f.state != Fighter.State.ATTACKING or f.current_move == null or not f.current_move.is_power_punch:
+		return
+	if f.attack_phase != Fighter.AttackPhase.STARTUP:
+		return
+	var early: bool = f.attack_tick <= 7
+	if not early and not f.charging:
+		return
+	var h: float = f.setup.body_height
+	var body: bool = f.current_move.zone == MoveData.Zone.BODY
+	var color: Color = Color(0.8, 0.45, 1.0) if body else Color(1.0, 0.92, 0.4)
+	var center := Vector2(f.position.x - f.facing * f.half_width() * 0.2, -h * (0.62 if body else 0.86))
+	var t: float = 1.0 - float(f.attack_tick) / 8.0 if early else 0.6 + 0.4 * sin(_time * 18.0)
+	var r: float = 18.0 + 22.0 * t
+	color.a = 0.85
+	# Estrella de 4 puntas.
+	var pts := PackedVector2Array([
+		center + Vector2(0, -r), center + Vector2(r * 0.22, -r * 0.22), center + Vector2(r, 0),
+		center + Vector2(r * 0.22, r * 0.22), center + Vector2(0, r), center + Vector2(-r * 0.22, r * 0.22),
+		center + Vector2(-r, 0), center + Vector2(-r * 0.22, -r * 0.22)])
+	draw_colored_polygon(pts, color)
+	draw_circle(center, r * 0.25, Color(1, 1, 1, 0.9))

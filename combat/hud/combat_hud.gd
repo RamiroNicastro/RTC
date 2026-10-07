@@ -12,7 +12,7 @@ extends CanvasLayer
 ## En el Hito I se ancla a la safe area.
 
 const BAR_SIZE := Vector2(460.0, 26.0)
-const STAMINA_BAR_HEIGHT: float = 10.0
+const STAMINA_BAR_HEIGHT: float = 16.0
 const MARGIN := Vector2(28.0, 24.0)
 ## Velocidad (fracción de barra por segundo) con la que baja la marca del daño reciente.
 const TRAIL_SPEED: float = 0.6
@@ -196,6 +196,13 @@ func _draw_fighter_bars(pos: Vector2, f: Fighter, trail: float, mirrored: bool) 
 	_canvas.draw_rect(Rect2(st_pos, st_size), Color(0.08, 0.15, 0.08))
 	var st_color: Color = COLOR_STAMINA_TIRED if f.is_tired() else COLOR_STAMINA
 	_canvas.draw_rect(_fill_rect(st_pos, st_size, f.stamina / f.base_max_stamina, mirrored), st_color)
+	if f.is_tired() and fmod(_time, 0.6) < 0.4:
+		var tired_font: Font = UIStyle.font()
+		var tired_align := HORIZONTAL_ALIGNMENT_LEFT if mirrored else HORIZONTAL_ALIGNMENT_RIGHT
+		_canvas.draw_string_outline(tired_font, st_pos + Vector2(0, STAMINA_BAR_HEIGHT + 26.0), tr("HUD_TIRED"),
+				tired_align, st_size.x, 22, 6, Color.BLACK)
+		_canvas.draw_string(tired_font, st_pos + Vector2(0, STAMINA_BAR_HEIGHT + 26.0), tr("HUD_TIRED"),
+				tired_align, st_size.x, 22, COLOR_STAMINA_TIRED)
 	# Desde el final de la barra: primero el desgaste del cuerpo y después la fatiga.
 	var from_end: float = 0.0
 	for segment in [[f.body_drain, COLOR_BODY_DRAIN], [f.fatigue, COLOR_FATIGUE]]:

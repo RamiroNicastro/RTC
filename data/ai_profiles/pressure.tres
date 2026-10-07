@@ -13,6 +13,7 @@ retreat_chance = 0.05
 preferred_gap = 25.0
 power_chance = 0.3
 body_chance = 0.35
+charge_chance = 0.35
 step_back_after_attack = 0.0
 block_chance = 0.35
 dodge_chance = 0.06

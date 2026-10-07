@@ -98,6 +98,7 @@ func _label(parent: Control, text: String, size: int, color: Color) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.add_theme_font_override("font", UIStyle.font())
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	parent.add_child(l)
@@ -110,6 +111,7 @@ func _row(grid: GridContainer, left: String, middle: String, right: String, colo
 		l.text = text
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.custom_minimum_size.x = 170.0
-		l.add_theme_font_size_override("font_size", 16)
+		l.add_theme_font_override("font", UIStyle.font())
+		l.add_theme_font_size_override("font_size", 19)
 		l.add_theme_color_override("font_color", color if text != middle else Color(0.7, 0.7, 0.75))
 		grid.add_child(l)

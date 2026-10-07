@@ -26,6 +26,8 @@ extends Resource
 ## Al atacar: probabilidad de usar fuerte o cuerpo en vez de jab.
 @export_range(0.0, 1.0) var power_chance: float = 0.22
 @export_range(0.0, 1.0) var body_chance: float = 0.2
+## Al tirar un fuerte: probabilidad de cargarlo (es un aviso grande: invita a esquivar y contragolpear).
+@export_range(0.0, 1.0) var charge_chance: float = 0.08
 ## Después de atacar: probabilidad de salir hacia atrás ("pegar y salir").
 @export_range(0.0, 1.0) var step_back_after_attack: float = 0.0
 

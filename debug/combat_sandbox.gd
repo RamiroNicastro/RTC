@@ -22,7 +22,7 @@ extends Node
 ## En el celular no hay teclado: arriba al centro hay botones para cambiar el modo del rival,
 ## mostrar u ocultar el debug y reiniciar.
 ##   R              reiniciar la escena
-##   Esc            volver al menú
+##   Esc / P        pausa (desde la pausa: SALIR vuelve al menú)
 
 const COMBAT_SCENE: PackedScene = preload("res://combat/combat_scene.tscn")
 const AI_PROFILES: Array[AIProfile] = [
@@ -47,6 +47,7 @@ func _ready() -> void:
 	_combat = COMBAT_SCENE.instantiate()
 	add_child(_combat)
 	_combat.start(_make_default_setup())
+	_combat.quit_requested.connect(func() -> void: get_tree().change_scene_to_file("res://ui/title/title_screen.tscn"))
 
 	_debug_draw = CombatDebugDraw.new()
 	_combat.add_child(_debug_draw)
@@ -95,8 +96,7 @@ func _unhandled_input(event: InputEvent) -> void:
 						_combat.fighter_b.health = mini(_combat.fighter_b.health, 10)
 		KEY_R:
 			get_tree().reload_current_scene()
-		KEY_ESCAPE:
-			get_tree().change_scene_to_file("res://ui/title/title_screen.tscn")
+
 
 
 ## Rota el rival: los tres estilos de IA y después los modos del dummy de práctica.

@@ -219,10 +219,11 @@ func test_charged_power() -> void:
 	sa.power_next = true
 	sa.power_held = true
 	var ai_reacted_while_charging := false
-	for i in 50:
+	# La carga arranca en el tick CHARGE_HOLD_TICK (zona muerta) y dura hasta 45 ticks.
+	for i in Fighter.CHARGE_HOLD_TICK + 50:
 		step(combat)
 		# Desde que la IA "ve" la carga (su retraso + margen), no debería tener ninguna defensa pendiente.
-		if i >= ai.reaction_ticks + 8 and combat.fighter_a.charging and (ai._guard_left > 0 or ai._dodge_in >= 0):
+		if i >= Fighter.CHARGE_HOLD_TICK + ai.reaction_ticks + 8 and combat.fighter_a.charging and (ai._guard_left > 0 or ai._dodge_in >= 0):
 			ai_reacted_while_charging = true
 	var ratio: float = combat.fighter_a.charge_ratio()
 	sa.power_held = false
@@ -231,7 +232,7 @@ func test_charged_power() -> void:
 	print("Fuerte cargado: carga %d%%, resultado %s, daño %d (normal 14), empuje %.0f" % [
 		roundi(ratio * 100.0), HitInfo.Result.keys()[infos[0].result] if infos.size() > 0 else "-",
 		infos[0].damage if infos.size() > 0 else 0, infos[0].knockback if infos.size() > 0 else 0.0])
-	check(is_equal_approx(ratio, 1.0), "manteniendo K 50 ticks se carga completo")
+	check(is_equal_approx(ratio, 1.0), "manteniendo K se carga completo")
 	check(not ai_reacted_while_charging, "la IA espera a que suelte la carga para reaccionar")
 	if infos.size() > 0 and infos[0].result == HitInfo.Result.HIT:
 		check(infos[0].damage >= 21, "el fuerte cargado completo debería hacer ~22")
