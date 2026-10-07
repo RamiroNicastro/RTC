@@ -6,6 +6,13 @@
 script = ExtResource("1_move")
 id = &"fuerte_cuerpo"
 is_power_punch = true
+sweet_gap_min = 0.0
+sweet_gap_max = 65.0
+too_close_damage_mult = 1.0
+at_tip_damage_mult = 0.55
+lunge = 25.0
+knockback = 30.0
+can_charge = true
 startup_ticks = 17
 active_ticks = 3
 recovery_ticks = 21

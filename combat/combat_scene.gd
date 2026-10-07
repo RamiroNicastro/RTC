@@ -126,6 +126,8 @@ func _apply_hit(info: HitInfo) -> void:
 		# Que te esquiven cansa como pegarle al aire.
 		info.attacker.spend_stamina(info.move.whiff_stamina_penalty)
 	info.defender.receive_hit(info)
+	if info.knockback > 0.0 and info.result != HitInfo.Result.DODGED:
+		info.defender.push_back(info.knockback)
 	stats.record_hit(info, _index_of(info.attacker))
 	hit_resolved.emit(info)
 	if info.defender.state == Fighter.State.KNOCKDOWN:

@@ -67,6 +67,19 @@ const ROUND_HEAL_RATIO: float = 0.5
 const ROUND_FATIGUE_RECOVERY: float = 0.5
 const ROUND_BODY_DRAIN_RECOVERY: float = 0.5
 
+## --- Impulso, empuje y carga ---
+## Qué tan rápido el impulso sigue al movimiento (por tick). Moverse ~0,3 s hacia adelante = impulso casi completo.
+const MOMENTUM_FOLLOW: float = 0.15
+## Con impulso completo: +30 % de daño avanzando, −40 % retrocediendo.
+const MOMENTUM_FORWARD_BONUS: float = 0.3
+const MOMENTUM_BACKWARD_PENALTY: float = 0.4
+## El empuje se reparte en varios ticks: cada tick se aplica esta fracción de lo que falta.
+const KNOCKBACK_STEP: float = 0.3
+## Tick del arranque en el que se "congela" el golpe mientras se carga.
+const CHARGE_HOLD_TICK: int = 3
+## Stamina que cuesta cada tick de carga.
+const CHARGE_STAMINA_PER_TICK: float = 0.2
+
 var setup: FighterSetup
 ## +1 = mira a la derecha, -1 = mira a la izquierda.
 var facing: int = 1
@@ -107,11 +120,20 @@ var knockdowns: int = 0
 var round_knockdowns: int = 0
 ## Barra para levantarse: 0 = vacía, 1 = se puede levantar.
 var getup_progress: float = 0.0
+## Impulso: -1 (venía retrocediendo) a +1 (venía avanzando). Sigue al movimiento con suavidad.
+var momentum: float = 0.0
+## true mientras está cargando el fuerte (el rival lo ve venir).
+var charging: bool = false
+## Número de serie del golpe actual: sube con cada golpe nuevo (identifica cada golpe, aunque se cargue).
+var attack_serial: int = 0
 
 # Arranque y recuperación efectivos del golpe actual (más largos si está cansado).
 var _startup_ticks: int = 0
 var _recovery_ticks: int = 0
 var _attack_is_counter: bool = false
+var _attack_momentum: float = 0.0
+var _charge_ticks: int = 0
+var _knockback_left: float = 0.0
 var _buffered_move: MoveData
 var _buffered_dodge: bool = false
 var _buffer_left: int = 0
@@ -139,6 +161,7 @@ func configure(fighter_setup: FighterSetup, facing_dir: int) -> void:
 func tick(cmd: FighterCommand) -> void:
 	previous_x = position.x
 	_last_move_dir = 0
+	_apply_knockback()
 	_read_buffer(cmd)
 	if flash_left > 0:
 		flash_left -= 1
@@ -157,6 +180,8 @@ func tick(cmd: FighterCommand) -> void:
 			_tick_knockdown(cmd)
 		State.KO:
 			pass
+	# El impulso sigue al movimiento real de este tick (quieto o atacando, se va apagando).
+	momentum = lerpf(momentum, float(_last_move_dir), MOMENTUM_FOLLOW)
 	_regen_stamina()
 	queue_redraw()
 
@@ -204,7 +229,8 @@ func is_down() -> bool:
 ## Toques necesarios para levantarse en la caída actual.
 func getup_taps_required() -> float:
 	var battered: float = 1.0 - float(max_health) / float(base_max_health)
-	return GETUP_BASE_TAPS + GETUP_TAPS_PER_KNOCKDOWN * maxf(0.0, knockdowns - 1) 			+ GETUP_TAPS_PER_DEEP_DAMAGE * battered
+	return GETUP_BASE_TAPS + GETUP_TAPS_PER_KNOCKDOWN * maxf(0.0, knockdowns - 1) \
+			+ GETUP_TAPS_PER_DEEP_DAMAGE * battered
 
 
 ## true cuando llenó la barra para levantarse (FightManager decide cuándo se levanta).
@@ -223,6 +249,24 @@ func is_tired() -> bool:
 
 func damage_multiplier() -> float:
 	return TIRED_DAMAGE_MULT if is_tired() else 1.0
+
+
+## Impulso con el que salió el golpe actual: avanzando suma daño, retrocediendo resta.
+func momentum_damage_multiplier() -> float:
+	var m: float = _attack_momentum
+	return 1.0 + MOMENTUM_FORWARD_BONUS * m if m > 0.0 else 1.0 + MOMENTUM_BACKWARD_PENALTY * m
+
+
+## Carga del golpe actual: 0 = sin cargar, 1 = carga completa.
+func charge_ratio() -> float:
+	if current_move == null or not current_move.can_charge or current_move.max_charge_ticks <= 0:
+		return 0.0
+	return clampf(float(_charge_ticks) / current_move.max_charge_ticks, 0.0, 1.0)
+
+
+## CombatScene: empuja a este peleador hacia atrás (se reparte en varios ticks; las cuerdas lo frenan).
+func push_back(distance: float) -> void:
+	_knockback_left += distance
 
 
 func guard_damage_reduction() -> float:
@@ -276,7 +320,6 @@ func receive_hit(info: HitInfo) -> void:
 	queue_redraw()
 
 
-## causes_fatigue = false para gastos que no son esfuerzo propio (por ejemplo, golpes recibidos en la guardia).
 ## FightManager: se levanta después de llenar la barra.
 func rise() -> void:
 	var ratio: float = maxf(RISE_HEALTH_MIN_RATIO, RISE_HEALTH_RATIO - RISE_HEALTH_STEP * (knockdowns - 1))
@@ -307,6 +350,8 @@ func reset_to_neutral() -> void:
 	flash_left = 0
 	getup_progress = 0.0
 	_regen_delay_left = 0
+	_knockback_left = 0.0
+	momentum = 0.0
 	_set_state(State.IDLE)
 	queue_redraw()
 
@@ -317,6 +362,7 @@ func stay_down() -> void:
 	_set_state(State.KO)
 
 
+## causes_fatigue = false para gastos que no son esfuerzo propio (por ejemplo, golpes recibidos en la guardia).
 func spend_stamina(amount: float, causes_fatigue: bool = true) -> void:
 	if amount <= 0.0:
 		return
@@ -385,6 +431,10 @@ func _start_attack(move: MoveData) -> void:
 	_recovery_ticks = move.recovery_ticks + (TIRED_EXTRA_RECOVERY_TICKS if tired else 0)
 	spend_stamina(move.stamina_cost)
 	current_move = move
+	attack_serial += 1
+	_attack_momentum = momentum
+	_charge_ticks = 0
+	charging = false
 	_attack_is_counter = counter_ready_left > 0
 	counter_ready_left = 0
 	_clear_buffer()
@@ -396,7 +446,18 @@ func _start_attack(move: MoveData) -> void:
 
 
 func _tick_attack(cmd: FighterCommand) -> void:
+	# Fuerte cargado: mientras se mantiene el botón, el golpe queda "congelado" en el arranque.
+	charging = current_move.can_charge and attack_tick == CHARGE_HOLD_TICK and cmd.power_held \
+			and _charge_ticks < current_move.max_charge_ticks
+	if charging:
+		_charge_ticks += 1
+		spend_stamina(CHARGE_STAMINA_PER_TICK)
+		return
 	_advance_attack()
+	# Paso adelante (lunge) durante el arranque si venía avanzando.
+	if state == State.ATTACKING and attack_phase == AttackPhase.STARTUP and current_move.lunge > 0.0 \
+			and _attack_momentum > 0.0:
+		position.x += facing * current_move.lunge * _attack_momentum / float(_startup_ticks)
 	if state != State.ATTACKING:
 		# El golpe terminó en este tick: se puede actuar ya mismo (sin un tick muerto).
 		_tick_neutral(cmd)
@@ -431,6 +492,19 @@ func _interrupt_attack() -> void:
 	attack_phase = AttackPhase.NONE
 	attack_tick = 0
 	_attack_is_counter = false
+	_attack_momentum = 0.0
+	_charge_ticks = 0
+	charging = false
+
+
+func _apply_knockback() -> void:
+	if _knockback_left <= 0.5:
+		_knockback_left = 0.0
+		return
+	var step: float = maxf(1.0, _knockback_left * KNOCKBACK_STEP)
+	step = minf(step, _knockback_left)
+	position.x -= facing * step
+	_knockback_left -= step
 
 
 func _start_dodge() -> void:
@@ -619,8 +693,10 @@ func _draw_gloves(w: float, h: float, head_radius: float) -> void:
 			var gx_back: float = -w * 0.55 * facing
 			draw_rect(Rect2(Vector2(gx_back - glove.x * 0.5, -h * 0.55), glove), GLOVE_COLOR.darkened(0.3))
 		_:
-			# Dorado = tiene un counter listo.
+			# Dorado = tiene un counter listo. Mientras carga el fuerte, el guante se va poniendo amarillo.
 			var color: Color = Color(1.0, 0.8, 0.1) if counter_ready_left > 0 or _attack_is_counter else GLOVE_COLOR
+			if charge_ratio() > 0.0:
+				color = GLOVE_COLOR.lerp(Color(1.0, 0.95, 0.4), charge_ratio())
 			draw_rect(_attack_glove_rect(w, h, glove), color)
 
 
@@ -638,7 +714,7 @@ func _attack_glove_rect(w: float, h: float, glove: Vector2) -> Rect2:
 		var full_extension: float = w * 0.5 + current_move.reach - size.x * 0.5
 		match attack_phase:
 			AttackPhase.STARTUP:
-				front = rest_front - (24.0 if is_power else 8.0)  # carga hacia atrás
+				front = rest_front - (24.0 if is_power else 8.0) - 30.0 * charge_ratio()  # carga hacia atrás
 			AttackPhase.ACTIVE:
 				front = full_extension
 			AttackPhase.RECOVERY:

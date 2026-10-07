@@ -41,8 +41,10 @@ func _on_hit(info: HitInfo) -> void:
 			what = "ROMPIÓ LA GUARDIA" if info.guard_broken else "fue bloqueado"
 		HitInfo.Result.DODGED:
 			what = "fue ESQUIVADO"
-	_last_event = "tick %d: %s de %s %s (%d de daño)" % [
-		_combat.clock.tick, info.move.id, info.attacker.setup.display_name, what, info.damage]
+	_last_event = "tick %d: %s de %s %s (%d de daño · distancia %d%% · impulso %+d%% · carga %d%% · empuje %.0f)" % [
+		_combat.clock.tick, info.move.id, info.attacker.setup.display_name, what, info.damage,
+		roundi(info.range_mult * 100.0), roundi((info.momentum_mult - 1.0) * 100.0),
+		roundi(info.charge_ratio * 100.0), info.knockback]
 	if info.defender == _combat.fighter_a and info.result == HitInfo.Result.DODGED:
 		_dodges += 1
 	if info.attacker != _combat.fighter_a or info.result == HitInfo.Result.DODGED:
@@ -76,7 +78,7 @@ func _process(_delta: float) -> void:
 	var gap: float = DistanceHitResolver.edge_gap(a, b)
 	var dummy := _combat.controller_b as DummyInput
 	var lines: PackedStringArray = [
-		"J jab  K fuerte  L guardia  ESPACIO esquive  S/↓ cuerpo (mantener + golpe)",
+		"J jab  K fuerte (mantener = cargar)  L guardia  ESPACIO esquive  S/↓ cuerpo (mantener + golpe)",
 		"3 rival (estilos de IA / dummy)  8 dificultad  |  dummy: 1/2/4 jab/fuerte/cuerpo  5 se levanta  |  6 rival a 10 de vida  7 quedan 5 s",
 		"F1 límite FPS   F2 rangos   F3 botones táctiles   R reiniciar",
 		"FPS: %d (límite: %s)   tick %d   lógico %.2f s / real %.2f s" % [
@@ -108,8 +110,9 @@ func _rival_line(dummy: DummyInput) -> String:
 		return "Rival: dummy %s   se levanta: %s" % [dummy.mode_name(), "sí" if dummy.getup_enabled else "NO"]
 	var ai := _combat.controller_b as AIInput
 	if ai != null:
-		return "Rival: IA %s (%s)   pensando: %s   reacción %d ticks" % [
-			tr(ai.profile.style_name_key), AIInput.Difficulty.keys()[ai.difficulty], ai.intent, ai.reaction_ticks]
+		return "Rival: IA %s (%s)   pensando: %s   reacción %d ticks   te está leyendo: %d%%" % [
+			tr(ai.profile.style_name_key), AIInput.Difficulty.keys()[ai.difficulty], ai.intent, ai.reaction_ticks,
+			roundi(ai.last_read * 100.0)]
 	return "Rival: -"
 
 
@@ -140,6 +143,8 @@ func _fighter_line(f: Fighter) -> String:
 		text += " (barra para levantarse %d%%, %.0f toques)" % [roundi(f.getup_progress * 100.0), f.getup_taps_required()]
 	elif f.state == Fighter.State.DODGING:
 		text += " (%d/%d%s)" % [f.dodge_tick, f.dodge_total_ticks(), " INVULNERABLE" if f.is_dodging_head() else ""]
+	if f.charging:
+		text += "  CARGANDO %d%%" % roundi(f.charge_ratio() * 100.0)
 	if f.counter_ready_left > 0:
 		text += "  COUNTER LISTO"
 	return text + "   salud %d/%d (base %d)   stamina %.0f/%.0f (fatiga %.1f, cuerpo %.1f)%s" % [

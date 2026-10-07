@@ -14,6 +14,12 @@ var counter: bool = false
 var damage: int = 0
 ## true si este golpe bloqueado rompió la guardia.
 var guard_broken: bool = false
+## Empuje que recibe el defensor (unidades).
+var knockback: float = 0.0
+## Para el feedback y el debug: cuánto influyeron la distancia, el impulso y la carga.
+var range_mult: float = 1.0
+var momentum_mult: float = 1.0
+var charge_ratio: float = 0.0
 var move: MoveData
 var attacker: Fighter
 var defender: Fighter

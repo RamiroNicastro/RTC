@@ -36,6 +36,10 @@ extends Resource
 ## Cerca del rival y sin atacar: probabilidad de mantener la guardia arriba mientras mide.
 @export_range(0.0, 1.0) var guard_up_chance: float = 0.4
 
+@export_group("Lectura")
+## 0–1: qué tan bien aprende tus patrones. Si repetís un golpe, lo anticipa y se defiende mejor.
+@export_range(0.0, 1.0) var read_skill: float = 0.6
+
 @export_group("Castigo")
 ## Al ver al rival expuesto (recuperación, guardia rota, esquive fallado): probabilidad de castigar.
 @export_range(0.0, 1.0) var punish_chance: float = 0.65

@@ -77,18 +77,21 @@ func test_stats_count_real_events() -> void:
 	var r := new_combat()
 	var combat: CombatScene = r[0]
 	var sa: Scripted = r[1]
+	# Antes de cada golpe se acomoda la distancia (cada golpe empuja al rival).
 	for i in 3:
+		combat.fighter_b.position.x = combat.fighter_a.position.x + 140.0
 		sa.jab_next = true
 		step(combat, 25)
+	combat.fighter_b.position.x = combat.fighter_a.position.x + 140.0
 	sa.power_next = true
 	step(combat, 45)
-	combat.fighter_b.position.x += 400.0   # lo alejo: el próximo jab falla
+	combat.fighter_b.position.x = combat.fighter_a.position.x + 600.0   # lo alejo: el próximo jab falla
 	sa.jab_next = true
 	step(combat, 25)
 	var a: FightStats.FighterRoundStats = combat.stats.current(0)
 	print("Registro: tirados %d, conectados %d, de poder %d, daño %d" % [a.thrown, a.landed, a.landed_power, a.damage_dealt])
 	check(a.thrown == 5 and a.landed == 4 and a.landed_power == 1, "debería registrar 5 tirados, 4 conectados, 1 de poder")
-	check(a.damage_dealt == 3 * 4 + 14, "el daño registrado debería ser 26")
+	check(a.damage_dealt == 3 * 4 + 14, "el daño registrado debería ser 26 (jab a distancia 50 ≈ 4, fuerte 14)")
 	dispose(combat)
 
 

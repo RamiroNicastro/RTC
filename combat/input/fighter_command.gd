@@ -10,6 +10,8 @@ var move: int = 0
 ## Golpes: true solo en el tick en que se apretó el botón (no mientras se mantiene).
 var jab: bool = false
 var power: bool = false
+## true MIENTRAS se mantiene el botón del fuerte (para cargarlo).
+var power_held: bool = false
 ## Guardia: true MIENTRAS se mantiene apretado.
 var guard: bool = false
 ## Esquive: true solo en el tick en que se apretó.

@@ -14,6 +14,7 @@ func get_command(me: Fighter, _opponent: Fighter) -> FighterCommand:
 	cmd.move = screen_dir * me.facing
 	cmd.jab = Input.is_action_just_pressed("jab")
 	cmd.power = Input.is_action_just_pressed("power")
+	cmd.power_held = Input.is_action_pressed("power")
 	cmd.guard = Input.is_action_pressed("guard")
 	cmd.dodge = Input.is_action_just_pressed("dodge")
 	cmd.body = Input.is_action_pressed("body")

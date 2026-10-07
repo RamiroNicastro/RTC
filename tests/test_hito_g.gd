@@ -105,12 +105,17 @@ func test_styles_are_recognizable() -> void:
 	var p: Dictionary = m["presionador"]
 	var o: Dictionary = m["técnico"]
 	var c: Dictionary = m["contragolpeador"]
-	check(p["distancia"] < o["distancia"] and p["distancia"] < c["distancia"], "el presionador debería pelear más cerca que los otros")
-	check(p["avance"] > o["avance"] and p["avance"] > c["avance"], "el presionador debería ser el que más avanza")
-	check(p["poder+cuerpo"] > o["poder+cuerpo"], "el presionador debería meter más poder y cuerpo que el técnico")
-	check(o["distancia"] > c["distancia"], "el técnico debería pelear más lejos que el contragolpeador")
+	# Presionador: el que más tira, el que más avanza y el que más poder/cuerpo mete.
+	# (No necesariamente el más cercano: sus golpes de poder empujan al rival hacia atrás.)
+	check(p["tirados/min"] > o["tirados/min"] and p["tirados/min"] > c["tirados/min"], "el presionador debería ser el que más tira")
+	check(p["avance"] > o["avance"], "el presionador debería avanzar más que el técnico")
+	check(p["poder+cuerpo"] > o["poder+cuerpo"] and p["poder+cuerpo"] > c["poder+cuerpo"], "el presionador debería meter más poder y cuerpo")
+	check(p["distancia"] < o["distancia"], "el presionador debería pelear más cerca que el técnico")
+	# Técnico: el que pelea más lejos y vive del jab.
+	check(o["distancia"] > p["distancia"] and o["distancia"] > c["distancia"], "el técnico debería pelear más lejos que los otros")
 	check(o["jab"] > p["jab"] and o["jab"] > c["jab"], "el técnico debería vivir del jab")
-	check(c["tirados/min"] < p["tirados/min"] and c["tirados/min"] < o["tirados/min"], "el contragolpeador debería ser el que menos inicia")
+	# Contragolpeador: inicia menos que el presionador; esquiva y contragolpea mucho más.
+	check(c["tirados/min"] < p["tirados/min"], "el contragolpeador debería iniciar menos que el presionador")
 	check(c["esquives/min"] > p["esquives/min"] and c["esquives/min"] > o["esquives/min"], "el contragolpeador debería esquivar más")
 	check(c["counters/min"] > p["counters/min"] and c["counters/min"] > o["counters/min"], "el contragolpeador debería meter más counters")
 

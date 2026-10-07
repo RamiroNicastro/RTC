@@ -43,9 +43,19 @@ func _draw() -> void:
 					color = COLOR_RECOVERY
 			draw_rect(_range_rect(front, f.current_move.reach, f.facing, y), color)
 		else:
-			# Contornos: alcance del fuerte (amarillo) y del jab (blanco).
-			draw_rect(_range_rect(front, f.setup.power_punch.reach, f.facing, y), COLOR_POWER_IDLE, false, 2.0)
-			draw_rect(_range_rect(front, f.setup.jab.reach, f.facing, y), COLOR_IDLE, false, 2.0)
+			# Contornos: alcance del fuerte (amarillo) y del jab (blanco). Relleno = su zona de distancia justa.
+			var power: MoveData = f.setup.power_punch
+			var jab: MoveData = f.setup.jab
+			draw_rect(_range_rect(front, power.reach, f.facing, y + 9.0), COLOR_POWER_IDLE, false, 2.0)
+			draw_rect(_sweet_rect(front, power, f.facing, y + 9.0), Color(COLOR_POWER_IDLE, 0.35))
+			draw_rect(_range_rect(front, jab.reach, f.facing, y - 9.0), COLOR_IDLE, false, 2.0)
+			draw_rect(_sweet_rect(front, jab, f.facing, y - 9.0), Color(COLOR_IDLE, 0.3))
+
+
+func _sweet_rect(front: float, move: MoveData, facing: int, y: float) -> Rect2:
+	var a: float = front + facing * move.sweet_gap_min
+	var b: float = front + facing * minf(move.sweet_gap_max, move.reach)
+	return Rect2(Vector2(minf(a, b), y - BAR_HEIGHT * 0.5), Vector2(absf(b - a), BAR_HEIGHT))
 
 
 func _range_rect(front: float, reach: float, facing: int, y: float) -> Rect2:

@@ -11,9 +11,11 @@ extends FighterController
 
 enum Difficulty { EASY, NORMAL, HARD }
 
-## Ajustes de dificultad encima del perfil.
+## Ajustes de dificultad encima del perfil (Normal es un poco más accesible que el perfil "puro").
 const EASY_EXTRA_REACTION_TICKS: int = 6
 const EASY_DEFENSE_MULT: float = 0.7
+const NORMAL_EXTRA_REACTION_TICKS: int = 3
+const NORMAL_DEFENSE_MULT: float = 0.85
 const HARD_REACTION_REDUCTION_TICKS: int = 4
 const HARD_DEFENSE_MULT: float = 1.2
 const MIN_REACTION_TICKS: int = 6
@@ -22,6 +24,13 @@ const MIN_REACTION_TICKS: int = 6
 var profile: AIProfile = AIProfile.new()
 var difficulty: Difficulty = Difficulty.NORMAL
 var reaction_ticks: int = 12
+
+## Cuántos golpes del rival recuerda para leer sus patrones.
+const READ_MEMORY: int = 6
+## Con lectura completa (rival 100 % predecible y read_skill 1), reacciona estos ticks antes.
+const READ_MAX_ANTICIPATION_TICKS: int = 10
+## Con lectura completa, cuánto suma a la probabilidad de defenderse.
+const READ_MAX_DEFENSE_BONUS: float = 0.45
 
 ## Lo que se ve del rival en un tick.
 class Snapshot:
@@ -33,6 +42,11 @@ class Snapshot:
 	var reach: float
 	var zone: MoveData.Zone
 	var guarding: bool
+	var move_id: StringName
+	var charging: bool
+	var can_charge: bool
+	## Número de serie del golpe: identifica cada golpe (aunque se esté cargando).
+	var start_t: int
 
 var _rng := RandomNumberGenerator.new()
 var _history: Array[Snapshot] = []
@@ -44,8 +58,13 @@ var _dodge_in: int = -1
 var _idle_guard: bool = false
 ## Ticks que le quedan saliendo hacia atrás después de atacar ("pegar y salir").
 var _step_back_left: int = 0
-var _reacted_to_attack: bool = false
-var _last_seen_attack_tick: int = 0
+## Cuándo empezó (en ticks de la IA) el último golpe del rival que anotó y al que reaccionó.
+var _registered_start: int = -1
+var _reacted_start: int = -1
+## Últimos golpes que le vio tirar al rival (para leer patrones).
+var _opponent_moves: Array[StringName] = []
+## Para el debug: cuánto "leyó" el último golpe (0–1).
+var last_read: float = 0.0
 ## Para el debug: qué está pensando.
 var intent: String = "-"
 
@@ -61,11 +80,18 @@ func configure(base_profile: AIProfile, rng_seed: int, ai_difficulty: Difficulty
 			profile.block_chance *= EASY_DEFENSE_MULT
 			profile.dodge_chance *= EASY_DEFENSE_MULT
 			profile.punish_chance *= EASY_DEFENSE_MULT
+			profile.read_skill *= 0.5
+		Difficulty.NORMAL:
+			reaction_ticks += NORMAL_EXTRA_REACTION_TICKS
+			profile.block_chance *= NORMAL_DEFENSE_MULT
+			profile.dodge_chance *= NORMAL_DEFENSE_MULT
+			profile.punish_chance *= NORMAL_DEFENSE_MULT
 		Difficulty.HARD:
 			reaction_ticks = maxi(MIN_REACTION_TICKS, reaction_ticks - HARD_REACTION_REDUCTION_TICKS)
 			profile.block_chance = minf(1.0, profile.block_chance * HARD_DEFENSE_MULT)
 			profile.dodge_chance = minf(1.0 - profile.block_chance, profile.dodge_chance * HARD_DEFENSE_MULT)
 			profile.punish_chance = minf(1.0, profile.punish_chance * HARD_DEFENSE_MULT)
+			profile.read_skill = minf(1.0, profile.read_skill * 1.25)
 	if rng_seed == 0:
 		_rng.randomize()
 	else:
@@ -91,7 +117,7 @@ func get_command(me: Fighter, opponent: Fighter) -> FighterCommand:
 	var gap: float = absf(seen.x - me.position.x) - me.half_width() - opponent.half_width()
 	var can_act: bool = me.state in [Fighter.State.IDLE, Fighter.State.MOVING, Fighter.State.BLOCKING]
 
-	_react_to_incoming(seen, gap)
+	_react_to_incoming(me, opponent)
 
 	# Esquive programado (para que la invulnerabilidad coincida con el golpe que viene).
 	if _dodge_in >= 0:
@@ -199,27 +225,78 @@ func _choose_attack(cmd: FighterCommand, me: Fighter, seen: Snapshot, gap: float
 		cmd.jab = true
 
 
-## Mira la "foto" retrasada: si ve un golpe nuevo que la alcanza, decide UNA vez cómo defenderse.
-func _react_to_incoming(seen: Snapshot, gap: float) -> void:
-	var attacking: bool = seen.state == Fighter.State.ATTACKING and seen.phase == Fighter.AttackPhase.STARTUP
-	if not attacking:
-		_reacted_to_attack = false
-		_last_seen_attack_tick = 0
+## Decide UNA vez por golpe del rival cómo defenderse, mirando la "foto" retrasada.
+## Lectura de patrones: si el rival viene repitiendo un golpe, la IA lo está ESPERANDO y reconoce
+## ese golpe antes (percepción más rápida, proporcional a qué tan predecible es). Si el rival tira
+## otra cosa, la sorprende con su retraso normal.
+func _react_to_incoming(me: Fighter, opponent: Fighter) -> void:
+	var predicted: StringName = _predicted_move()
+	var read: float = _read_level(predicted) * profile.read_skill
+	var anticipation: int = roundi(read * READ_MAX_ANTICIPATION_TICKS)
+	var delay: int = reaction_ticks
+	var view: Snapshot = _history[0]
+	if anticipation > 0:
+		var fast: Snapshot = _history[maxi(0, _history.size() - 1 - (reaction_ticks - anticipation))]
+		if _is_winding_up(fast) and fast.move_id == predicted:
+			view = fast
+			delay = reaction_ticks - anticipation
+	if not _is_winding_up(view):
 		return
-	if seen.attack_tick < _last_seen_attack_tick:
-		_reacted_to_attack = false  # empezó otro golpe
-	_last_seen_attack_tick = seen.attack_tick
-	if _reacted_to_attack or gap > seen.reach + 15.0:
+	# Si ve que lo está CARGANDO, cancela lo que iba a hacer y vuelve a reaccionar cuando lo suelte.
+	if view.charging:
+		if view.start_t == _reacted_start:
+			_reacted_start = -1
+			_guard_left = 0
+			_dodge_in = -1
 		return
-	_reacted_to_attack = true
-	# Lo que vio pasó hace reaction_ticks: estima cuánto le falta al golpe ahora.
-	var eta: int = seen.ticks_until_active - reaction_ticks
+	if view.start_t != _registered_start:
+		_registered_start = view.start_t
+		last_read = read if view.move_id == predicted else 0.0
+		_remember(view.move_id)
+	var gap: float = absf(view.x - me.position.x) - me.half_width() - opponent.half_width()
+	if view.start_t == _reacted_start or gap > view.reach + 15.0:
+		return
+	_reacted_start = view.start_t
+	# La foto es de hace `delay` ticks: estima cuánto le falta al golpe ahora.
+	var eta: int = view.ticks_until_active - delay
+	var bonus: float = last_read * READ_MAX_DEFENSE_BONUS
 	var roll: float = _rng.randf()
-	if roll < profile.dodge_chance and seen.zone == MoveData.Zone.HEAD and eta >= 2:
+	var dodge_p: float = profile.dodge_chance * (1.0 + bonus)
+	var block_p: float = profile.block_chance + bonus
+	if roll < dodge_p and view.zone == MoveData.Zone.HEAD and eta >= 2:
 		_dodge_in = maxi(0, eta - 3)   # que la invulnerabilidad (desde el tick 3) cubra el golpe
-	elif roll < profile.dodge_chance + profile.block_chance and eta >= 0:
+	elif roll < dodge_p + block_p and eta >= 0:
 		_guard_left = eta + 12
 	# Si no le da el tiempo (eta < 0), el golpe le entra: así es un humano con reflejos normales.
+
+
+func _is_winding_up(s: Snapshot) -> bool:
+	return s.state == Fighter.State.ATTACKING and s.phase == Fighter.AttackPhase.STARTUP
+
+
+## El golpe que más viene repitiendo el rival (el que la IA "espera").
+func _predicted_move() -> StringName:
+	var best: StringName = &""
+	var best_count: int = 0
+	for id in _opponent_moves:
+		var c: int = _opponent_moves.count(id)
+		if c > best_count:
+			best = id
+			best_count = c
+	return best
+
+
+## Fracción de los últimos golpes del rival que fueron este mismo (0 = nunca, 1 = siempre lo mismo).
+func _read_level(move_id: StringName) -> float:
+	if _opponent_moves.size() < 2:
+		return 0.0
+	return float(_opponent_moves.count(move_id)) / READ_MEMORY
+
+
+func _remember(move_id: StringName) -> void:
+	_opponent_moves.push_back(move_id)
+	while _opponent_moves.size() > READ_MEMORY:
+		_opponent_moves.pop_front()
 
 
 func _observe(f: Fighter) -> Snapshot:
@@ -232,4 +309,8 @@ func _observe(f: Fighter) -> Snapshot:
 	s.reach = f.current_move.reach if f.current_move != null else 0.0
 	s.zone = f.current_move.zone if f.current_move != null else MoveData.Zone.HEAD
 	s.guarding = f.is_guarding()
+	s.move_id = f.current_move.id if f.current_move != null else &""
+	s.charging = f.charging
+	s.can_charge = f.current_move.can_charge if f.current_move != null else false
+	s.start_t = f.attack_serial
 	return s

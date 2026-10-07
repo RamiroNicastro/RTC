@@ -5,6 +5,13 @@
 [resource]
 script = ExtResource("1_move")
 id = &"jab_cuerpo"
+sweet_gap_min = 20.0
+sweet_gap_max = 95.0
+too_close_damage_mult = 0.6
+at_tip_damage_mult = 0.85
+lunge = 0.0
+knockback = 12.0
+can_charge = false
 startup_ticks = 7
 active_ticks = 2
 recovery_ticks = 11

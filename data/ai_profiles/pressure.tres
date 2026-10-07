@@ -17,6 +17,7 @@ step_back_after_attack = 0.0
 block_chance = 0.35
 dodge_chance = 0.06
 guard_up_chance = 0.55
+read_skill = 0.4
 punish_chance = 0.6
 counter_with_power_chance = 0.3
 tired_caution = 0.35

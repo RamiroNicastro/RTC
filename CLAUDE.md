@@ -38,6 +38,14 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
 
   Se mide con `godot --headless --path . -s res://tests/balance_report.gd` (20 peleas IA contra IA).
 
+- **Ampliación estratégica** (pedido de la persona: "que no sea solo spamear", al estilo de Gladihoppers):
+  - **Distancia justa:** cada `MoveData` tiene su zona ideal (`sweet_gap_min/max`). El jab rinde en la punta y el fuerte de cerca.
+  - **Impulso:** pegar avanzando da hasta +30 % y retrocediendo hasta −40 %. El fuerte avanzando además adelanta un paso (`lunge`).
+  - **Empuje:** el golpe que entra empuja al rival (`knockback`); bloqueado, la mitad. Las cuerdas lo frenan.
+  - **Fuerte cargado:** mantener el botón congela el arranque hasta 45 ticks: +60 % de daño y el doble de empuje. Cargar cerca del rival es arriesgado, porque te pueden cortar.
+  - **La IA lee patrones:** recuerda los últimos 6 golpes del rival. Al golpe que más se repite lo reconoce antes (percepción más rápida según `read_skill`) y se defiende mejor. Contra el spam de jab llega a defender más del 90 %.
+  - **Normal más fácil:** +3 ticks de reacción y −15 % de defensa sobre el perfil.
+
 ## Forma de trabajo
 
 - **Un hito por sesión.** Un hito se commitea solo después de que la persona lo probó en Godot y cumple el criterio de la sección 16 del plan.
@@ -68,5 +76,5 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [x] Hito E3: FightStats (solo eventos reales), 3 jueces con pesos distintos, decisiones, FightResult (solo datos), pantalla final
 - [x] Hito F: IA que ve con 0,2 s de retraso, mide distancia, ataca, castiga, se cubre o esquiva, cuida la stamina; primer ajuste de balance
 - [x] Hito G: AIProfile con 3 estilos (presionador, técnico, contragolpeador) y dificultad fácil/normal/difícil
-- [ ] **Ampliación estratégica (pedido de la persona): distancia justa, impulso, empuje, la IA lee patrones, fuerte cargado, Normal más fácil** ← en curso
+- [~] Ampliación estratégica: distancia justa, impulso, empuje, la IA lee patrones, fuerte cargado, Normal más fácil (hecha; falta que la persona la pruebe)
 - [ ] Hitos H, I
