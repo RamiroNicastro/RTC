@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://combat/combat_scene.gd" id="1_scene"]
+[ext_resource type="Script" path="res://combat/ring.gd" id="2_ring"]
+[ext_resource type="PackedScene" path="res://combat/fighter/fighter.tscn" id="3_fighter"]
+[ext_resource type="Script" path="res://combat/camera/combat_camera.gd" id="4_camera"]
+
+[node name="CombatScene" type="Node2D"]
+script = ExtResource("1_scene")
+
+[node name="Ring" type="Node2D" parent="."]
+script = ExtResource("2_ring")
+
+[node name="FighterA" parent="." instance=ExtResource("3_fighter")]
+
+[node name="FighterB" parent="." instance=ExtResource("3_fighter")]
+
+[node name="CombatCamera" type="Camera2D" parent="."]
+process_callback = 0
+script = ExtResource("4_camera")

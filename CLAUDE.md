@@ -37,5 +37,6 @@ GODOT="$HOME/Downloads/Godot_v4.7.2-stable_win64.exe/Godot_v4.7.2-stable_win64_c
 
 - [x] Fase 0: proyecto configurado (1280×720, canvas_items + expand, sensor_landscape, 60 Hz, interpolación de física), git, docs.
 - [ ] Fase 0: exportación a Android (la configura la persona; los pasos están en docs/ANDROID.md).
-- [ ] **Hito A: movimiento, Fighter y rival quieto** ← en curso
-- [ ] Hitos B, C, T, D, E1, E2, E3, F, G, H, I
+- [x] Hito A: movimiento, Fighter, rival quieto y cámara con zoom suave
+- [ ] **Hito B: jab, timing, impacto y daño** ← siguiente
+- [ ] Hitos C, T, D, E1, E2, E3, F, G, H, I
