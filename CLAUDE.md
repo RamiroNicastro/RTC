@@ -20,6 +20,11 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
 - **Textos visibles** con `tr("CLAVE")`. Se exceptúan el overlay de debug y la sandbox.
 - **Placeholders** solamente: no se hace arte final antes de pasar la puerta del MVP.
 
+## Decisiones tomadas durante el desarrollo (amplían el plan)
+
+- **Hito C, tono:** el combate es realista pero **arcade**. El spam se castiga claramente, y frenar recupera rápido.
+- **Hito C, fatiga ligera:** el 15 % de la stamina gastada se vuelve fatiga y baja el máximo (con tope del 25 %). Se ve como un tramo gris en la barra. En el Hito E2, el descanso entre rounds recupera una parte con `recover_fatigue()`. Se suma a la reducción del máximo por golpes al cuerpo (Hito D).
+
 ## Forma de trabajo
 
 - **Un hito por sesión.** Un hito se commitea solo después de que la persona lo probó en Godot y cumple el criterio de la sección 16 del plan.
@@ -42,5 +47,6 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [ ] Fase 0: exportación a Android (la configura la persona; los pasos están en docs/ANDROID.md).
 - [x] Hito A: movimiento, Fighter, rival quieto y cámara con zoom suave
 - [x] Hito B: jab (MoveData en ticks), HitResolver por distancia, salud, hitstun, HUD, rangos en debug
-- [ ] **Hito C: stamina, golpe fuerte y guardia** ← siguiente
-- [ ] Hitos T, D, E1, E2, E3, F, G, H, I
+- [x] Hito C: stamina arcade + fatiga ligera, golpe fuerte, guardia y ruptura de guardia, modos del dummy
+- [ ] **Hito T: prueba táctil temprana** ← siguiente
+- [ ] Hitos D, E1, E2, E3, F, G, H, I

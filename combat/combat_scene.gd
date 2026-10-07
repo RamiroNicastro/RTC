@@ -12,7 +12,7 @@ extends Node2D
 ##   4. resolver los golpes de AMBOS y recién después aplicarlos (si conectan en el mismo tick, es un intercambio);
 ##   5. mover la cámara.
 
-## Se emite por cada golpe que conectó (HIT; desde el Hito C también BLOCKED).
+## Se emite por cada golpe que llegó al rival (HIT o BLOCKED).
 signal hit_resolved(info: HitInfo)
 
 @onready var ring: Ring = $Ring

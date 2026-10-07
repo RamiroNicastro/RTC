@@ -4,7 +4,10 @@ extends Node
 ## Controles:
 ##   ← / → o A / D  moverse
 ##   J              jab
-##   L              el rival tira un jab (para probar castigar su recuperación)
+##   K              golpe fuerte
+##   L (mantener)   guardia
+##   1 / 2          el rival tira un jab / un fuerte (para probar castigos y guardia)
+##   3              cambiar el modo del rival (quieto, siempre bloquea, jab cada X, fuerte cada X, bloquea y jab)
 ##   F1             cambiar el límite de FPS (sin límite → 30 → 144) para probar que la lógica no depende de los FPS
 ##   F2             mostrar u ocultar los rangos de golpe
 ##   R              reiniciar la escena
@@ -40,10 +43,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			_cycle_fps_cap()
 		KEY_F2:
 			_debug_draw.visible = not _debug_draw.visible
-		KEY_L:
+		KEY_1, KEY_2, KEY_3:
 			var dummy := _combat.controller_b as DummyInput
-			if dummy != null:
-				dummy.queue_jab()
+			if dummy == null:
+				return
+			match key.physical_keycode:
+				KEY_1:
+					dummy.queue_jab()
+				KEY_2:
+					dummy.queue_power()
+				KEY_3:
+					dummy.cycle_mode()
 		KEY_R:
 			get_tree().reload_current_scene()
 

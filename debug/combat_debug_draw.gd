@@ -2,12 +2,13 @@ class_name CombatDebugDraw
 extends Node2D
 ## Dibuja en el MUNDO el alcance de los golpes (solo debug; el combate no lo conoce).
 ##
-## - En reposo: contorno tenue del alcance del jab desde el borde delantero del cuerpo.
+## - En reposo: contornos tenues del alcance del jab (blanco) y del fuerte (amarillo).
 ## - Atacando: barra del alcance coloreada según la fase:
 ##     gris = arranque (no pega), rojo = activo (puede conectar), azul = recuperación (expuesto).
 ## Se activa o desactiva con F2.
 
 const COLOR_IDLE := Color(1, 1, 1, 0.25)
+const COLOR_POWER_IDLE := Color(1, 0.85, 0.2, 0.25)
 const COLOR_STARTUP := Color(0.7, 0.7, 0.7, 0.6)
 const COLOR_ACTIVE := Color(1.0, 0.15, 0.15, 0.75)
 const COLOR_RECOVERY := Color(0.3, 0.5, 1.0, 0.6)
@@ -40,6 +41,8 @@ func _draw() -> void:
 					color = COLOR_RECOVERY
 			draw_rect(_range_rect(front, f.current_move.reach, f.facing, y), color)
 		else:
+			# Contornos: alcance del fuerte (amarillo) y del jab (blanco).
+			draw_rect(_range_rect(front, f.setup.power_punch.reach, f.facing, y), COLOR_POWER_IDLE, false, 2.0)
 			draw_rect(_range_rect(front, f.setup.jab.reach, f.facing, y), COLOR_IDLE, false, 2.0)
 
 

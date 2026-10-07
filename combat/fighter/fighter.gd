@@ -12,14 +12,33 @@ signal attack_started(move: MoveData)
 ## El golpe terminó su fase ACTIVE sin conectar.
 signal attack_whiffed(move: MoveData)
 signal hit_received(info: HitInfo)
+signal guard_broken()
 
-enum State { IDLE, MOVING, ATTACKING, HITSTUN }
+enum State { IDLE, MOVING, ATTACKING, HITSTUN, BLOCKING, BLOCKSTUN, GUARD_BROKEN }
 enum AttackPhase { NONE, STARTUP, ACTIVE, RECOVERY }
 
 ## Si se aprieta un golpe hasta estos ticks antes de poder actuar, igual sale (se siente más responsivo).
 const INPUT_BUFFER_TICKS: int = 6
-## Ticks del destello blanco al recibir un golpe (placeholder de feedback).
+## Ticks del destello al recibir un golpe (placeholder de feedback).
 const FLASH_TICKS: int = 5
+
+## --- Stamina (valores iniciales; se balancean en el Hito H) ---
+## Ticks sin regenerar después de gastar stamina.
+const REGEN_DELAY_TICKS: int = 40
+## Multiplicadores de regeneración según lo que esté haciendo.
+const REGEN_MULT_RETREAT: float = 1.0
+const REGEN_MULT_ADVANCE: float = 0.4
+const REGEN_MULT_GUARD: float = 0.3
+## Debajo de este porcentaje de stamina, el peleador está CANSADO.
+const TIRED_RATIO: float = 0.3
+const TIRED_DAMAGE_MULT: float = 0.6
+const TIRED_EXTRA_STARTUP_TICKS: int = 4
+const TIRED_EXTRA_RECOVERY_TICKS: int = 4
+const TIRED_MOVE_SPEED_MULT: float = 0.8
+## Si la guardia se rompe por quedarse sin stamina (no por un golpe fuerte).
+const EXHAUSTED_GUARD_BREAK_TICKS: int = 30
+
+const GUARD_MOVE_SPEED_MULT: float = 0.5
 
 var setup: FighterSetup
 ## +1 = mira a la derecha, -1 = mira a la izquierda.
@@ -30,19 +49,31 @@ var previous_x: float = 0.0
 
 var health: int = 100
 var max_health: int = 100
+var stamina: float = 100.0
+## Máximo actual = máximo base - fatiga (en el Hito D también restan los golpes al cuerpo).
+var max_stamina: float = 100.0
+var base_max_stamina: float = 100.0
+## Cansancio acumulado durante la pelea. Baja el máximo; entre rounds se recupera una parte.
+var fatigue: float = 0.0
 
 ## Golpe en curso (null si no está atacando).
 var current_move: MoveData
 var attack_phase: AttackPhase = AttackPhase.NONE
 ## Ticks transcurridos desde que empezó el golpe actual (1 = primer tick de arranque).
 var attack_tick: int = 0
-## Un golpe aplica daño UNA sola vez, aunque tenga varios ticks activos.
+## Un golpe aplica su efecto UNA sola vez, aunque tenga varios ticks activos.
 var move_has_connected: bool = false
-var hitstun_left: int = 0
+## Ticks que quedan de HITSTUN, BLOCKSTUN o GUARD_BROKEN.
+var stun_left: int = 0
 var flash_left: int = 0
 
+# Arranque y recuperación efectivos del golpe actual (más largos si está cansado).
+var _startup_ticks: int = 0
+var _recovery_ticks: int = 0
 var _buffered_move: MoveData
 var _buffer_left: int = 0
+var _regen_delay_left: int = 0
+var _last_move_dir: int = 0
 
 
 func configure(fighter_setup: FighterSetup, facing_dir: int) -> void:
@@ -50,24 +81,32 @@ func configure(fighter_setup: FighterSetup, facing_dir: int) -> void:
 	facing = facing_dir
 	max_health = setup.max_health
 	health = max_health
+	base_max_stamina = setup.max_stamina
+	fatigue = 0.0
+	max_stamina = base_max_stamina
+	stamina = max_stamina
 	queue_redraw()
 
 
 ## Avanza un tick de lógica.
 func tick(cmd: FighterCommand) -> void:
 	previous_x = position.x
+	_last_move_dir = 0
 	_read_buffer(cmd)
 	if flash_left > 0:
 		flash_left -= 1
 	match state:
-		State.IDLE, State.MOVING:
+		State.IDLE, State.MOVING, State.BLOCKING:
 			_tick_neutral(cmd)
 		State.ATTACKING:
 			_tick_attack(cmd)
-		State.HITSTUN:
-			_tick_hitstun(cmd)
+		State.HITSTUN, State.BLOCKSTUN, State.GUARD_BROKEN:
+			_tick_stun(cmd)
+	_regen_stamina()
 	queue_redraw()
 
+
+# --- Consultas (las usan HitResolver, HUD y debug) ---
 
 func half_width() -> float:
 	return setup.body_width * 0.5
@@ -78,22 +117,81 @@ func is_hit_active() -> bool:
 	return state == State.ATTACKING and attack_phase == AttackPhase.ACTIVE and not move_has_connected
 
 
-## Lo llama CombatScene cuando el HitResolver confirma que el golpe de ESTE peleador conectó.
+func is_guarding() -> bool:
+	return state == State.BLOCKING or state == State.BLOCKSTUN
+
+
+func is_tired() -> bool:
+	# Se mide contra el máximo BASE: la fatiga no hace que "cansado" se active más tarde.
+	return stamina < base_max_stamina * TIRED_RATIO
+
+
+func damage_multiplier() -> float:
+	return TIRED_DAMAGE_MULT if is_tired() else 1.0
+
+
+func guard_damage_reduction() -> float:
+	return setup.tired_guard_damage_reduction if is_tired() else setup.guard_damage_reduction
+
+
+## Total de ticks del golpe actual, con el arranque efectivo.
+func current_move_total_ticks() -> int:
+	if current_move == null:
+		return 0
+	return _startup_ticks + current_move.active_ticks + _recovery_ticks
+
+
+# --- Llamadas desde CombatScene ---
+
+## El HitResolver confirmó que el golpe de ESTE peleador conectó (o fue bloqueado).
 func mark_move_connected() -> void:
 	move_has_connected = true
 
 
-## Lo llama CombatScene cuando ESTE peleador recibe un golpe.
+## ESTE peleador recibe un golpe (conectado o bloqueado).
 func receive_hit(info: HitInfo) -> void:
-	health = maxi(0, health - info.damage)  # Llegar a 0 todavía no hace nada: knockdown en el Hito E1.
 	flash_left = FLASH_TICKS
-	# Recibir un golpe interrumpe cualquier ataque propio.
-	current_move = null
-	attack_phase = AttackPhase.NONE
-	hitstun_left = info.move.hitstun_ticks
-	_set_state(State.HITSTUN)
+	match info.result:
+		HitInfo.Result.HIT:
+			_take_damage(info.damage)
+			_interrupt_attack()
+			_enter_stun(State.HITSTUN, info.move.hitstun_ticks)
+		HitInfo.Result.BLOCKED:
+			_take_damage(info.damage)  # daño que pasa la guardia
+			spend_stamina(info.move.block_stamina_damage)
+			if info.guard_broken:
+				_enter_stun(State.GUARD_BROKEN, info.move.guard_break_ticks)
+				guard_broken.emit()
+			elif stamina <= 0.0:
+				_enter_stun(State.GUARD_BROKEN, EXHAUSTED_GUARD_BREAK_TICKS)
+				guard_broken.emit()
+			else:
+				_enter_stun(State.BLOCKSTUN, info.move.blockstun_ticks)
 	hit_received.emit(info)
 	queue_redraw()
+
+
+func spend_stamina(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	stamina = maxf(0.0, stamina - amount)
+	_regen_delay_left = REGEN_DELAY_TICKS
+	_add_fatigue(amount * setup.fatigue_ratio)
+
+
+## Recupera una fracción de la fatiga (0.5 = la mitad). Lo va a usar el descanso entre rounds (Hito E2).
+func recover_fatigue(fraction: float) -> void:
+	_set_fatigue(fatigue * (1.0 - clampf(fraction, 0.0, 1.0)))
+
+
+func _add_fatigue(amount: float) -> void:
+	_set_fatigue(minf(fatigue + amount, base_max_stamina * setup.max_fatigue_ratio))
+
+
+func _set_fatigue(value: float) -> void:
+	fatigue = value
+	max_stamina = base_max_stamina - fatigue
+	stamina = minf(stamina, max_stamina)
 
 
 # --- Estados ---
@@ -102,15 +200,28 @@ func _tick_neutral(cmd: FighterCommand) -> void:
 	if _buffered_move != null:
 		_start_attack(_buffered_move)
 		return
-	if cmd.move == 0:
-		_set_state(State.IDLE)
-		return
 	var speed: float = setup.forward_speed if cmd.move > 0 else setup.backward_speed
-	position.x += cmd.move * facing * speed * CombatTime.SECONDS_PER_TICK
-	_set_state(State.MOVING)
+	if cmd.guard:
+		speed *= GUARD_MOVE_SPEED_MULT
+	if is_tired():
+		speed *= TIRED_MOVE_SPEED_MULT
+	if cmd.move != 0:
+		position.x += cmd.move * facing * speed * CombatTime.SECONDS_PER_TICK
+		_last_move_dir = cmd.move
+	if cmd.guard:
+		_set_state(State.BLOCKING)
+	elif cmd.move != 0:
+		_set_state(State.MOVING)
+	else:
+		_set_state(State.IDLE)
 
 
 func _start_attack(move: MoveData) -> void:
+	# El cansancio se evalúa ANTES de pagar el golpe.
+	var tired: bool = is_tired()
+	_startup_ticks = move.startup_ticks + (TIRED_EXTRA_STARTUP_TICKS if tired else 0)
+	_recovery_ticks = move.recovery_ticks + (TIRED_EXTRA_RECOVERY_TICKS if tired else 0)
+	spend_stamina(move.stamina_cost)
 	current_move = move
 	_buffered_move = null
 	_buffer_left = 0
@@ -133,16 +244,17 @@ func _advance_attack() -> void:
 	attack_tick += 1
 	var m: MoveData = current_move
 	var previous_phase: AttackPhase = attack_phase
-	if attack_tick <= m.startup_ticks:
+	if attack_tick <= _startup_ticks:
 		attack_phase = AttackPhase.STARTUP
-	elif attack_tick <= m.startup_ticks + m.active_ticks:
+	elif attack_tick <= _startup_ticks + m.active_ticks:
 		attack_phase = AttackPhase.ACTIVE
-	elif attack_tick <= m.total_ticks():
+	elif attack_tick <= current_move_total_ticks():
 		attack_phase = AttackPhase.RECOVERY
 	else:
 		_end_attack()
 		return
 	if previous_phase == AttackPhase.ACTIVE and attack_phase == AttackPhase.RECOVERY and not move_has_connected:
+		spend_stamina(m.whiff_stamina_penalty)
 		attack_whiffed.emit(m)
 
 
@@ -153,15 +265,48 @@ func _end_attack() -> void:
 	_set_state(State.IDLE)
 
 
-func _tick_hitstun(cmd: FighterCommand) -> void:
-	hitstun_left -= 1
-	if hitstun_left <= 0:
+func _interrupt_attack() -> void:
+	current_move = null
+	attack_phase = AttackPhase.NONE
+	attack_tick = 0
+
+
+func _enter_stun(stun_state: State, ticks: int) -> void:
+	stun_left = ticks
+	_set_state(stun_state)
+
+
+func _tick_stun(cmd: FighterCommand) -> void:
+	stun_left -= 1
+	if stun_left <= 0:
 		_set_state(State.IDLE)
 		_tick_neutral(cmd)
 
 
+func _take_damage(amount: int) -> void:
+	health = maxi(0, health - amount)  # Llegar a 0 todavía no hace nada: knockdown en el Hito E1.
+
+
+func _regen_stamina() -> void:
+	if _regen_delay_left > 0:
+		_regen_delay_left -= 1
+		return
+	var mult: float = 0.0
+	match state:
+		State.IDLE:
+			mult = 1.0
+		State.MOVING:
+			mult = REGEN_MULT_RETREAT if _last_move_dir < 0 else REGEN_MULT_ADVANCE
+		State.BLOCKING:
+			mult = REGEN_MULT_GUARD
+	stamina = minf(max_stamina, stamina + setup.stamina_regen * mult * CombatTime.SECONDS_PER_TICK)
+
+
 func _read_buffer(cmd: FighterCommand) -> void:
-	if cmd.jab:
+	if cmd.power:
+		_buffered_move = setup.power_punch
+		_buffer_left = INPUT_BUFFER_TICKS
+	elif cmd.jab:
 		_buffered_move = setup.jab
 		_buffer_left = INPUT_BUFFER_TICKS
 	elif _buffer_left > 0:
@@ -179,6 +324,8 @@ func _set_state(new_state: State) -> void:
 
 # --- Placeholder visual (rectángulos). La lógica no depende de nada de esto. ---
 
+const GLOVE_COLOR := Color(0.85, 0.1, 0.1)
+
 func _draw() -> void:
 	if setup == null:
 		return
@@ -192,32 +339,57 @@ func _draw() -> void:
 		State.HITSTUN:
 			body_color = setup.color.darkened(0.3)
 			lean = -8.0 * facing  # se echa hacia atrás
+		State.BLOCKSTUN:
+			lean = -4.0 * facing
+		State.GUARD_BROKEN:
+			body_color = setup.color.lerp(Color(0.6, 0.2, 0.8), 0.45)
+			lean = -10.0 * facing
 	if flash_left > 0:
-		body_color = Color.WHITE
+		body_color = Color(0.7, 0.85, 1.0) if state == State.BLOCKSTUN else Color.WHITE
+	if is_tired():
+		body_color = body_color.darkened(0.15)
 
 	# Torso y piernas.
 	draw_rect(Rect2(-w * 0.5 + lean, -h * 0.82, w, h * 0.82), body_color)
 	# Cabeza (su borde superior coincide con body_height, que usa la cámara para encuadrar).
 	var head_radius: float = w * 0.32
 	draw_circle(Vector2(lean * 1.5, -h + head_radius), head_radius, body_color.lightened(0.25))
-	# Guante: en reposo, adelante del pecho; al pegar se estira hasta el alcance del golpe.
-	draw_rect(_glove_rect(w, h), Color(0.85, 0.1, 0.1))
+	_draw_gloves(w, h, head_radius)
 
 
-func _glove_rect(w: float, h: float) -> Rect2:
-	var glove_size := Vector2(36.0, 30.0)
+func _draw_gloves(w: float, h: float, head_radius: float) -> void:
+	var glove := Vector2(36.0, 30.0)
+	match state:
+		State.BLOCKING, State.BLOCKSTUN:
+			# Guantes arriba, delante de la cara.
+			var gx: float = w * 0.42 * facing
+			draw_rect(Rect2(Vector2(gx - glove.x * 0.5, -h + head_radius * 0.4), glove), GLOVE_COLOR)
+			draw_rect(Rect2(Vector2(gx - glove.x * 0.5, -h + head_radius * 0.4 + glove.y + 2.0), glove), GLOVE_COLOR)
+		State.GUARD_BROKEN:
+			# Brazos abiertos: guantes hacia atrás y abajo.
+			var gx_back: float = -w * 0.55 * facing
+			draw_rect(Rect2(Vector2(gx_back - glove.x * 0.5, -h * 0.55), glove), GLOVE_COLOR.darkened(0.3))
+		_:
+			draw_rect(_attack_glove_rect(w, h, glove), GLOVE_COLOR)
+
+
+func _attack_glove_rect(w: float, h: float, glove: Vector2) -> Rect2:
 	var rest_front: float = w * 0.35
 	var front: float = rest_front
+	var size: Vector2 = glove
 	if state == State.ATTACKING and current_move != null:
-		var full_extension: float = w * 0.5 + current_move.reach - glove_size.x * 0.5
+		var is_power: bool = current_move == setup.power_punch
+		if is_power:
+			size = glove * 1.25
+		var full_extension: float = w * 0.5 + current_move.reach - size.x * 0.5
 		match attack_phase:
 			AttackPhase.STARTUP:
-				front = rest_front - 8.0  # pequeña carga hacia atrás
+				front = rest_front - (24.0 if is_power else 8.0)  # carga hacia atrás
 			AttackPhase.ACTIVE:
 				front = full_extension
 			AttackPhase.RECOVERY:
-				var t: float = float(attack_tick - current_move.startup_ticks - current_move.active_ticks) \
-						/ float(current_move.recovery_ticks)
+				var t: float = float(attack_tick - _startup_ticks - current_move.active_ticks) \
+						/ float(_recovery_ticks)
 				front = lerpf(full_extension, rest_front, t)
 	var center_x: float = front * facing
-	return Rect2(Vector2(center_x - glove_size.x * 0.5, -h * 0.75), glove_size)
+	return Rect2(Vector2(center_x - size.x * 0.5, -h * 0.75), size)

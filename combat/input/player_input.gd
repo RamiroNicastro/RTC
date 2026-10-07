@@ -2,8 +2,8 @@ class_name PlayerInput
 extends FighterController
 ## Convierte el input del jugador en un FighterCommand.
 ##
-## Lee acciones del Input Map ("move_left", "move_right", "jab"). En el Hito T, los botones táctiles
-## disparan esas mismas acciones, así que este archivo no cambia.
+## Lee acciones del Input Map ("move_left", "move_right", "jab", "power", "guard").
+## En el Hito T, los botones táctiles disparan esas mismas acciones, así que este archivo no cambia.
 
 
 func get_command(me: Fighter, _opponent: Fighter) -> FighterCommand:
@@ -13,4 +13,6 @@ func get_command(me: Fighter, _opponent: Fighter) -> FighterCommand:
 	# Pasar a dirección relativa: si miro a la izquierda, ir a la izquierda es avanzar.
 	cmd.move = screen_dir * me.facing
 	cmd.jab = Input.is_action_just_pressed("jab")
+	cmd.power = Input.is_action_just_pressed("power")
+	cmd.guard = Input.is_action_pressed("guard")
 	return cmd

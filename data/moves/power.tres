@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://combat/moves/move_data.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+id = &"fuerte"
+startup_ticks = 16
+active_ticks = 3
+recovery_ticks = 20
+reach = 125.0
+zone = 0
+damage = 16
+hitstun_ticks = 22
+stamina_cost = 18.0
+whiff_stamina_penalty = 8.0
+block_stamina_damage = 15.0
+blockstun_ticks = 14
+breaks_guard = true
+guard_break_ticks = 34

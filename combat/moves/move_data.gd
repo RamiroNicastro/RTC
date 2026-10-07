@@ -21,10 +21,26 @@ enum Zone { HEAD, BODY }
 @export var reach: float = 110.0
 @export var zone: Zone = Zone.HEAD
 
-@export_group("Efecto")
+@export_group("Si conecta")
 @export var damage: int = 6
 ## Ticks que el rival queda aturdido si el golpe conecta.
 @export var hitstun_ticks: int = 14
+
+@export_group("Stamina")
+## Lo que cuesta tirarlo.
+@export var stamina_cost: float = 5.0
+## Costo extra si falla (pegarle al aire cansa más).
+@export var whiff_stamina_penalty: float = 2.0
+
+@export_group("Si lo bloquean")
+## Stamina que pierde el defensor al bloquearlo.
+@export var block_stamina_damage: float = 4.0
+## Ticks que el defensor queda trabado en la guardia.
+@export var blockstun_ticks: int = 8
+## Si es true, al ser bloqueado ROMPE la guardia del defensor.
+@export var breaks_guard: bool = false
+## Ticks que el defensor queda con la guardia rota y expuesto.
+@export var guard_break_ticks: int = 0
 
 
 func total_ticks() -> int:
