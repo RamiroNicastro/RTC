@@ -154,7 +154,6 @@ func configure(fighter_setup: FighterSetup, facing_dir: int) -> void:
 	body_drain = 0.0
 	max_stamina = base_max_stamina
 	stamina = max_stamina
-	queue_redraw()
 
 
 ## Avanza un tick de lógica.
@@ -183,7 +182,6 @@ func tick(cmd: FighterCommand) -> void:
 	# El impulso sigue al movimiento real de este tick (quieto o atacando, se va apagando).
 	momentum = lerpf(momentum, float(_last_move_dir), MOMENTUM_FOLLOW)
 	_regen_stamina()
-	queue_redraw()
 
 
 # --- Consultas (las usan HitResolver, HUD y debug) ---
@@ -317,7 +315,6 @@ func receive_hit(info: HitInfo) -> void:
 			else:
 				_enter_stun(State.BLOCKSTUN, info.move.blockstun_ticks)
 	hit_received.emit(info)
-	queue_redraw()
 
 
 ## FightManager: se levanta después de llenar la barra.
@@ -353,7 +350,6 @@ func reset_to_neutral() -> void:
 	_knockback_left = 0.0
 	momentum = 0.0
 	_set_state(State.IDLE)
-	queue_redraw()
 
 
 ## FightManager: no se levanta más (KO o TKO).
@@ -623,103 +619,13 @@ func _set_state(new_state: State) -> void:
 	state_changed.emit(state)
 
 
-# --- Placeholder visual (rectángulos). La lógica no depende de nada de esto. ---
+# --- Datos de solo lectura para el placeholder visual (FighterVisual). La lógica no depende de esto. ---
 
-const GLOVE_COLOR := Color(0.85, 0.1, 0.1)
-
-func _draw() -> void:
-	if setup == null:
-		return
-	var w: float = setup.body_width
-	var h: float = setup.body_height
-	if is_down():
-		_draw_down(w, h)
-		return
-	var body_color: Color = setup.color
-	var lean: float = 0.0
-	match state:
-		State.MOVING:
-			body_color = setup.color.lightened(0.15)
-		State.HITSTUN:
-			body_color = setup.color.darkened(0.3)
-			lean = -8.0 * facing  # se echa hacia atrás
-		State.BLOCKSTUN:
-			lean = -4.0 * facing
-		State.GUARD_BROKEN:
-			body_color = setup.color.lerp(Color(0.6, 0.2, 0.8), 0.45)
-			lean = -10.0 * facing
-		State.DODGING:
-			lean = -26.0 * facing  # se tira hacia atrás
-	if flash_left > 0:
-		body_color = Color(0.7, 0.85, 1.0) if state == State.BLOCKSTUN else Color.WHITE
-	if is_tired():
-		body_color = body_color.darkened(0.15)
-
-	# Torso y piernas.
-	draw_rect(Rect2(-w * 0.5 + lean, -h * 0.82, w, h * 0.82), body_color)
-	# Cabeza (su borde superior coincide con body_height, que usa la cámara para encuadrar).
-	var head_radius: float = w * 0.32
-	var head_color: Color = body_color.lightened(0.25)
-	if is_dodging_head():
-		head_color.a = 0.35  # cabeza invulnerable
-	draw_circle(Vector2(lean * 1.5, -h + head_radius), head_radius, head_color)
-	_draw_gloves(w, h, head_radius)
+## Arranque efectivo del golpe actual en ticks (más largo si salió cansado). Solo lectura.
+func startup_ticks_effective() -> int:
+	return _startup_ticks
 
 
-## Tirado en la lona, con la cabeza hacia atrás (lejos del rival).
-func _draw_down(w: float, h: float) -> void:
-	var color: Color = setup.color.darkened(0.45 if state == State.KO else 0.2)
-	var length: float = h * 0.8
-	var thickness: float = w * 0.55
-	var head_radius: float = w * 0.32
-	# Los pies quedan donde estaba parado y el cuerpo se extiende hacia atrás (lejos del rival).
-	var front: float = facing * w * 0.3
-	var back: float = front - facing * length
-	draw_rect(Rect2(Vector2(minf(front, back), -thickness), Vector2(length, thickness)), color)
-	var head_x: float = back - facing * head_radius * 0.7
-	draw_circle(Vector2(head_x, -thickness * 0.5), head_radius, color.lightened(0.2))
-
-
-func _draw_gloves(w: float, h: float, head_radius: float) -> void:
-	var glove := Vector2(36.0, 30.0)
-	match state:
-		State.BLOCKING, State.BLOCKSTUN:
-			# Guantes arriba, delante de la cara.
-			var gx: float = w * 0.42 * facing
-			draw_rect(Rect2(Vector2(gx - glove.x * 0.5, -h + head_radius * 0.4), glove), GLOVE_COLOR)
-			draw_rect(Rect2(Vector2(gx - glove.x * 0.5, -h + head_radius * 0.4 + glove.y + 2.0), glove), GLOVE_COLOR)
-		State.GUARD_BROKEN:
-			# Brazos abiertos: guantes hacia atrás y abajo.
-			var gx_back: float = -w * 0.55 * facing
-			draw_rect(Rect2(Vector2(gx_back - glove.x * 0.5, -h * 0.55), glove), GLOVE_COLOR.darkened(0.3))
-		_:
-			# Dorado = tiene un counter listo. Mientras carga el fuerte, el guante se va poniendo amarillo.
-			var color: Color = Color(1.0, 0.8, 0.1) if counter_ready_left > 0 or _attack_is_counter else GLOVE_COLOR
-			if charge_ratio() > 0.0:
-				color = GLOVE_COLOR.lerp(Color(1.0, 0.95, 0.4), charge_ratio())
-			draw_rect(_attack_glove_rect(w, h, glove), color)
-
-
-func _attack_glove_rect(w: float, h: float, glove: Vector2) -> Rect2:
-	var rest_front: float = w * 0.35
-	var front: float = rest_front
-	var size: Vector2 = glove
-	var glove_y: float = -h * 0.75
-	if state == State.ATTACKING and current_move != null:
-		if current_move.zone == MoveData.Zone.BODY:
-			glove_y = -h * 0.5
-		var is_power: bool = current_move == setup.power_punch
-		if is_power:
-			size = glove * 1.25
-		var full_extension: float = w * 0.5 + current_move.reach - size.x * 0.5
-		match attack_phase:
-			AttackPhase.STARTUP:
-				front = rest_front - (24.0 if is_power else 8.0) - 30.0 * charge_ratio()  # carga hacia atrás
-			AttackPhase.ACTIVE:
-				front = full_extension
-			AttackPhase.RECOVERY:
-				var t: float = float(attack_tick - _startup_ticks - current_move.active_ticks) \
-						/ float(_recovery_ticks)
-				front = lerpf(full_extension, rest_front, t)
-	var center_x: float = front * facing
-	return Rect2(Vector2(center_x - size.x * 0.5, glove_y), size)
+## Recuperación efectiva del golpe actual en ticks (más larga si salió cansado). Solo lectura.
+func recovery_ticks_effective() -> int:
+	return _recovery_ticks

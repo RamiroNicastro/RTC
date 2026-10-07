@@ -77,6 +77,7 @@ func new_combat(gap: float) -> Array:
 	combat.set_physics_process(false)
 	var s := FightSetup.new()
 	s.start_with_intro = false
+	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
 	s.fighter_b = FighterSetup.new()
 	s.start_distance = gap + 90.0

@@ -50,6 +50,7 @@ func new_combat(type_a: FighterSetup.ControllerType, type_b: FighterSetup.Contro
 	combat.set_physics_process(false)
 	var s := FightSetup.new()
 	s.start_with_intro = false
+	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
 	s.fighter_a.controller_type = type_a
 	s.fighter_a.ai_seed = seed_a

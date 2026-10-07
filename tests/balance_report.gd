@@ -29,6 +29,7 @@ func run() -> void:
 		combat.set_physics_process(false)
 		var s := FightSetup.new()
 		s.start_with_intro = false
+		s.game_feel = false
 		s.fighter_a = FighterSetup.new()
 		s.fighter_a.controller_type = FighterSetup.ControllerType.AI
 		s.fighter_a.ai_seed = 1000 + i

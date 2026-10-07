@@ -24,6 +24,8 @@ signal fight_finished(result: FightResult)
 @onready var hud: CombatHUD = $CombatHUD
 @onready var touch_controls: TouchControls = $TouchControls
 @onready var result_screen: ResultScreen = $ResultScreen
+@onready var fx: CombatFX = $CombatFX
+@onready var sfx: CombatSfx = $CombatSfx
 
 var clock := CombatClock.new()
 ## Árbitro: rounds, reloj, knockdowns, cuenta, KO y TKO.
@@ -46,6 +48,7 @@ var _started: bool = false
 
 func start(fight_setup: FightSetup) -> void:
 	_setup = fight_setup
+	clock.effects_enabled = fight_setup.game_feel
 	ring.configure(fight_setup.ring_width)
 
 	fighter_a.configure(fight_setup.fighter_a, 1)
@@ -57,12 +60,18 @@ func start(fight_setup: FightSetup) -> void:
 
 	fighter_a.attack_started.connect(func(_m: MoveData) -> void: stats.record_attack_started(0))
 	fighter_b.attack_started.connect(func(_m: MoveData) -> void: stats.record_attack_started(1))
+	for f in [fighter_a, fighter_b]:
+		f.attack_whiffed.connect(func(m: MoveData) -> void: sfx.play_whoosh(0.8 if m.is_power_punch else 0.3))
 
 	# Conectar ANTES de fight.setup(): si la pelea arranca sin cartel, el round 1 empieza ahí mismo.
 	fight.round_started.connect(func(_n: int) -> void: stats.start_round())
 	fight.round_ended.connect(_on_round_ended)
 	fight.round_break_started.connect(_on_round_break_started)
 	fight.fight_ended.connect(_on_fight_ended)
+	# Sonido: campana al empezar y terminar cada round, público de fondo.
+	fight.round_started.connect(func(_n: int) -> void: sfx.play_bell(1))
+	fight.round_ended.connect(func(_n: int) -> void: sfx.play_bell(3))
+	sfx.start_crowd_ambience()
 	fight.setup(fighter_a, fighter_b, fight_setup)
 
 	camera.setup(fighter_a, fighter_b, ring.stage_half_width())
@@ -75,7 +84,10 @@ func start(fight_setup: FightSetup) -> void:
 
 # delta se ignora a propósito: la lógica avanza por ticks fijos (ver CombatTime).
 func _physics_process(_delta: float) -> void:
-	if not _started or not clock.advance():
+	if not _started:
+		return
+	if not clock.advance():
+		camera.follow()  # durante el hitstop la lógica se congela, pero la sacudida sigue
 		return
 
 	var cmd_a: FighterCommand = controller_a.get_command(fighter_a, fighter_b)
@@ -130,9 +142,71 @@ func _apply_hit(info: HitInfo) -> void:
 		info.defender.push_back(info.knockback)
 	stats.record_hit(info, _index_of(info.attacker))
 	hit_resolved.emit(info)
+	_impact_feel(info)
 	if info.defender.state == Fighter.State.KNOCKDOWN:
 		stats.record_knockdown(_index_of(info.defender))
 		fight.on_knockdown(info.defender)
+		_knockdown_feel(info.defender)
+
+
+## Game feel de cada impacto: hitstop (la lógica se congela), sacudida, zoom y vibración.
+## Todo proporcional a la fuerza del golpe: un jab apenas se nota, un fuerte cargado sacude todo.
+func _impact_feel(info: HitInfo) -> void:
+	fx.on_hit(info)
+	var strength: float = clampf(info.damage / 14.0, 0.0, 1.6)
+	match info.result:
+		HitInfo.Result.HIT:
+			sfx.play_hit(strength + (0.3 if info.counter else 0.0), info.zone == MoveData.Zone.BODY)
+			if info.counter or strength >= 1.0:
+				sfx.play_crowd_cheer(0.5)
+		HitInfo.Result.BLOCKED:
+			if info.guard_broken:
+				sfx.play_guard_break()
+			else:
+				sfx.play_block(strength)
+		HitInfo.Result.DODGED:
+			sfx.play_dodge()
+	match info.result:
+		HitInfo.Result.HIT:
+			var hitstop: int = 2 + roundi(strength * 5.0)
+			if info.counter:
+				hitstop += 3
+			if info.charge_ratio >= 0.5:
+				hitstop += 3
+			clock.freeze(hitstop)
+			camera.shake(0.1 + strength * 0.35)
+			if info.move.is_power_punch:
+				camera.kick_zoom(0.02 + strength * 0.05)
+			_vibrate(20 + roundi(strength * 40.0))
+			ring.excite(0.08 + strength * 0.3 + (0.3 if info.counter else 0.0))
+		HitInfo.Result.BLOCKED:
+			if info.guard_broken:
+				clock.freeze(8)
+				camera.shake(0.45)
+				camera.kick_zoom(0.05)
+				_vibrate(60)
+			else:
+				clock.freeze(2)
+				camera.shake(0.06 + strength * 0.15)
+		HitInfo.Result.DODGED:
+			clock.freeze(3)
+
+
+func _knockdown_feel(f: Fighter) -> void:
+	fx.on_knockdown(f)
+	ring.excite(1.0)
+	sfx.play_knockdown()
+	sfx.play_crowd_cheer(1.0)
+	clock.freeze(14)
+	clock.slow_motion(70, 3)
+	camera.shake(0.8)
+	camera.kick_zoom(0.1)
+	_vibrate(180)
+
+
+func _vibrate(ms: int) -> void:
+	if OS.has_feature("mobile") and _setup.game_feel:
+		Input.vibrate_handheld(ms)
 
 
 ## Agresividad para los jueces: ticks en que cada uno avanza hacia el rival (también caminando con la guardia arriba).
@@ -151,6 +225,13 @@ func _on_round_ended(_round_number: int) -> void:
 
 
 func _on_fight_ended(winner: Fighter, method: FightManager.Method) -> void:
+	if method == FightManager.Method.KO or method == FightManager.Method.TKO:
+		# Final dramático: cámara lenta y zoom sobre el que quedó en la lona.
+		clock.slow_motion(150, 4)
+		camera.focus(_other(winner))
+		fx.flash(0.6)
+		sfx.play_crowd_cheer(1.2)
+	sfx.play_bell(5)
 	result = _build_result(winner, method)
 	result_screen.show_result(result)
 	fight_finished.emit(result)
@@ -192,6 +273,10 @@ func _build_result(winner: Fighter, method: FightManager.Method) -> FightResult:
 
 func _index_of(f: Fighter) -> int:
 	return 0 if f == fighter_a else 1
+
+
+func _other(f: Fighter) -> Fighter:
+	return fighter_b if f == fighter_a else fighter_a
 
 
 func _place_fighters_at_start() -> void:

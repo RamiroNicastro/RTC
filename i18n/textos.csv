@@ -33,3 +33,55 @@ AI_STYLE_COUNTER,Contragolpeador,Counter-puncher
 AI_DIFFICULTY_EASY,Fácil,Easy
 AI_DIFFICULTY_NORMAL,Normal,Normal
 AI_DIFFICULTY_HARD,Difícil,Hard
+FX_COUNTER,¡COUNTER!,COUNTER!
+FX_CHARGED,¡DEMOLEDOR!,DEVASTATING!
+FX_CLEAN,¡LIMPIO!,CLEAN!
+FX_GUARD_BREAK,¡GUARDIA ROTA!,GUARD BREAK!
+FX_DODGE,¡ESQUIVE!,DODGE!
+FX_COMBO,{n} GOLPES,{n} HITS
+GAME_TITLE,GUANTES DE BARRIO,BARRIO GLOVES
+GAME_SUBTITLE,prototipo de combate,combat prototype
+MENU_ARCADE,MODO ARCADE,ARCADE MODE
+MENU_PRACTICE,PRÁCTICA,PRACTICE
+MENU_RECORD,"Récord: {score} puntos  ·  Títulos: {titles}","Best: {score} points  ·  Titles: {titles}"
+MENU_HINT,"J jab · K fuerte (mantener = cargar) · L guardia · Espacio esquive · S cuerpo","J jab · K power (hold = charge) · L guard · Space dodge · S body"
+ARCADE_STAGE,"RIVAL {n} DE {total}","RIVAL {n} OF {total}"
+ARCADE_YOU,VOS,YOU
+ARCADE_ROUNDS,{n} rounds,{n} rounds
+ARCADE_SCORE_LINE,"Puntos: {score}   ·   Récord: {best}","Score: {score}   ·   Best: {best}"
+ARCADE_FIGHT,¡A PELEAR!,FIGHT!
+ARCADE_VICTORY,¡VICTORIA!,VICTORY!
+ARCADE_MULT,"x{mult} por la dificultad  →  +{gained}","x{mult} difficulty  →  +{gained}"
+ARCADE_TOTAL,"PUNTOS: {score}   (+{gained})","SCORE: {score}   (+{gained})"
+ARCADE_NEXT,SIGUIENTE RIVAL,NEXT RIVAL
+ARCADE_FINAL_BELT,¡POR EL CINTURÓN!,FOR THE BELT!
+ARCADE_DRAW,EMPATE,DRAW
+ARCADE_DRAW_HINT,Nadie ganó. Revancha sin perder puntos.,Nobody won. Rematch without losing points.
+ARCADE_REMATCH,REVANCHA,REMATCH
+ARCADE_GAME_OVER,GAME OVER,GAME OVER
+ARCADE_REACHED,"Llegaste al rival {n} de {total}  ·  {score} puntos","You reached rival {n} of {total}  ·  {score} points"
+ARCADE_NEW_RECORD,¡NUEVO RÉCORD!,NEW RECORD!
+ARCADE_BEST,Récord: {score},Best: {score}
+ARCADE_CONTINUE,CONTINUAR (−50 % PUNTOS),CONTINUE (−50 % SCORE)
+ARCADE_MENU,MENÚ,MENU
+ARCADE_CHAMPION,¡CAMPEÓN!,CHAMPION!
+ARCADE_FINAL_SCORE,Puntaje final: {score},Final score: {score}
+ARCADE_PLAY_AGAIN,OTRA VEZ,PLAY AGAIN
+SCORE_WIN,Victoria,Victory
+SCORE_KO,KO,KO
+SCORE_TKO,KO técnico,Technical KO
+SCORE_EARLY,Terminó antes,Early finish
+SCORE_ACCURACY,Precisión,Accuracy
+SCORE_COUNTERS,Counters,Counters
+SCORE_POWER,Golpes de poder,Power punches
+SCORE_HEALTH,Salud restante,Health left
+SCORE_KNOCKDOWNS,Caídas propias,Your knockdowns
+SCORE_FLAWLESS,¡IMPECABLE!,FLAWLESS!
+TIP_PRESSURE,"Viene siempre al frente: jabeá retrocediendo y castigá sus fuertes.","Always coming forward: jab while backing up and punish his power shots."
+TIP_OUTBOXER,"Vive del jab a distancia: cortale el paso, entrá con impulso y rompé su guardia.","Lives off the jab: cut him off, step in and break his guard."
+TIP_COUNTER,"Espera tu error: no regales golpes, variá y atacá al cuerpo (no lo puede esquivar).","Waits for your mistake: don't throw lazy shots, vary and go to the body (he can't dodge it)."
+TOUCH_JAB,JAB,JAB
+TOUCH_POWER,FUERTE,POWER
+TOUCH_GUARD,GUARDIA,GUARD
+TOUCH_DODGE,ESQUIVE,DODGE
+TOUCH_BODY,CUERPO,BODY

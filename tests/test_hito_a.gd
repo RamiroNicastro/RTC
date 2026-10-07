@@ -14,6 +14,7 @@ func _initialize() -> void:
 	var d := FighterSetup.new()
 	var s := FightSetup.new()
 	s.start_with_intro = false
+	s.game_feel = false
 	s.fighter_a = p
 	s.fighter_b = d
 	set_meta("setup", s)

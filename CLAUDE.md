@@ -46,6 +46,9 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
   - **La IA lee patrones:** recuerda los últimos 6 golpes del rival. Al golpe que más se repite lo reconoce antes (percepción más rápida según `read_skill`) y se defiende mejor. Contra el spam de jab llega a defender más del 90 %.
   - **Normal más fácil:** +3 ticks de reacción y −15 % de defensa sobre el perfil.
 
+- **Pedido de la persona: "que sea un vicio".** Se agregó un **Modo Arcade de prueba** (escalera de rivales con puntaje y récords) como capa sobre el combate, para la puerta del MVP. **No es la carrera**: la carrera sigue siendo la Fase 2 y va a reemplazar o convivir con este modo.
+- **Game feel:** se apaga con `FightSetup.game_feel = false` (todas las pruebas lo hacen, para contar ticks exactos).
+
 ## Forma de trabajo
 
 - **Un hito por sesión.** Un hito se commitea solo después de que la persona lo probó en Godot y cumple el criterio de la sección 16 del plan.
@@ -76,5 +79,7 @@ Las pruebas de `tests/` reemplazan los controladores por controladores guionados
 - [x] Hito E3: FightStats (solo eventos reales), 3 jueces con pesos distintos, decisiones, FightResult (solo datos), pantalla final
 - [x] Hito F: IA que ve con 0,2 s de retraso, mide distancia, ataca, castiga, se cubre o esquiva, cuida la stamina; primer ajuste de balance
 - [x] Hito G: AIProfile con 3 estilos (presionador, técnico, contragolpeador) y dificultad fácil/normal/difícil
-- [~] Ampliación estratégica: distancia justa, impulso, empuje, la IA lee patrones, fuerte cargado, Normal más fácil (hecha; falta que la persona la pruebe)
-- [ ] Hitos H, I
+- [x] Ampliación estratégica: distancia justa, impulso, empuje, la IA lee patrones, fuerte cargado, Normal más fácil
+- [~] Hito H (game feel): hitstop y cámara lenta en `CombatClock`, sacudida y zoom en `CombatCamera`, `CombatFX` (chispas, carteles, combos, destello), `CombatSfx` (sonidos sintetizados), público que reacciona, HUD con carteles animados
+- [~] Hito I: controles táctiles con 7 botones (esquive y cuerpo incluidos), safe area y modo zurdo. Falta la prueba en un celular real.
+- [x] Modo Arcade de prueba: título → escalera de 6 rivales → puntaje → récords en JSON (`modes/arcade/`, `ui/`)

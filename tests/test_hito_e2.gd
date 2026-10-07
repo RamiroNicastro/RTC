@@ -49,6 +49,7 @@ func new_combat(round_seconds: float = 60.0, rounds: int = 3, intro: bool = fals
 	combat.set_physics_process(false)
 	var s := FightSetup.new()
 	s.start_with_intro = intro
+	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
 	s.fighter_b = FighterSetup.new()
 	s.start_distance = 140.0

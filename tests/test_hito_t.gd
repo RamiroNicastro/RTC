@@ -36,6 +36,7 @@ func _physics_process(_delta: float) -> bool:
 		1:
 			var s := FightSetup.new()
 			s.start_with_intro = false
+			s.game_feel = false
 			s.fighter_a = FighterSetup.new()
 			s.fighter_a.controller_type = FighterSetup.ControllerType.PLAYER
 			s.fighter_b = FighterSetup.new()
@@ -44,6 +45,9 @@ func _physics_process(_delta: float) -> bool:
 			tc.visible = true
 			check_layout(tc, Vector2(1280, 720))
 			check_layout(tc, Vector2(1600, 720))
+			tc.left_handed = true
+			check_layout(tc, Vector2(1280, 720))
+			tc.left_handed = false
 		3:
 			touch(0, tc._guard, true)   # dedo 1: mantiene la guardia
 		8:
@@ -79,7 +83,7 @@ func _physics_process(_delta: float) -> bool:
 
 func check_layout(tc: TouchControls, view: Vector2) -> void:
 	# Recalcula la distribución para ese tamaño de pantalla y verifica que nada se pise ni se salga.
-	var buttons: Array[TouchScreenButton] = [tc._left, tc._right, tc._jab, tc._power, tc._guard]
+	var buttons: Array[TouchScreenButton] = [tc._left, tc._right, tc._body, tc._jab, tc._power, tc._guard, tc._dodge]
 	var old_size: Vector2i = root.size
 	root.size = Vector2i(view)
 	tc._layout()
@@ -94,6 +98,6 @@ func check_layout(tc: TouchControls, view: Vector2) -> void:
 			var rj: float = (bj.shape as CircleShape2D).radius
 			var cj: Vector2 = bj.position + Vector2.ONE * rj
 			check(ci.distance_to(cj) >= ri + rj, "%s y %s se superponen en %s" % [bi.action, bj.action, actual])
-	print("Distribución en %s: sin superposiciones ni botones afuera" % actual)
+	print("Distribución en %s (zurdo=%s): sin superposiciones ni botones afuera" % [actual, tc.left_handed])
 	root.size = old_size
 	tc._layout()

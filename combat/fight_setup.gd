@@ -16,6 +16,8 @@ extends Resource
 @export var round_seconds: float = 60.0
 ## true = la pelea arranca con el cartel "ROUND 1 — ¡BOXEEN!". Las pruebas lo apagan.
 @export var start_with_intro: bool = true
+## true = hitstop y cámara lenta (game feel). Las pruebas lo apagan para contar ticks exactos.
+@export var game_feel: bool = true
 
 @export_group("Ring")
 ## Distancia entre las cuerdas, en unidades de mundo. Es igual en todos los celulares.

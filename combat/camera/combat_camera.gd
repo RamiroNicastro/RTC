@@ -8,6 +8,11 @@ extends Camera2D
 ## - El piso queda siempre a la misma altura de la pantalla (FLOOR_SCREEN_FRACTION), así el zoom no "bambolea".
 ## - Se actualiza en follow(), una vez por tick fijo de lógica: se comporta igual a cualquier FPS.
 ## - Solo cambia lo que se VE. El ring, las cuerdas y las distancias reales no cambian.
+##
+## Efectos (game feel, solo visuales):
+##   - shake(trauma): sacudida. Usa "trauma" (0–1) que decae solo; la sacudida es trauma² (los golpes chicos casi no mueven).
+##   - kick_zoom(amount): golpecito de zoom hacia adentro que vuelve solo (impactos fuertes).
+##   - focus(target, extra_zoom): durante el KO se cierra sobre el caído.
 
 ## Proporción de la altura de pantalla que ocupa el peleador cuando están cerca y cuando están lejos.
 const FIGHTER_FRACTION_CLOSE: float = 0.47
@@ -28,10 +33,23 @@ const ZOOM_LERP: float = 0.015
 ## Si hace falta abrir el zoom para no cortar a nadie, se abre más rápido.
 const ZOOM_LERP_SAFETY: float = 0.1
 
+## Sacudida: desplazamiento máximo (unidades de pantalla) y cuánto trauma se pierde por segundo.
+const SHAKE_MAX_OFFSET: float = 26.0
+const SHAKE_MAX_ROTATION: float = 0.025
+const TRAUMA_DECAY_PER_SECOND: float = 1.8
+## Golpe de zoom: cuánto vuelve por segundo.
+const KICK_DECAY_PER_SECOND: float = 4.0
+
 var target_zoom: float = 1.0
 
 var _a: Fighter
 var _b: Fighter
+var _trauma: float = 0.0
+var _kick: float = 0.0
+var _focus: Fighter
+var _focus_extra_zoom: float = 0.0
+var _noise := FastNoiseLite.new()
+var _time: float = 0.0
 
 
 func setup(a: Fighter, b: Fighter, stage_half_width: float) -> void:
@@ -42,6 +60,7 @@ func setup(a: Fighter, b: Fighter, stage_half_width: float) -> void:
 	limit_right = int(stage_half_width)
 	# El suavizado lo hacemos nosotros por tick (posición y zoom juntos).
 	position_smoothing_enabled = false
+	_noise.frequency = 2.5
 	_update_targets()
 	zoom = Vector2.ONE * target_zoom
 	position = _target_position(target_zoom)
@@ -49,16 +68,48 @@ func setup(a: Fighter, b: Fighter, stage_half_width: float) -> void:
 	make_current()
 
 
-## Se llama una vez por tick, desde CombatScene.
+## Sacudida: suma trauma (0–1). 0.2 = golpecito, 0.5 = fuerte, 0.9 = KO.
+func shake(trauma: float) -> void:
+	_trauma = clampf(_trauma + trauma, 0.0, 1.0)
+
+
+## Golpecito de zoom hacia adentro (0.04 = sutil, 0.1 = fuerte).
+func kick_zoom(amount: float) -> void:
+	_kick = maxf(_kick, amount)
+
+
+## Durante el KO: centra y cierra sobre un peleador. null = vuelve a lo normal.
+func focus(target: Fighter, extra_zoom: float = 0.35) -> void:
+	_focus = target
+	_focus_extra_zoom = extra_zoom
+
+
+## Se llama una vez por tick, desde CombatScene (también durante el hitstop, para que la cámara no se congele).
 func follow() -> void:
 	var fit_zoom: float = _update_targets()
-	var current: float = zoom.x
-	var lerp_weight: float = ZOOM_LERP_SAFETY if current > fit_zoom else ZOOM_LERP
-	var new_zoom: float = lerpf(current, target_zoom, lerp_weight)
-	zoom = Vector2.ONE * new_zoom
+	var current: float = zoom.x / (1.0 + _kick)
+	var goal: float = target_zoom
+	if _focus != null:
+		goal = minf(ZOOM_MAX, target_zoom * (1.0 + _focus_extra_zoom))
+	var lerp_weight: float = ZOOM_LERP_SAFETY if current > fit_zoom and _focus == null else ZOOM_LERP * (3.0 if _focus != null else 1.0)
+	var new_zoom: float = lerpf(current, goal, lerp_weight)
 
 	var target_pos: Vector2 = _target_position(new_zoom)
+	if _focus != null:
+		target_pos.x = _focus.position.x
 	position = Vector2(lerpf(position.x, target_pos.x, POSITION_LERP), target_pos.y)
+
+	# Efectos: decaen con el tiempo de física (fijo) → iguales a cualquier FPS.
+	var dt: float = CombatTime.SECONDS_PER_TICK
+	_time += dt
+	_trauma = maxf(0.0, _trauma - TRAUMA_DECAY_PER_SECOND * dt)
+	_kick = maxf(0.0, _kick - KICK_DECAY_PER_SECOND * dt * _kick - 0.02 * dt)
+	zoom = Vector2.ONE * new_zoom * (1.0 + _kick)
+	var shake_amount: float = _trauma * _trauma
+	offset = Vector2(
+		_noise.get_noise_2d(_time * 60.0, 0.0),
+		_noise.get_noise_2d(0.0, _time * 60.0)) * SHAKE_MAX_OFFSET * shake_amount / zoom.x
+	rotation = _noise.get_noise_2d(_time * 60.0, 100.0) * SHAKE_MAX_ROTATION * shake_amount
 
 
 ## Calcula target_zoom y devuelve el zoom máximo que permite ver a los dos sin cortar.
