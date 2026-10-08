@@ -163,3 +163,29 @@ TIER_3,Campeón nacional,National champion
 TIER_4,Ranking internacional,International ranking
 TIER_5,Contendiente mundial,World contender
 TIER_6,Campeón mundial,World champion
+HUB_ENERGY,ENERGÍA,ENERGY
+HUB_ACTIONS,ACCIONES DE LA SEMANA,ACTIONS THIS WEEK
+HUB_DEBT,¡deuda!,debt!
+TRAINING_HEAVY_BAG,BOLSA PESADA,HEAVY BAG
+TRAINING_JUMP_ROPE,SOGA,JUMP ROPE
+TRAINING_RUNNING,CORRER,RUNNING
+TRAINING_SHADOW,SOMBRA,SHADOWBOXING
+TRAINING_MITTS,MANOPLAS,MITTS
+TRAINING_SPARRING,SPARRING,SPARRING
+TRAINING_ALL_STATS,Todo +,All +
+ENERGY_COST,(-{n} energía),(-{n} energy)
+GYM_WEAK,"Hoy rendís al {pct} % (cansancio o deudas).","Today you train at {pct} % (tired or in debt)."
+GYM_NO_GAIN,Sesión floja: casi no mejoraste.,Weak session: barely improved.
+WORK_DESC,"Una changa en el corralón: +${pay}, pero cansa (-{energy} energía).","A shift at the hardware yard: +${pay}, but it's tiring (-{energy} energy)."
+WORK_DO,TRABAJAR,WORK
+WORK_DONE,+${pay} trabajando,+${pay} from work
+HOME_DESC,"Dormir, comer bien y descansar: +{energy} energía.","Sleep, eat well and rest: +{energy} energy."
+HOME_DO,DESCANSAR,REST
+HOME_DONE,+{energy} energía descansando,+{energy} energy from resting
+TOO_TIRED,Estás muy cansado: descansá primero.,You're too tired: rest first.
+WEEK_END_TITLE,EMPIEZA LA SEMANA {week},WEEK {week} BEGINS
+WEEK_BIRTHDAY,¡Feliz cumpleaños! Ahora tenés {age} años.,Happy birthday! You're now {age}.
+WEEK_EXPENSES,"Gastos de la semana (alquiler, comida, gimnasio): -${n}","Weekly expenses (rent, food, gym): -${n}"
+WEEK_ENERGY,Descanso del domingo: +{n} energía,Sunday rest: +{n} energy
+WEEK_DEBT_WARNING,"¡Estás debiendo plata! Mientras debas, entrenás peor. Conseguí trabajo.","You're in debt! While you owe money, you train worse. Get some work."
+WEEK_CONTINUE,SEGUIR,CONTINUE

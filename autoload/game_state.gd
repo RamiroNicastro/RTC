@@ -17,6 +17,8 @@ const START_MONEY: int = 500
 const START_STAT_RATIO: float = 0.6
 ## Las 6 estadísticas, en el orden en que se guardan y se muestran.
 const STAT_NAMES: Array[StringName] = [&"power", &"speed", &"cardio", &"chin", &"technique", &"defense"]
+const MAX_ENERGY: int = 100
+const ACTIONS_PER_WEEK: int = 3
 
 ## true si hay una carrera cargada (nueva o continuada).
 var active: bool = false
@@ -31,6 +33,12 @@ var wins: int = 0
 var losses: int = 0
 var draws: int = 0
 var kos: int = 0
+## Energía (0 a MAX_ENERGY). Entrenar y trabajar la gastan; descansar la recupera.
+var energy: int = MAX_ENERGY
+## Acciones que quedan esta semana. Al llegar a 0 pasa la semana.
+var actions_left: int = ACTIONS_PER_WEEK
+## Lo que ya se entrenó pero todavía no llegó a un punto entero, por estadística (0 a 1).
+var stat_progress: Dictionary = {}
 
 
 ## Arranca una carrera desde cero con el peleador que creó el jugador.
@@ -46,6 +54,9 @@ func new_career(player: PlayerFighter) -> void:
 	losses = 0
 	draws = 0
 	kos = 0
+	energy = MAX_ENERGY
+	actions_left = ACTIONS_PER_WEEK
+	stat_progress = {}
 	active = true
 	changed.emit()
 
@@ -82,6 +93,9 @@ func to_dict() -> Dictionary:
 		"week": week,
 		"tier": tier,
 		"record": {"wins": wins, "losses": losses, "draws": draws, "kos": kos},
+		"energy": energy,
+		"actions_left": actions_left,
+		"stat_progress": stat_progress,
 	}
 
 
@@ -104,6 +118,12 @@ func from_dict(d: Dictionary) -> void:
 	losses = int(rec.get("losses", 0))
 	draws = int(rec.get("draws", 0))
 	kos = int(rec.get("kos", 0))
+	energy = clampi(int(d.get("energy", MAX_ENERGY)), 0, MAX_ENERGY)
+	actions_left = clampi(int(d.get("actions_left", ACTIONS_PER_WEEK)), 1, ACTIONS_PER_WEEK)
+	stat_progress = {}
+	var progress: Dictionary = d.get("stat_progress", {})
+	for stat in STAT_NAMES:
+		stat_progress[String(stat)] = clampf(float(progress.get(String(stat), 0.0)), 0.0, 0.999)
 	active = true
 	changed.emit()
 

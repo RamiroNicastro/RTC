@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TrainingData" format=3]
+
+[ext_resource type="Script" path="res://career/training/training_data.gd" id="1_training"]
+
+[resource]
+script = ExtResource("1_training")
+id = &"mitts"
+name_key = "TRAINING_MITTS"
+main_stat = &"defense"
+side_stat = &"technique"
+all_stats = false
+energy_cost = 25

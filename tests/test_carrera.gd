@@ -122,7 +122,7 @@ func test_screens() -> void:
 	var hub: Control = load("res://career/hub/hub_screen.tscn").instantiate()
 	root.add_child(hub)
 	check(hub._bars != null and hub._bars.numbers[0].text == str(game_state.fighter.power), "el hub muestra tus estadísticas")
-	hub._on_place(&"gym")
+	hub._on_place(&"arena")
 	check(hub._toast.text != "", "tocar un lugar avisa que viene pronto")
 	hub.queue_free()
 	# Se nombra la pantalla por su script (no por class_name): este script se compila antes que los autoloads.
