@@ -9,6 +9,7 @@ Hoy está el **prototipo de combate**:
 
 - **Plan aprobado (congelado):** [docs/PLAN_FINAL_V2.1.md](docs/PLAN_FINAL_V2.1.md)
 - **Reglas para trabajar con IA, estado actual y decisiones:** [CLAUDE.md](CLAUDE.md). **Leerlo antes de tocar código.**
+- **Traspaso detallado (cómo seguir):** [docs/HANDOFF.md](docs/HANDOFF.md)
 - **Convenciones:** [docs/CONVENCIONES.md](docs/CONVENCIONES.md)
 - **Exportar a Android:** [docs/ANDROID.md](docs/ANDROID.md)
 

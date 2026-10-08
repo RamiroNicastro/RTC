@@ -3,6 +3,7 @@
 RPG de carrera de boxeo 2D para Android, hecho en Godot 4.7 con GDScript.
 El plan aprobado y congelado está en [docs/PLAN_FINAL_V2.1.md](docs/PLAN_FINAL_V2.1.md). **No se rediseña:** cualquier cambio de diseño se consulta antes.
 Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.md).
+**Para continuar el trabajo** (mapa del código, balance, pruebas, trampas y próximos pasos), leé [docs/HANDOFF.md](docs/HANDOFF.md).
 
 ## Reglas inviolables
 
@@ -82,7 +83,7 @@ El repo está en GitHub (`origin`). Lo usan dos sesiones de Claude: una local, e
 7. **Si las dos sesiones necesitan los mismos archivos al mismo tiempo**, usar una rama (`git checkout -b <tema>`) y unirla a `main` cuando las pruebas den OK.
 
 ### En curso
-- (nada)
+- Sesión local (PC de la persona): pasada de realismo, parte 1 (cortes, cutman y médico): fighter.gd, distance_hit_resolver.gd, combat_scene.gd, fight_manager.gd, fight_result.gd, combat_fx.gd, fighter_visual.gd, tests/test_cortes.gd. Ver docs/HANDOFF.md, paso A.
 
 ## Forma de trabajo
 
