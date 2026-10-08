@@ -62,6 +62,8 @@ combat/                        TODO el combate (no usa autoloads; R2)
   ring.gd                      cuerdas y choque (la lógica de espacio) + escenario y público
 data/moves/                    golpes .tres (jab, power, jab_body, power_body) y rivals/ (golpes del arcade)
 data/ai_profiles/              pressure.tres, outboxer.tres, counter.tres
+data/rivals/arcade/            fichas FighterData de los 6 rivales del arcade (estadísticas, estilo, golpe propio)
+fighter_model/                 FighterData (ficha: 6 estadísticas 1-100 + envergadura) y StatFormulas (ficha → FighterSetup; 50 = valores de hoy)
 modes/arcade/                  Modo Arcade: arcade_run (flujo), arcade_rivals, arcade_score, arcade_records
 ui/                            ui_style.gd (fuente y botones) y title/ (pantalla de título, escena principal)
 debug/                         sandbox de práctica con overlay de debug (teclas en la cabecera del script)
@@ -195,7 +197,7 @@ Daño localizado, que ya está previsto en el plan:
 
 ### Paso D: Fase 2 del plan (la carrera)
 Ver la sección 22 del plan. Arrancar por:
-1. `FighterData` y `stat_formulas`, que convierten estadísticas en parámetros de `FighterSetup`;
+1. ~~`FighterData` y `stat_formulas`~~ **hecho**. Pendiente de esa parte: que Mentón también mueva el umbral de knockdown, levantarse y la recuperación entre rounds (hoy son constantes en `fighter.gd`), y sliders de estadísticas en la sandbox;
 2. los autoloads `GameState` y `SceneRouter`;
 3. el hub;
 4. el campamento;

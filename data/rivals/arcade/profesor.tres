@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="FighterData" format=3]
+
+[ext_resource type="Script" path="res://fighter_model/fighter_data.gd" id="1_data"]
+[ext_resource type="Resource" path="res://data/ai_profiles/outboxer.tres" id="2_profile"]
+[ext_resource type="Resource" path="res://data/moves/rivals/profesor_cruzado.tres" id="3_move"]
+
+[resource]
+script = ExtResource("1_data")
+full_name = "Fede Lima"
+nickname = "El Profesor"
+color = Color(0.2, 0.55, 0.45, 1)
+ai_profile = ExtResource("2_profile")
+signature_move = ExtResource("3_move")
+power = 50
+speed = 60
+cardio = 65
+chin = 50
+technique = 70
+defense = 60
+wingspan = 0.6

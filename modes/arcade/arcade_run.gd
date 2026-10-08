@@ -54,16 +54,16 @@ func _show_vs() -> void:
 	vs.add_child(UIStyle.label(tr("ARCADE_YOU"), 64, Color(0.4, 0.7, 1.0), 12))
 	vs.add_child(UIStyle.label("VS", 80, UIStyle.GOLD, 14))
 	var rival_box := VBoxContainer.new()
-	rival_box.add_child(UIStyle.label("\"%s\"" % rival.nickname, 64, rival.color.lightened(0.2), 12))
-	rival_box.add_child(UIStyle.label(rival.full_name, 30, UIStyle.TEXT))
+	rival_box.add_child(UIStyle.label("\"%s\"" % rival.data.nickname, 64, rival.data.color.lightened(0.2), 12))
+	rival_box.add_child(UIStyle.label(rival.data.full_name, 30, UIStyle.TEXT))
 	vs.add_child(rival_box)
 	box.add_child(vs)
 	box.add_child(UIStyle.label("%s  ·  %s  ·  %s" % [
-		tr(rival.profile.style_name_key),
+		tr(rival.data.ai_profile.style_name_key),
 		tr("AI_DIFFICULTY_" + AIInput.Difficulty.keys()[rival.difficulty]),
 		tr("ARCADE_ROUND_ONE") if rival.rounds == 1 else tr("ARCADE_ROUNDS").format({"n": rival.rounds})], 26, UIStyle.TEXT))
-	box.add_child(UIStyle.label("“%s”" % tr(rival.quote_key), 26, rival.color.lightened(0.35), 6))
-	box.add_child(UIStyle.label(_style_tip(rival.profile), 22, UIStyle.MUTED, 5))
+	box.add_child(UIStyle.label("“%s”" % tr(rival.quote_key), 26, rival.data.color.lightened(0.35), 6))
+	box.add_child(UIStyle.label(_style_tip(rival.data.ai_profile), 22, UIStyle.MUTED, 5))
 	for c in rival.challenges:
 		box.add_child(UIStyle.label(tr("CHALLENGE_LINE").format({"text": tr(ArcadeRivals.challenge_key(c)),
 				"bonus": ArcadeRivals.CHALLENGE_BONUS}), 22, UIStyle.GOLD, 5))
@@ -80,13 +80,10 @@ func _start_fight() -> void:
 	player.display_name = tr("ARCADE_YOU")
 	player.controller_type = FighterSetup.ControllerType.PLAYER
 	player.color = Color(0.2, 0.55, 0.9)
-	var enemy := FighterSetup.new()
-	enemy.display_name = "\"%s\" %s" % [rival.nickname, rival.full_name.get_slice(" ", 1)]
+	var enemy := StatFormulas.build_setup(rival.data)
+	enemy.display_name = "\"%s\" %s" % [rival.data.nickname, rival.data.full_name.get_slice(" ", 1)]
 	enemy.controller_type = FighterSetup.ControllerType.AI
-	enemy.ai_profile = rival.profile
 	enemy.ai_difficulty = rival.difficulty
-	enemy.color = rival.color
-	enemy.power_punch = rival.signature
 	var setup := FightSetup.new()
 	setup.fighter_a = player
 	setup.fighter_b = enemy

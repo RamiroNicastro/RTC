@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="FighterData" format=3]
+
+[ext_resource type="Script" path="res://fighter_model/fighter_data.gd" id="1_data"]
+[ext_resource type="Resource" path="res://data/ai_profiles/pressure.tres" id="2_profile"]
+[ext_resource type="Resource" path="res://data/moves/rivals/martillo.tres" id="3_move"]
+
+[resource]
+script = ExtResource("1_data")
+full_name = "Kevin Ruiz"
+nickname = "Martillo"
+color = Color(0.55, 0.3, 0.6, 1)
+ai_profile = ExtResource("2_profile")
+signature_move = ExtResource("3_move")
+power = 70
+speed = 45
+cardio = 55
+chin = 60
+technique = 40
+defense = 40
+wingspan = -0.2

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="FighterData" format=3]
+
+[ext_resource type="Script" path="res://fighter_model/fighter_data.gd" id="1_data"]
+[ext_resource type="Resource" path="res://data/ai_profiles/pressure.tres" id="2_profile"]
+[ext_resource type="Resource" path="res://data/moves/rivals/toro_embestida.tres" id="3_move"]
+
+[resource]
+script = ExtResource("1_data")
+full_name = "Rubén Medina"
+nickname = "El Toro"
+color = Color(0.75, 0.25, 0.2, 1)
+ai_profile = ExtResource("2_profile")
+signature_move = ExtResource("3_move")
+power = 62
+speed = 38
+cardio = 55
+chin = 60
+technique = 30
+defense = 35
+wingspan = -0.3

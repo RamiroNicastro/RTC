@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="FighterData" format=3]
+
+[ext_resource type="Script" path="res://fighter_model/fighter_data.gd" id="1_data"]
+[ext_resource type="Resource" path="res://data/ai_profiles/counter.tres" id="2_profile"]
+[ext_resource type="Resource" path="res://data/moves/rivals/fantasma_contra.tres" id="3_move"]
+
+[resource]
+script = ExtResource("1_data")
+full_name = "Darío Ibarra"
+nickname = "El Fantasma"
+color = Color(0.9, 0.9, 0.95, 1)
+ai_profile = ExtResource("2_profile")
+signature_move = ExtResource("3_move")
+power = 60
+speed = 65
+cardio = 60
+chin = 55
+technique = 65
+defense = 70
+wingspan = 0.2

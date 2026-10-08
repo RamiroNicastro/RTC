@@ -75,7 +75,7 @@ func test_ladder() -> void:
 	check(ladder.size() == 6, "la escalera tiene 6 rivales")
 	var styles := {}
 	for i in ladder.size():
-		styles[ladder[i].profile.style_name_key] = true
+		styles[ladder[i].data.ai_profile.style_name_key] = true
 		if i > 0:
 			check(ladder[i].score_mult > ladder[i - 1].score_mult, "cada rival vale más que el anterior")
 			check(ladder[i].difficulty >= ladder[i - 1].difficulty, "la dificultad no baja")
@@ -83,9 +83,10 @@ func test_ladder() -> void:
 	var rounds: Array[int] = []
 	for r in ladder:
 		rounds.append(r.rounds)
-		check(r.signature != null and r.signature.startup_ticks >= 20, "el golpe de %s debería verse venir (arranque >= 20)" % r.nickname)
+		var sig: MoveData = StatFormulas.build_setup(r.data).power_punch
+		check(r.data.signature_move != null and sig.startup_ticks >= 20, "el golpe de %s debería verse venir (arranque >= 20, ya con su Velocidad)" % r.data.nickname)
 	check(rounds == [1, 1, 2, 2, 3, 3], "rounds 1-1-2-2-3-3")
-	check(ladder[0].profile.style_name_key == "AI_STYLE_PRESSURE", "el primer rival es un presionador (el más fácil de aprender)")
+	check(ladder[0].data.ai_profile.style_name_key == "AI_STYLE_PRESSURE", "el primer rival es un presionador (el más fácil de aprender)")
 
 
 func test_challenges() -> void:
