@@ -45,6 +45,24 @@ func is_decision() -> bool:
 	return method in [Method.UNANIMOUS_DECISION, Method.SPLIT_DECISION, Method.MAJORITY_DECISION, Method.DRAW]
 
 
+## Clave de texto del método (KO, KO técnico, decisión...). Para mostrar: tr(method_key()).
+func method_key() -> String:
+	match method:
+		Method.KO:
+			return "COMBAT_KO"
+		Method.TKO:
+			return "COMBAT_TKO"
+		Method.DOCTOR_STOPPAGE:
+			return "RESULT_DOCTOR"
+		Method.UNANIMOUS_DECISION:
+			return "RESULT_UNANIMOUS"
+		Method.SPLIT_DECISION:
+			return "RESULT_SPLIT"
+		Method.MAJORITY_DECISION:
+			return "RESULT_MAJORITY"
+	return "RESULT_DRAW_TITLE"
+
+
 func winner_name() -> String:
 	return "" if is_draw() else fighter_names[winner_index]
 

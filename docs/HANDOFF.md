@@ -71,6 +71,7 @@ autoload/                      GameState (datos de la carrera), SaveManager (JSO
 career/hub/                    hub de la carrera: encabezado (nombre, semana, edad, plata, récord), estadísticas y 5 lugares
 career/week/week_actions.gd    acciones de la semana (entrenar, trabajar, descansar), paso de la semana y TODOS sus números
 career/training/               TrainingData (un ejercicio); los .tres están en data/trainings/
+career/arena/                  la Arena: FightOffer (oferta, guardable), RivalGenerator (rivales a tu nivel; nombres en data/rivals/names.json), ArenaRules (ofertas, bolsas, ranking, setup y resultado; TODOS sus números), ArenaScreen (ofertas → pelea → resultado)
 modes/arcade/                  Modo Arcade: arcade_run (flujo), arcade_rivals, arcade_score, arcade_records
 ui/                            ui_style.gd (fuente y botones) y title/ (pantalla de título, escena principal)
 debug/                         sandbox de práctica con overlay de debug (teclas en la cabecera del script)
@@ -209,7 +210,7 @@ Ver la sección 22 del plan. Arrancar por:
 1. ~~`FighterData` y `stat_formulas`~~ **hecho**. Pendiente de esa parte: que Mentón también mueva el umbral de knockdown, levantarse y la recuperación entre rounds (hoy son constantes en `fighter.gd`), y sliders de estadísticas en la sandbox;
 2. ~~autoloads `GameState`, `SaveManager` y `SceneRouter`~~ **hecho** (carrera nueva desde "Crear peleador", guardado en `user://slot_1.json` con `.bak`);
 3. ~~el hub~~ **hecho como esqueleto**: muestra todo, los 5 lugares todavía avisan "Próximamente". Sigue: Gimnasio (entrenar), Trabajo (plata), Casa (descansar) y que la semana avance;
-4. ~~semana con acciones~~ **hecho** (Gimnasio, Trabajo y Casa). Sigue: **Arena** (peleas amateur con rivales generados, bolsa, récord) y después el campamento antes de cada pelea;
+4. ~~semana con acciones~~ y ~~Arena~~ **hechos**. Sigue (a consultar con la persona): Tienda (guantes que se ven en el ring, programas de entrenamiento), peleas callejeras con apuestas, campamento antes de cada pelea, pasar a T2 profesional al llegar al #1;
 5. los saltos de tiempo.
 
 **El combate no se toca:** la carrera arma un `FightSetup` y lee el `FightResult` (R2).

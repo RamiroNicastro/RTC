@@ -146,7 +146,7 @@ CAREER_START,EMPEZAR,START
 CAREER_NEED_NAME,¡Poné un nombre!,Enter a name!
 HUB_STATS,TUS ESTADÍSTICAS,YOUR STATS
 HUB_MENU,GUARDAR Y SALIR,SAVE AND QUIT
-HUB_SUBTITLE,"{style}  ·  {tier}","{style}  ·  {tier}"
+HUB_SUBTITLE,"{style}  ·  {tier} #{rank}","{style}  ·  {tier} #{rank}"
 HUB_DATE,"Semana {week} · Año {year}","Week {week} · Year {year}"
 HUB_AGE,{age} años,{age} years old
 HUB_MONEY,plata,money
@@ -189,3 +189,27 @@ WEEK_EXPENSES,"Gastos de la semana (alquiler, comida, gimnasio): -${n}","Weekly 
 WEEK_ENERGY,Descanso del domingo: +{n} energía,Sunday rest: +{n} energy
 WEEK_DEBT_WARNING,"¡Estás debiendo plata! Mientras debas, entrenás peor. Conseguí trabajo.","You're in debt! While you owe money, you train worse. Get some work."
 WEEK_CONTINUE,SEGUIR,CONTINUE
+ARENA_STATUS,"Tu ranking: #{rank}  ·  Energía: {energy}","Your rank: #{rank}  ·  Energy: {energy}"
+ARENA_CHOICE_HINT,Esta semana podés elegir rival. Pelear usa toda la semana.,This week you can pick your opponent. Fighting takes the whole week.
+ARENA_ASSIGNED_HINT,"Esta semana te toca este rival: lo aceptás o no peleás.","This week you get this opponent: take it or don't fight."
+ARENA_NO_FIGHTS,Esta semana no hay más peleas. Volvé la semana que viene.,No more fights this week. Come back next week.
+ARENA_TOO_TIRED,"Estás muy cansado para pelear (necesitás {n} de energía). Descansá en Casa.","You're too tired to fight (you need {n} energy). Rest at Home."
+ARENA_EASY,FÁCIL,EASY
+ARENA_EVEN,PAREJA,EVEN
+ARENA_HARD,DIFÍCIL,HARD
+ARENA_ASSIGNED,TE TOCA,ASSIGNED
+ARENA_RIVAL_LINE,"#{rank}  ·  {record} ({kos} KO)","#{rank}  ·  {record} ({kos} KO)"
+ARENA_YOU,VOS,YOU
+ARENA_HIM,ÉL,HIM
+ARENA_PURSE,Bolsa: ${n},Purse: ${n}
+ARENA_FIGHT,PELEAR,FIGHT
+ARENA_ACCEPT,ACEPTAR,ACCEPT
+ARENA_DECLINE,RECHAZAR,DECLINE
+ARENA_BACK,VOLVER AL HUB,BACK TO HUB
+ARENA_WON,¡GANASTE!,YOU WON!
+ARENA_LOST,PERDISTE,YOU LOST
+ARENA_PAY,Cobraste ${n},You earned ${n}
+ARENA_KO_BONUS,(+25 % por KO),(+25 % KO bonus)
+ARENA_RANK_CHANGE,Ranking: #{before} → #{after},Rank: #{before} → #{after}
+ARENA_RECORD,"Récord: {record} ({kos} KO)","Record: {record} ({kos} KO)"
+ARENA_ENERGY_AFTER,Energía para la semana que viene: {n},Energy for next week: {n}

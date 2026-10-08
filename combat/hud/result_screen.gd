@@ -84,20 +84,7 @@ func _build(r: FightResult) -> void:
 
 
 func _method_text(r: FightResult) -> String:
-	match r.method:
-		FightResult.Method.KO:
-			return tr("COMBAT_KO")
-		FightResult.Method.TKO:
-			return tr("COMBAT_TKO")
-		FightResult.Method.DOCTOR_STOPPAGE:
-			return tr("RESULT_DOCTOR")
-		FightResult.Method.UNANIMOUS_DECISION:
-			return tr("RESULT_UNANIMOUS")
-		FightResult.Method.SPLIT_DECISION:
-			return tr("RESULT_SPLIT")
-		FightResult.Method.MAJORITY_DECISION:
-			return tr("RESULT_MAJORITY")
-	return tr("RESULT_DRAW_TITLE")
+	return tr(r.method_key())
 
 
 func _label(parent: Control, text: String, size: int, color: Color) -> Label:

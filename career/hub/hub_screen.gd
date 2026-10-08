@@ -117,7 +117,7 @@ func _header() -> Control:
 	var style: FighterStyle = PlayerFighter.find_style(GameState.style_id)
 	var sub := UIStyle.label(tr("HUB_SUBTITLE").format({
 		"style": tr(style.name_key) if style != null else "",
-		"tier": tr("TIER_%d" % GameState.tier)}), 22, UIStyle.MUTED, 5)
+		"tier": tr("TIER_%d" % GameState.tier), "rank": GameState.rank}), 22, UIStyle.MUTED, 5)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	who.add_child(sub)
 	who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -195,6 +195,9 @@ func _on_place(id: StringName) -> void:
 		&"home":
 			_open_simple(tr("PLACE_HOME"), tr("HOME_DESC").format({"energy": WeekActions.REST_ENERGY}),
 					tr("HOME_DO"), _do_rest, true)
+		&"arena":
+			SaveManager.save()
+			SceneRouter.go(SceneRouter.ARENA)
 		_:
 			_show_toast(tr("HUB_SOON"))
 

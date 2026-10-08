@@ -33,3 +33,32 @@ extends Resource
 @export_range(-1.0, 1.0) var wingspan: float = 0.0
 ## Qué tan fácil se corta (0 = nunca, 1 = normal, 2 = piel frágil).
 @export var cut_susceptibility: float = 1.0
+
+const STAT_NAMES: Array[StringName] = [&"power", &"speed", &"cardio", &"chin", &"technique", &"defense"]
+
+
+## Para guardar en JSON: nombre, apodo, color, envergadura y estadísticas.
+## NO guarda el estilo de IA ni el golpe característico (son recursos; quien guarda anota cuál era).
+func to_dict() -> Dictionary:
+	var stats := {}
+	for stat in STAT_NAMES:
+		stats[String(stat)] = int(get(stat))
+	return {
+		"full_name": full_name,
+		"nickname": nickname,
+		"color": color.to_html(false),
+		"wingspan": wingspan,
+		"stats": stats,
+	}
+
+
+static func from_dict(d: Dictionary, default_stat: int = 50) -> FighterData:
+	var f := FighterData.new()
+	f.full_name = str(d.get("full_name", ""))
+	f.nickname = str(d.get("nickname", ""))
+	f.color = Color.html(str(d.get("color", "ffffff")))
+	f.wingspan = clampf(float(d.get("wingspan", 0.0)), -1.0, 1.0)
+	var stats: Dictionary = d.get("stats", {})
+	for stat in STAT_NAMES:
+		f.set(stat, clampi(int(stats.get(String(stat), default_stat)), 1, 100))
+	return f

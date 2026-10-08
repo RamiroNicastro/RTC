@@ -19,6 +19,9 @@ const START_STAT_RATIO: float = 0.6
 const STAT_NAMES: Array[StringName] = [&"power", &"speed", &"cardio", &"chin", &"technique", &"defense"]
 const MAX_ENERGY: int = 100
 const ACTIONS_PER_WEEK: int = 3
+## Puesto inicial en el ranking amateur (1 = el mejor) y el peor posible.
+const START_RANK: int = 30
+const WORST_RANK: int = 40
 
 ## true si hay una carrera cargada (nueva o continuada).
 var active: bool = false
@@ -39,6 +42,12 @@ var energy: int = MAX_ENERGY
 var actions_left: int = ACTIONS_PER_WEEK
 ## Lo que ya se entrenó pero todavía no llegó a un punto entero, por estadística (0 a 1).
 var stat_progress: Dictionary = {}
+## Puesto en el ranking amateur (1 = el mejor).
+var rank: int = START_RANK
+## Ofertas de pelea de esta semana (FightOffer.to_dict). Se generan una vez por semana.
+var offers: Array = []
+## Semana a la que corresponden las ofertas (-1 = ninguna todavía).
+var offers_week: int = -1
 
 
 ## Arranca una carrera desde cero con el peleador que creó el jugador.
@@ -57,6 +66,9 @@ func new_career(player: PlayerFighter) -> void:
 	energy = MAX_ENERGY
 	actions_left = ACTIONS_PER_WEEK
 	stat_progress = {}
+	rank = START_RANK
+	offers = []
+	offers_week = -1
 	active = true
 	changed.emit()
 
@@ -77,17 +89,8 @@ func display_name() -> String:
 
 
 func to_dict() -> Dictionary:
-	var stats := {}
-	for stat in STAT_NAMES:
-		stats[String(stat)] = int(fighter.get(stat))
 	return {
-		"fighter": {
-			"full_name": fighter.full_name,
-			"nickname": fighter.nickname,
-			"color": fighter.color.to_html(false),
-			"wingspan": fighter.wingspan,
-			"stats": stats,
-		},
+		"fighter": fighter.to_dict(),
 		"style_id": String(style_id),
 		"money": money,
 		"week": week,
@@ -96,19 +99,14 @@ func to_dict() -> Dictionary:
 		"energy": energy,
 		"actions_left": actions_left,
 		"stat_progress": stat_progress,
+		"rank": rank,
+		"offers": offers,
+		"offers_week": offers_week,
 	}
 
 
 func from_dict(d: Dictionary) -> void:
-	var f: Dictionary = d.get("fighter", {})
-	fighter = FighterData.new()
-	fighter.full_name = str(f.get("full_name", ""))
-	fighter.nickname = str(f.get("nickname", ""))
-	fighter.color = Color.html(str(f.get("color", PlayerFighter.COLOR.to_html(false))))
-	fighter.wingspan = clampf(float(f.get("wingspan", 0.0)), -1.0, 1.0)
-	var stats: Dictionary = f.get("stats", {})
-	for stat in STAT_NAMES:
-		fighter.set(stat, clampi(int(stats.get(String(stat), 30)), 1, 100))
+	fighter = FighterData.from_dict(d.get("fighter", {}), 30)
 	style_id = StringName(str(d.get("style_id", "balanced")))
 	money = int(d.get("money", START_MONEY))
 	week = maxi(0, int(d.get("week", 0)))
@@ -124,6 +122,9 @@ func from_dict(d: Dictionary) -> void:
 	var progress: Dictionary = d.get("stat_progress", {})
 	for stat in STAT_NAMES:
 		stat_progress[String(stat)] = clampf(float(progress.get(String(stat), 0.0)), 0.0, 0.999)
+	rank = clampi(int(d.get("rank", START_RANK)), 1, WORST_RANK)
+	offers = d.get("offers", [])
+	offers_week = int(d.get("offers_week", -1))
 	active = true
 	changed.emit()
 

@@ -1,0 +1,12 @@
+{
+	"first_names": ["Juan", "Matías", "Lucas", "Diego", "Facundo", "Nicolás", "Gonzalo", "Brian", "Maxi", "Leandro",
+		"Cristian", "Emanuel", "Franco", "Agustín", "Walter", "Hernán", "Sergio", "Pablo", "Damián", "Jonathan",
+		"Ezequiel", "Rodrigo", "Marcos", "Tomás", "Ariel", "Germán", "Iván", "Julio", "Omar", "Ramón"],
+	"last_names": ["González", "Rodríguez", "Fernández", "López", "Martínez", "Pérez", "Gómez", "Díaz", "Sosa", "Romero",
+		"Álvarez", "Torres", "Ruiz", "Benítez", "Acosta", "Medina", "Herrera", "Aguirre", "Giménez", "Molina",
+		"Castro", "Ortiz", "Silva", "Núñez", "Luna", "Cabrera", "Ríos", "Vega", "Ferreyra", "Correa"],
+	"nicknames": ["El Gato", "Tanque", "La Bestia", "El Zurdo", "Chispa", "El Ruso", "Pitbull", "El Flaco", "Topo",
+		"Huracán", "El Tigre", "Mazazo", "La Roca", "El Indio", "Rayo", "Cañón", "El Pibe de Oro", "Lobo",
+		"El Chino", "Martillito", "Toro Chico", "El Mudo", "Látigo", "Pantera", "El Cuervo", "Dinamita",
+		"El Turco", "Granito", "Viborita", "El Cacique"]
+}

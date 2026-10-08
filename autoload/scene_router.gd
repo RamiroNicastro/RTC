@@ -6,6 +6,7 @@ extends Node
 const TITLE: String = "res://ui/title/title_screen.tscn"
 const CREATE_FIGHTER: String = "res://ui/create_fighter/create_fighter_screen.tscn"
 const HUB: String = "res://career/hub/hub_screen.tscn"
+const ARENA: String = "res://career/arena/arena_screen.tscn"
 const ARCADE: String = "res://modes/arcade/arcade_run.tscn"
 const PRACTICE: String = "res://debug/combat_sandbox.tscn"
 
