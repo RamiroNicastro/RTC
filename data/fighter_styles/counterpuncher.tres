@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FighterStyle" format=3]
+
+[ext_resource type="Script" path="res://fighter_model/fighter_style.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+id = &"counterpuncher"
+name_key = "STYLE_COUNTERPUNCHER"
+desc_key = "STYLE_COUNTERPUNCHER_DESC"
+power = 45
+speed = 55
+cardio = 35
+chin = 35
+technique = 60
+defense = 70

@@ -5,6 +5,8 @@ extends Control
 
 const ARCADE_SCENE: String = "res://modes/arcade/arcade_run.tscn"
 const PRACTICE_SCENE: String = "res://debug/combat_sandbox.tscn"
+const CREATE_SCENE: String = "res://ui/create_fighter/create_fighter_screen.tscn"
+const TITLE_SCENE: String = "res://ui/title/title_screen.tscn"
 
 var _time: float = 0.0
 var _title: Label
@@ -29,9 +31,15 @@ func _ready() -> void:
 	box.add_child(UIStyle.label(tr("GAME_SUBTITLE"), 26, UIStyle.MUTED, 6))
 	box.add_child(Control.new())
 
-	var arcade := UIStyle.button(tr("MENU_ARCADE"), func() -> void: get_tree().change_scene_to_file(ARCADE_SCENE))
+	var arcade := UIStyle.button(tr("MENU_ARCADE"), _go_arcade)
 	box.add_child(arcade)
+	box.add_child(UIStyle.button(tr("MENU_EDIT_FIGHTER"), _go_create.bind(TITLE_SCENE), false))
 	box.add_child(UIStyle.button(tr("MENU_PRACTICE"), func() -> void: get_tree().change_scene_to_file(PRACTICE_SCENE), false))
+
+	if PlayerFighter.exists():
+		var me := PlayerFighter.load_fighter()
+		box.add_child(UIStyle.label(tr("MENU_YOUR_FIGHTER").format({"name": me.display_name(tr("ARCADE_YOU")),
+				"style": tr(me.style().name_key)}), 24, Color(0.4, 0.7, 1.0), 5))
 
 	var rec := ArcadeRecords.load_records()
 	var rec_text: String = tr("MENU_RECORD").format({"score": rec.best_score, "titles": rec.championships})
@@ -44,6 +52,19 @@ func _ready() -> void:
 		if c is Control:
 			UIStyle.pop_in(c, i * 0.06)
 			i += 1
+
+
+## La primera vez, antes del Arcade se crea el peleador.
+func _go_arcade() -> void:
+	if PlayerFighter.exists():
+		get_tree().change_scene_to_file(ARCADE_SCENE)
+	else:
+		_go_create(ARCADE_SCENE)
+
+
+func _go_create(then: String) -> void:
+	CreateFighterScreen.next_scene = then
+	get_tree().change_scene_to_file(CREATE_SCENE)
 
 
 func _process(delta: float) -> void:

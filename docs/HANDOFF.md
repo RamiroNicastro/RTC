@@ -64,6 +64,8 @@ data/moves/                    golpes .tres (jab, power, jab_body, power_body) y
 data/ai_profiles/              pressure.tres, outboxer.tres, counter.tres
 data/rivals/arcade/            fichas FighterData de los 6 rivales del arcade (estadísticas, estilo, golpe propio)
 fighter_model/                 FighterData (ficha: 6 estadísticas 1-100 + envergadura) y StatFormulas (ficha → FighterSetup; 50 = valores de hoy)
+                               FighterStyle (estilos del jugador, en data/fighter_styles/) y PlayerFighter (tu peleador, JSON en user://)
+ui/create_fighter/             pantalla "Crear peleador" (nombre, apodo, estilo con barras de estadísticas)
 modes/arcade/                  Modo Arcade: arcade_run (flujo), arcade_rivals, arcade_score, arcade_records
 ui/                            ui_style.gd (fuente y botones) y title/ (pantalla de título, escena principal)
 debug/                         sandbox de práctica con overlay de debug (teclas en la cabecera del script)

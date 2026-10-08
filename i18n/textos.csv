@@ -113,3 +113,27 @@ HUD_CUT,CORTE {pct} %,CUT {pct} %
 COMBAT_DOCTOR,¡PARA EL MÉDICO!,DOCTOR STOPS IT!
 RESULT_DOCTOR,PARADA MÉDICA,DOCTOR STOPPAGE
 SCORE_DOCTOR,Parada médica,Doctor stoppage
+MENU_EDIT_FIGHTER,MI PELEADOR,MY FIGHTER
+MENU_YOUR_FIGHTER,"Tu peleador: {name}  ·  {style}","Your fighter: {name}  ·  {style}"
+CREATE_TITLE,CREÁ TU PELEADOR,CREATE YOUR FIGHTER
+CREATE_NAME,Nombre,Name
+CREATE_NICKNAME,Apodo,Nickname
+CREATE_STYLE,ELEGÍ TU ESTILO,CHOOSE YOUR STYLE
+CREATE_DONE,LISTO,DONE
+CREATE_BACK,VOLVER,BACK
+STAT_POWER,Potencia,Power
+STAT_SPEED,Velocidad,Speed
+STAT_CARDIO,Cardio,Cardio
+STAT_CHIN,Mentón,Chin
+STAT_TECHNIQUE,Técnica,Technique
+STAT_DEFENSE,Defensa,Defense
+STYLE_BALANCED,EQUILIBRADO,BALANCED
+STYLE_BALANCED_DESC,"Un poco de todo, sin puntos débiles. Ideal para aprender.","A bit of everything, no weak spots. Great for learning."
+STYLE_PUNCHER,PEGADOR,PUNCHER
+STYLE_PUNCHER_DESC,"Mano pesada y buen mentón. Cada fuerte duele, pero es lento y gasta de más.","Heavy hands and a good chin. Every power shot hurts, but slow and wasteful."
+STYLE_STYLIST,ESTILISTA,STYLIST
+STYLE_STYLIST_DESC,"Rápido y prolijo: pega primero y se va. Pega poco y no aguanta mucho castigo.","Fast and clean: hits first and gets out. Light hands and a fragile chin."
+STYLE_BRAWLER,FAJADOR,BRAWLER
+STYLE_BRAWLER_DESC,"Aguanta todo y no se cansa nunca. Le falta velocidad y técnica: gana desgastando.","Takes everything and never tires. Lacks speed and technique: wins by grinding."
+STYLE_COUNTERPUNCHER,CONTRAGOLPEADOR,COUNTERPUNCHER
+STYLE_COUNTERPUNCHER_DESC,"Guardia de hierro y buen esquive: espera el error y castiga. Poco aire y mentón frágil.","Iron guard and slick dodges: waits for mistakes and punishes. Low stamina, fragile chin."

@@ -54,6 +54,11 @@ static func button(text: String, on_pressed: Callable, primary: bool = true) -> 
 	return b
 
 
+## Fondo de una opción elegible (por ejemplo, los estilos): roja con borde dorado si está elegida.
+static func choice_box(selected: bool) -> StyleBoxFlat:
+	return _box(RED, GOLD) if selected else _box(Color(0.22, 0.24, 0.3))
+
+
 static func panel() -> PanelContainer:
 	var p := PanelContainer.new()
 	var box := StyleBoxFlat.new()

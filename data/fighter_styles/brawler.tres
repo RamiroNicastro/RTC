@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FighterStyle" format=3]
+
+[ext_resource type="Script" path="res://fighter_model/fighter_style.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+id = &"brawler"
+name_key = "STYLE_BRAWLER"
+desc_key = "STYLE_BRAWLER_DESC"
+power = 55
+speed = 35
+cardio = 65
+chin = 70
+technique = 30
+defense = 45

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="FighterStyle" format=3]
+
+[ext_resource type="Script" path="res://fighter_model/fighter_style.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+id = &"stylist"
+name_key = "STYLE_STYLIST"
+desc_key = "STYLE_STYLIST_DESC"
+power = 35
+speed = 65
+cardio = 45
+chin = 35
+technique = 65
+defense = 55

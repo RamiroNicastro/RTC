@@ -20,6 +20,8 @@ var _ladder: Array[ArcadeRivals.Rival] = ArcadeRivals.ladder()
 var _stage: int = 0
 var _score: int = 0
 var _records: ArcadeRecords = ArcadeRecords.load_records()
+## El peleador del jugador (nombre, apodo y estilo; se crea en la pantalla "Crear peleador").
+var _me: PlayerFighter = PlayerFighter.load_fighter()
 var _combat: CombatScene
 var _ui: CanvasLayer
 var _bg: ColorRect
@@ -51,7 +53,11 @@ func _show_vs() -> void:
 	var vs := HBoxContainer.new()
 	vs.alignment = BoxContainer.ALIGNMENT_CENTER
 	vs.add_theme_constant_override("separation", 40)
-	vs.add_child(UIStyle.label(tr("ARCADE_YOU"), 64, Color(0.4, 0.7, 1.0), 12))
+	var me_box := VBoxContainer.new()
+	var me_big: String = _me.nickname if not _me.nickname.is_empty() else _me.display_name(tr("ARCADE_YOU"))
+	me_box.add_child(UIStyle.label(me_big, 64, Color(0.4, 0.7, 1.0), 12))
+	me_box.add_child(UIStyle.label(tr(_me.style().name_key), 30, UIStyle.TEXT))
+	vs.add_child(me_box)
 	vs.add_child(UIStyle.label("VS", 80, UIStyle.GOLD, 14))
 	var rival_box := VBoxContainer.new()
 	rival_box.add_child(UIStyle.label("\"%s\"" % rival.data.nickname, 64, rival.data.color.lightened(0.2), 12))
@@ -76,10 +82,9 @@ func _show_vs() -> void:
 func _start_fight() -> void:
 	_clear()
 	var rival: ArcadeRivals.Rival = _ladder[_stage]
-	var player := FighterSetup.new()
-	player.display_name = tr("ARCADE_YOU")
+	var player := StatFormulas.build_setup(_me.to_fighter_data())
+	player.display_name = _me.display_name(tr("ARCADE_YOU"))
 	player.controller_type = FighterSetup.ControllerType.PLAYER
-	player.color = Color(0.2, 0.55, 0.9)
 	var enemy := StatFormulas.build_setup(rival.data)
 	enemy.display_name = "\"%s\" %s" % [rival.data.nickname, rival.data.full_name.get_slice(" ", 1)]
 	enemy.controller_type = FighterSetup.ControllerType.AI
