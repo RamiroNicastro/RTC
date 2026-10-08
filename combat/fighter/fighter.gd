@@ -27,7 +27,7 @@ const FLASH_TICKS: int = 5
 
 ## --- Stamina (valores iniciales; se balancean en el Hito H) ---
 ## Ticks sin regenerar después de gastar stamina.
-const REGEN_DELAY_TICKS: int = 40
+const REGEN_DELAY_TICKS: int = 30
 ## Multiplicadores de regeneración según lo que esté haciendo.
 const REGEN_MULT_RETREAT: float = 1.0
 const REGEN_MULT_ADVANCE: float = 0.4
@@ -79,7 +79,7 @@ const KNOCKBACK_STEP: float = 0.3
 ## un toque corto (en el celular dura 80–120 ms) se suelta antes de este tick y sale un fuerte normal, sin demora.
 const CHARGE_HOLD_TICK: int = 8
 ## Stamina que cuesta cada tick de carga.
-const CHARGE_STAMINA_PER_TICK: float = 0.2
+const CHARGE_STAMINA_PER_TICK: float = 0.12
 
 ## --- Golpe estrella y combo 1-2 (ampliación pedida por la persona) ---
 ## Cuánto llena el medidor de estrella (0–1) cada cosa bien hecha, y cuánto baja al recibir un fuerte.

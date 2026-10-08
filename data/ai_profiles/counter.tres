@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_profile")
 style_name_key = "AI_STYLE_COUNTER"
-reaction_ticks = 10
+reaction_ticks = 6
 decision_interval_ticks = 7
 aggression = 0.15
 approach_chance = 1.0

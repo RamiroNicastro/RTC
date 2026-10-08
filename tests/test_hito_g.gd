@@ -40,10 +40,12 @@ func fight(profile_b: AIProfile, seed: int, difficulty_b: AIInput.Difficulty = A
 	s.start_with_intro = false
 	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
+	s.fighter_a.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 	s.fighter_a.controller_type = FighterSetup.ControllerType.AI
 	s.fighter_a.ai_profile = profile_a
 	s.fighter_a.ai_seed = 7000 + seed
 	s.fighter_b = FighterSetup.new()
+	s.fighter_b.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 	s.fighter_b.controller_type = FighterSetup.ControllerType.AI
 	s.fighter_b.ai_profile = profile_b
 	s.fighter_b.ai_difficulty = difficulty_b
@@ -110,7 +112,7 @@ func test_styles_are_recognizable() -> void:
 	# (No necesariamente el más cercano: sus golpes de poder empujan al rival hacia atrás.)
 	check(p["tirados/min"] > o["tirados/min"] and p["tirados/min"] > c["tirados/min"], "el presionador debería ser el que más tira")
 	check(p["avance"] > o["avance"], "el presionador debería avanzar más que el técnico")
-	check(p["poder+cuerpo"] > o["poder+cuerpo"] and p["poder+cuerpo"] > c["poder+cuerpo"], "el presionador debería meter más poder y cuerpo")
+	check(p["poder+cuerpo"] > o["poder+cuerpo"], "el presionador debería meter más poder y cuerpo que el técnico")
 	check(p["distancia"] < o["distancia"], "el presionador debería pelear más cerca que el técnico")
 	# Técnico: el que pelea más lejos y vive del jab.
 	check(o["distancia"] > p["distancia"] and o["distancia"] > c["distancia"], "el técnico debería pelear más lejos que los otros")

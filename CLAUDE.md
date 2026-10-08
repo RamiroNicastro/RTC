@@ -61,12 +61,34 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
   - **golpe estrella:** un medidor que llenan los counters, los fuertes limpios y los esquives. Lleno, el próximo fuerte pega ×1,6, rompe la guardia desde cualquier distancia y empuja ×1,8;
   - **combo 1-2 adelantado:** un jab que conecta hace que el fuerte siguiente arranque 6 ticks antes, durante 24 ticks;
   - **cuerpo en el táctil:** se desliza hacia abajo sobre JAB o FUERTE, con una ventana de 50 ms. Se sacó el botón CUERPO.
+- **Ajuste tras la prueba de la persona ("la stamina se termina muy rápido", "está difícil"):**
+  - stamina más fluida: jab 4,5 (+2,5 si falla), fuerte 13 (+5), esquive 6, recuperación de 18 por segundo con 0,5 s de espera y fatiga del 10 %;
+  - para compensar, la **salud base pasó a 160**. Con eso la mitad de las peleas termina por KO o TKO y todas llegan al round 3. Las pruebas fijan la salud en 100 para que sus cuentas sigan valiendo;
+  - Fácil y Normal son más accesibles: más reacción, menos defensa y castigo, menos lectura. El contragolpeador conserva reflejos rápidos (reacción 6) para que su esquive siga siendo su sello.
+- **Sangre visual** (la persona busca realismo): salpicaduras en los golpes fuertes a la cabeza, manchas en la lona y la cara marcada según el daño profundo. Se apaga con `CombatFX.blood_enabled`.
+- **Cortes con efecto en la pelea** (sangrado, el médico que para la pelea): van en la **pasada de realismo**, inmediatamente después de cerrar el prototipo de combate. Es la próxima gran tarea de diseño; la persona tomó como referencia el juego "Bruisers 2D Boxing".
 - **Game feel:** se apaga con `FightSetup.game_feel = false` (todas las pruebas lo hacen, para contar ticks exactos).
+
+## Trabajo en equipo: varias sesiones de Claude sobre el mismo repo
+
+El repo está en GitHub (`origin`). Lo usan dos sesiones de Claude: una local, en la PC de la persona, con Godot y Windows, y otra desde Claude Code, que puede correr en la nube con Linux. Para no pisarse:
+
+1. **Al empezar:** `git pull --rebase`. Leer este archivo, sobre todo "Estado actual" y "En curso".
+2. **Anotar qué se va a hacer** en "En curso" (más abajo), con el nombre de la sesión y los archivos. Commitear y pushear esa nota antes de empezar, si el trabajo es largo.
+3. **Trabajar en partes chicas:** un hito o una mejora por vez. **No dejar cambios sin commitear** al terminar.
+4. **Antes de pushear:** correr `bash tests/run_all.sh`; todo tiene que dar OK. Si no hay Godot, ver `tools/install_godot_linux.sh` y la variable `GODOT`.
+5. **Pushear al terminar** (`git push`) y borrar la nota de "En curso".
+6. **Si `git pull --rebase` da conflicto:** resolverlo con cuidado (nunca `--force`) y volver a correr las pruebas.
+7. **Si las dos sesiones necesitan los mismos archivos al mismo tiempo**, usar una rama (`git checkout -b <tema>`) y unirla a `main` cuando las pruebas den OK.
+
+### En curso
+- (nada)
 
 ## Forma de trabajo
 
 - **Un hito por sesión.** Un hito se commitea solo después de que la persona lo probó en Godot y cumple el criterio de la sección 16 del plan.
 - Al terminar un hito, se actualiza "Estado actual" en este archivo.
+- **Respaldo en GitHub:** el repo privado es https://github.com/RamiroNicastro/RTC (remoto `origin`, rama `main`). Después de cada commit se hace `git push` para no perder trabajo.
 
 ## Cómo validar sin abrir el editor (desde Git Bash)
 

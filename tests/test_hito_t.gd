@@ -46,8 +46,10 @@ func _physics_process(_delta: float) -> bool:
 			s.start_with_intro = false
 			s.game_feel = false
 			s.fighter_a = FighterSetup.new()
+			s.fighter_a.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 			s.fighter_a.controller_type = FighterSetup.ControllerType.PLAYER
 			s.fighter_b = FighterSetup.new()
+			s.fighter_b.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 			s.start_distance = 140.0
 			combat.start(s)
 			tc.visible = true
@@ -84,15 +86,21 @@ func _physics_process(_delta: float) -> bool:
 			var moved: float = a.position.x - float(get_meta("x0"))
 			print("◀ durante 30 ticks → se movió %.1f" % moved)
 			check(moved < -50.0, "◀ debería mover hacia la izquierda")
+		124:
+			var started: Array = []
+			set_meta("started", started)
+			a.attack_started.connect(func(m: MoveData) -> void: started.append(m.id))
 		125:
 			touch(5, tc._jab, true)      # JAB…
+			drag(5, tc._jab, Vector2(0, 60))  # arrastre en el mismo instante (no depende de la velocidad de la PC)
 		126:
 			drag(5, tc._jab, Vector2(0, 60))  # …y deslizar hacia abajo = jab al cuerpo
-		129:
+		128:
 			touch(5, tc._jab, false)
-			var id: StringName = a.current_move.id if a.current_move != null else &"-"
-			print("JAB deslizando hacia abajo → golpe %s" % id)
-			check(id == &"jab_cuerpo", "deslizar hacia abajo sobre JAB debería pegar al cuerpo")
+		136:
+			var started: Array = get_meta("started")
+			print("JAB deslizando hacia abajo → golpes que arrancaron: %s" % [started])
+			check(&"jab_cuerpo" in started and not (&"jab" in started), "deslizar hacia abajo sobre JAB debería pegar al cuerpo")
 			print("RESULTADO: ", "OK" if failures.is_empty() else "FALLÓ:\n  " + "\n  ".join(failures))
 			quit()
 	return false

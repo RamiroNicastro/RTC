@@ -45,8 +45,10 @@ func new_combat(round_seconds: float = 60.0, rounds: int = 3, gap: float = 50.0)
 	s.start_with_intro = false
 	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
+	s.fighter_a.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 	s.fighter_a.display_name = "A"
 	s.fighter_b = FighterSetup.new()
+	s.fighter_b.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 	s.fighter_b.display_name = "B"
 	s.start_distance = gap + 90.0
 	s.rounds = rounds

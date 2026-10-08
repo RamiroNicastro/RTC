@@ -22,14 +22,14 @@ enum ControllerType { PLAYER, DUMMY, AI }
 @export var body_height: float = 250.0
 
 @export_group("Salud")
-@export var max_health: int = 100
+@export var max_health: int = 160
 
 @export_group("Stamina")
 @export var max_stamina: float = 100.0
 ## Stamina por segundo que se recupera quieto o retrocediendo.
-@export var stamina_regen: float = 14.0
+@export var stamina_regen: float = 18.0
 ## Fracción de la stamina gastada que se vuelve FATIGA (baja el máximo hasta el fin del round).
-@export var fatigue_ratio: float = 0.15
+@export var fatigue_ratio: float = 0.1
 ## La fatiga nunca baja el máximo más que esta fracción del máximo base.
 @export var max_fatigue_ratio: float = 0.25
 ## Los golpes al cuerpo nunca bajan el máximo más que esta fracción del máximo base.
@@ -47,7 +47,7 @@ enum ControllerType { PLAYER, DUMMY, AI }
 @export var dodge_invuln_ticks: int = 10
 ## Ticks expuesto si el esquive no esquivó nada.
 @export var dodge_recovery_ticks: int = 12
-@export var dodge_stamina_cost: float = 8.0
+@export var dodge_stamina_cost: float = 6.0
 ## Después de un esquive exitoso, ticks en los que el siguiente golpe es un COUNTER.
 @export var counter_window_ticks: int = 30
 @export var counter_damage_mult: float = 1.5

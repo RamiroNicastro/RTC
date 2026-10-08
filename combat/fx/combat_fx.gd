@@ -13,6 +13,11 @@ const SPARK_COLOR_COUNTER := Color(1.0, 0.8, 0.15)
 
 ## Golpes seguidos sin recibir para mostrar el cartel de combo.
 const COMBO_MIN: int = 3
+## Sangre visual (salpicaduras, manchas en la lona, cara marcada). Opción para apagarla más adelante.
+static var blood_enabled: bool = true
+const BLOOD_COLOR := Color(0.6, 0.02, 0.04)
+## Manchas en la lona como máximo (las más viejas se borran).
+const MAX_STAINS: int = 40
 
 
 class Particle:
@@ -22,7 +27,7 @@ class Particle:
 	var max_life: float
 	var color: Color
 	var size: float
-	var kind: int  # 0 = chispa (línea), 1 = anillo, 2 = polvo (círculo)
+	var kind: int  # 0 = chispa (línea), 1 = anillo, 2 = polvo (círculo), 3 = gota de sangre
 
 
 class FloatText:
@@ -35,6 +40,8 @@ class FloatText:
 
 
 var _particles: Array[Particle] = []
+## Manchas en la lona: x, ancho, transparencia.
+var _stains: Array[Vector3] = []
 var _popups: Array[FloatText] = []
 var _rng := RandomNumberGenerator.new()
 var _combo_owner: Fighter
@@ -80,6 +87,8 @@ func on_hit(info: HitInfo) -> void:
 			_burst(point, -d.facing, strength, color)
 			_ring(point, 30.0 + strength * 60.0, color)
 			_track_combo(info.attacker)
+			if info.zone == MoveData.Zone.HEAD and (strength >= 0.75 or info.counter or info.star):
+				_blood_splash(point, -d.facing, strength)
 			# Los carteles del jugador en dorado/blanco; los del rival en rojo.
 			var mine: bool = info.attacker == _player
 			var big: Color = SPARK_COLOR_COUNTER if mine else Color(1.0, 0.4, 0.3)
@@ -201,6 +210,12 @@ func _process(delta: float) -> void:
 		p.vel *= 1.0 - minf(1.0, 6.0 * delta)
 		if p.kind == 2:
 			p.vel.y += 300.0 * delta
+		elif p.kind == 3:
+			p.vel.y += 1400.0 * delta
+			# Al tocar la lona queda una mancha.
+			if p.pos.y >= -2.0 and p.vel.y > 0.0:
+				_add_stain(p.pos.x, p.size)
+				p.life = 0.0
 	_particles = _particles.filter(func(p: Particle) -> bool: return p.life > 0.0)
 	for p in _popups:
 		p.life -= delta
@@ -212,6 +227,7 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	_draw_stains()
 	_draw_sweet_spot_marker()
 	for f in [_player, _rival]:
 		if f != null:
@@ -228,6 +244,8 @@ func _draw() -> void:
 				draw_arc(p.pos, p.size * (1.0 - t * 0.7), 0.0, TAU, 32, c, 6.0 * t + 1.0, true)
 			2:
 				draw_circle(p.pos, p.size * (1.4 - t * 0.4), c)
+			3:
+				draw_circle(p.pos, p.size, Color(BLOOD_COLOR, 0.95))
 	var font: Font = UIStyle.font()
 	for p in _popups:
 		var t: float = p.life / p.max_life
@@ -301,3 +319,39 @@ func _draw_star_ready(f: Fighter) -> void:
 		pts.append(center + Vector2.from_angle(-PI / 2.0 + i * TAU / 10.0) * radius)
 	draw_colored_polygon(pts, Color(1.0, 0.85, 0.2))
 	draw_polyline(pts + PackedVector2Array([pts[0]]), Color(0.3, 0.2, 0.0), 3.0, true)
+
+
+## Salpicadura de sangre en un golpe fuerte a la cabeza: gotas que vuelan y caen a la lona.
+func _blood_splash(point: Vector2, dir: int, strength: float) -> void:
+	if not blood_enabled:
+		return
+	var count: int = 4 + roundi(strength * 8.0)
+	for i in count:
+		var p := Particle.new()
+		p.pos = point
+		# Sale hacia `dir` (para atrás del golpeado) y hacia arriba; después la gravedad la baja.
+		var angle: float = _rng.randf_range(0.1, 1.2)
+		var speed: float = _rng.randf_range(180.0, 520.0) * (0.7 + strength * 0.4)
+		p.vel = Vector2(dir * cos(angle) * speed, -sin(angle) * speed * 0.9 - 120.0)
+		p.max_life = 1.6
+		p.life = p.max_life
+		p.color = BLOOD_COLOR
+		p.size = _rng.randf_range(2.5, 5.5)
+		p.kind = 3
+		_particles.append(p)
+
+
+func _add_stain(x: float, size: float) -> void:
+	_stains.append(Vector3(x, size * _rng.randf_range(2.0, 3.5), _rng.randf_range(0.55, 0.85)))
+	while _stains.size() > MAX_STAINS:
+		_stains.pop_front()
+
+
+## Manchas aplastadas sobre la lona (quedan toda la pelea).
+func _draw_stains() -> void:
+	if not blood_enabled:
+		return
+	for s in _stains:
+		draw_set_transform(Vector2(s.x, 6.0), 0.0, Vector2(1.0, 0.3))
+		draw_circle(Vector2.ZERO, s.y, Color(0.45, 0.02, 0.04, s.z))
+	draw_set_transform(Vector2.ZERO)

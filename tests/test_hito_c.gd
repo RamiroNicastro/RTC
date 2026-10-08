@@ -52,7 +52,9 @@ func new_combat(gap: float) -> Array:
 	s.start_with_intro = false
 	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
+	s.fighter_a.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 	s.fighter_b = FighterSetup.new()
+	s.fighter_b.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 	s.start_distance = gap + 90.0
 	combat.start(s)
 	var sa := Scripted.new()
@@ -85,7 +87,7 @@ func test_spam_drains_stamina() -> void:
 			step(combat)
 		jabs += 1
 	print("Spam de jabs al aire: cansado después de %d jabs (stamina %.1f)" % [jabs, a.stamina])
-	check(a.is_tired() and jabs <= 8, "spamear jabs al aire debería cansar en 8 jabs o menos")
+	check(a.is_tired() and jabs >= 8 and jabs <= 12, "spamear jabs al aire debería cansar, pero no tan rápido (entre 8 y 12 jabs)")
 	sa.jab_next = true
 	var startup := 0
 	for i in 15:
@@ -102,12 +104,12 @@ func test_regen() -> void:
 	var combat: CombatScene = r[0]
 	var a := combat.fighter_a
 	a.spend_stamina(50.0)
-	step(combat, 40)
+	step(combat, Fighter.REGEN_DELAY_TICKS)
 	var after_delay: float = a.stamina
 	step(combat, 60)
-	print("Regeneración: %.1f tras la pausa, %.1f un segundo después (esperado 50 → 64)" % [after_delay, a.stamina])
+	print("Regeneración: %.1f tras la pausa, %.1f un segundo después (esperado 50 → 68)" % [after_delay, a.stamina])
 	check(is_equal_approx(after_delay, 50.0), "no debería regenerar durante la pausa")
-	check(absf(a.stamina - 64.0) < 0.5, "debería regenerar 14 por segundo quieto")
+	check(absf(a.stamina - 68.0) < 0.5, "debería regenerar 18 por segundo quieto")
 	dispose(combat)
 
 
@@ -206,10 +208,10 @@ func test_fatigue() -> void:
 	var combat: CombatScene = r[0]
 	var a := combat.fighter_a
 	a.spend_stamina(40.0)
-	print("Fatiga: gastar 40 → fatiga %.1f, máximo %.1f (esperado 6 y 94)" % [a.fatigue, a.max_stamina])
-	check(is_equal_approx(a.fatigue, 6.0) and is_equal_approx(a.max_stamina, 94.0), "el 15 % del gasto debería ser fatiga")
+	print("Fatiga: gastar 40 → fatiga %.1f, máximo %.1f (esperado 4 y 96)" % [a.fatigue, a.max_stamina])
+	check(is_equal_approx(a.fatigue, 4.0) and is_equal_approx(a.max_stamina, 96.0), "el 10 % del gasto debería ser fatiga")
 	step(combat, 600)
-	check(is_equal_approx(a.stamina, 94.0), "la stamina se recupera solo hasta el máximo con fatiga")
+	check(is_equal_approx(a.stamina, 96.0), "la stamina se recupera solo hasta el máximo con fatiga")
 	for i in 20:
 		a.spend_stamina(50.0)
 	print("Fatiga con tope: %.1f (tope 25), máximo %.1f" % [a.fatigue, a.max_stamina])

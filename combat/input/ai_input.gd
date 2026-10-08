@@ -12,10 +12,11 @@ extends FighterController
 enum Difficulty { EASY, NORMAL, HARD }
 
 ## Ajustes de dificultad encima del perfil (Normal es un poco más accesible que el perfil "puro").
-const EASY_EXTRA_REACTION_TICKS: int = 6
-const EASY_DEFENSE_MULT: float = 0.7
-const NORMAL_EXTRA_REACTION_TICKS: int = 3
-const NORMAL_DEFENSE_MULT: float = 0.85
+const EASY_EXTRA_REACTION_TICKS: int = 10
+const EASY_DEFENSE_MULT: float = 0.5
+const NORMAL_EXTRA_REACTION_TICKS: int = 2
+const NORMAL_DEFENSE_MULT: float = 0.7
+const NORMAL_DODGE_MULT: float = 0.9
 const HARD_REACTION_REDUCTION_TICKS: int = 4
 const HARD_DEFENSE_MULT: float = 1.2
 const MIN_REACTION_TICKS: int = 6
@@ -28,7 +29,9 @@ var reaction_ticks: int = 12
 ## Cuántos golpes del rival recuerda para leer sus patrones.
 const READ_MEMORY: int = 6
 ## Con lectura completa (rival 100 % predecible y read_skill 1), reacciona estos ticks antes.
-const READ_MAX_ANTICIPATION_TICKS: int = 10
+const READ_MAX_ANTICIPATION_TICKS: int = 16
+## Retraso mínimo al anticipar un golpe leído (sin esto, en Difícil el retraso daba negativo).
+const MIN_READ_DELAY_TICKS: int = 3
 ## Con lectura completa, cuánto suma a la probabilidad de defenderse.
 const READ_MAX_DEFENSE_BONUS: float = 0.45
 
@@ -82,12 +85,15 @@ func configure(base_profile: AIProfile, rng_seed: int, ai_difficulty: Difficulty
 			profile.block_chance *= EASY_DEFENSE_MULT
 			profile.dodge_chance *= EASY_DEFENSE_MULT
 			profile.punish_chance *= EASY_DEFENSE_MULT
-			profile.read_skill *= 0.5
+			profile.read_skill *= 0.3
+			profile.aggression *= 0.75
 		Difficulty.NORMAL:
 			reaction_ticks += NORMAL_EXTRA_REACTION_TICKS
 			profile.block_chance *= NORMAL_DEFENSE_MULT
-			profile.dodge_chance *= NORMAL_DEFENSE_MULT
+			# El esquive casi no se toca: es el sello del contragolpeador (si no, pierde su estilo).
+			profile.dodge_chance *= NORMAL_DODGE_MULT
 			profile.punish_chance *= NORMAL_DEFENSE_MULT
+			profile.read_skill *= 0.6
 		Difficulty.HARD:
 			reaction_ticks = maxi(MIN_REACTION_TICKS, reaction_ticks - HARD_REACTION_REDUCTION_TICKS)
 			profile.block_chance = minf(1.0, profile.block_chance * HARD_DEFENSE_MULT)
@@ -245,14 +251,16 @@ func _choose_attack(cmd: FighterCommand, me: Fighter, seen: Snapshot, gap: float
 func _react_to_incoming(me: Fighter, opponent: Fighter) -> void:
 	var predicted: StringName = _predicted_move()
 	var read: float = _read_level(predicted) * profile.read_skill
-	var anticipation: int = roundi(read * READ_MAX_ANTICIPATION_TICKS)
+	# Nunca menos de MIN_READ_DELAY_TICKS de retraso: ni leyendo a la perfección es instantánea.
+	var anticipation: int = mini(roundi(read * READ_MAX_ANTICIPATION_TICKS), reaction_ticks - MIN_READ_DELAY_TICKS)
 	var delay: int = reaction_ticks
 	var view: Snapshot = _history[0]
 	if anticipation > 0:
-		var fast: Snapshot = _history[maxi(0, _history.size() - 1 - (reaction_ticks - anticipation))]
+		var fast_delay: int = reaction_ticks - anticipation
+		var fast: Snapshot = _history[clampi(_history.size() - 1 - fast_delay, 0, _history.size() - 1)]
 		if _is_winding_up(fast) and fast.move_id == predicted:
 			view = fast
-			delay = reaction_ticks - anticipation
+			delay = fast_delay
 	if not _is_winding_up(view):
 		return
 	# Si ve que lo está CARGANDO, cancela lo que iba a hacer y vuelve a reaccionar cuando lo suelte.

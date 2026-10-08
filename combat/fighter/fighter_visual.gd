@@ -816,6 +816,38 @@ func _draw_head(p: Pose, skin: Color, hair: Color) -> void:
 			if f.state == Fighter.State.ATTACKING or f.charging:
 				brow_b -= up * r * 0.12  # ceño fruncido al pegar
 	_tri_segment(brow_a, brow_b, 3.0, ink)
+	_draw_face_damage(p, r, up, fwd, eye, alpha)
+
+
+## Cara marcada por el daño PROFUNDO (la salud máxima perdida): moretón, sangre en la nariz,
+## ojo hinchado y corte en la ceja, a medida que la pelea se pone dura. Solo visual.
+## Se apaga con CombatFX.blood_enabled = false.
+func _draw_face_damage(p: Pose, r: float, up: Vector2, fwd: Vector2, eye: Vector2, alpha: float) -> void:
+	var f: Fighter = _fighter
+	if not CombatFX.blood_enabled or f.base_max_health <= 0:
+		return
+	var dmg: float = 1.0 - float(f.max_health) / float(f.base_max_health)
+	if dmg <= 0.05:
+		return
+	var bruise := Color(0.35, 0.12, 0.35, clampf((dmg - 0.05) * 3.0, 0.0, 0.55) * alpha)
+	_tri_circle(eye - up * r * 0.28 - fwd * r * 0.05, r * (0.2 + dmg * 0.25), bruise)
+	var blood := Color(0.62, 0.02, 0.04, alpha)
+	if dmg > 0.12:
+		# Hilo de sangre desde la nariz.
+		var nose: Vector2 = p.head + fwd * r * 0.92 - up * r * 0.25
+		var length: float = r * clampf((dmg - 0.12) * 2.5, 0.15, 0.7)
+		_tri_segment(nose, nose - up * length, 3.5, blood)
+		_tri_circle(nose - up * length, 2.6, blood)
+	if dmg > 0.22:
+		# Ojo hinchado: un bulto que lo va cerrando.
+		var swell := Color(_tint(f.setup.color.lerp(Color(0.55, 0.2, 0.3), 0.5)), alpha)
+		_tri_circle(eye + up * r * 0.06, r * (0.16 + (dmg - 0.22) * 0.5), swell)
+	if dmg > 0.32:
+		# Corte en la ceja con una gota.
+		var cut_a: Vector2 = eye + up * r * 0.38 - fwd * r * 0.1
+		var cut_b: Vector2 = cut_a + fwd * r * 0.3 + up * r * 0.05
+		_tri_segment(cut_a, cut_b, 3.0, blood)
+		_tri_segment(cut_a + fwd * r * 0.15, cut_a + fwd * r * 0.12 - up * r * 0.35, 2.5, blood)
 
 
 func _draw_glove(c: Vector2, elbow: Vector2, col: Color) -> void:

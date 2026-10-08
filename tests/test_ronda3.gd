@@ -45,7 +45,9 @@ func new_combat(gap: float) -> Array:
 	s.start_with_intro = false
 	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
+	s.fighter_a.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 	s.fighter_b = FighterSetup.new()
+	s.fighter_b.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
 	s.start_distance = gap + 90.0
 	combat.start(s)
 	var sa := Scripted.new()
