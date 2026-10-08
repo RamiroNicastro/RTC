@@ -1,15 +1,13 @@
 extends Control
-## Pantalla de título (prototipo): Modo Arcade, Práctica y récords.
+## Pantalla de título: Carrera (continuar o nueva), Modo Arcade, Mi peleador y Práctica.
 ##
-## Es el punto de entrada del juego mientras no exista la carrera (Fase 2).
-
-const ARCADE_SCENE: String = "res://modes/arcade/arcade_run.tscn"
-const PRACTICE_SCENE: String = "res://debug/combat_sandbox.tscn"
-const CREATE_SCENE: String = "res://ui/create_fighter/create_fighter_screen.tscn"
-const TITLE_SCENE: String = "res://ui/title/title_screen.tscn"
+## Solo navega (SceneRouter). La carrera se carga con SaveManager antes de ir al hub.
 
 var _time: float = 0.0
 var _title: Label
+## Segundo toque en "Nueva carrera" cuando ya hay una guardada (para no borrarla sin querer).
+var _confirm_new: bool = false
+var _new_button: Button
 
 
 func _ready() -> void:
@@ -31,10 +29,26 @@ func _ready() -> void:
 	box.add_child(UIStyle.label(tr("GAME_SUBTITLE"), 26, UIStyle.MUTED, 6))
 	box.add_child(Control.new())
 
-	var arcade := UIStyle.button(tr("MENU_ARCADE"), _go_arcade)
-	box.add_child(arcade)
-	box.add_child(UIStyle.button(tr("MENU_EDIT_FIGHTER"), _go_create.bind(TITLE_SCENE), false))
-	box.add_child(UIStyle.button(tr("MENU_PRACTICE"), func() -> void: get_tree().change_scene_to_file(PRACTICE_SCENE), false))
+	var has_career: bool = SaveManager.has_save()
+	var main: Button
+	if has_career:
+		main = UIStyle.button(tr("MENU_CONTINUE_CAREER"), _continue_career)
+	else:
+		main = UIStyle.button(tr("MENU_NEW_CAREER"), _new_career)
+	main.custom_minimum_size = Vector2(560, 92)
+	main.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(main)
+
+	var others := HBoxContainer.new()
+	others.alignment = BoxContainer.ALIGNMENT_CENTER
+	others.add_theme_constant_override("separation", 12)
+	if has_career:
+		_new_button = _small_button(tr("MENU_NEW_CAREER"), _new_career)
+		others.add_child(_new_button)
+	others.add_child(_small_button(tr("MENU_ARCADE"), _go_arcade))
+	others.add_child(_small_button(tr("MENU_EDIT_FIGHTER"), _go_create.bind(SceneRouter.TITLE)))
+	others.add_child(_small_button(tr("MENU_PRACTICE"), SceneRouter.go.bind(SceneRouter.PRACTICE)))
+	box.add_child(others)
 
 	if PlayerFighter.exists():
 		var me := PlayerFighter.load_fighter()
@@ -45,7 +59,7 @@ func _ready() -> void:
 	var rec_text: String = tr("MENU_RECORD").format({"score": rec.best_score, "titles": rec.championships})
 	box.add_child(UIStyle.label(rec_text, 22, UIStyle.MUTED, 5))
 	box.add_child(UIStyle.label(tr("MENU_HINT"), 18, Color(0.5, 0.52, 0.58), 4))
-	arcade.grab_focus()
+	main.grab_focus()
 	await get_tree().process_frame
 	var i: int = 0
 	for c in box.get_children():
@@ -57,14 +71,37 @@ func _ready() -> void:
 ## La primera vez, antes del Arcade se crea el peleador.
 func _go_arcade() -> void:
 	if PlayerFighter.exists():
-		get_tree().change_scene_to_file(ARCADE_SCENE)
+		SceneRouter.go(SceneRouter.ARCADE)
 	else:
-		_go_create(ARCADE_SCENE)
+		_go_create(SceneRouter.ARCADE)
 
 
 func _go_create(then: String) -> void:
 	CreateFighterScreen.next_scene = then
-	get_tree().change_scene_to_file(CREATE_SCENE)
+	CreateFighterScreen.for_career = false
+	SceneRouter.go(SceneRouter.CREATE_FIGHTER)
+
+
+func _continue_career() -> void:
+	if SaveManager.load_slot():
+		SceneRouter.go_hub()
+
+
+## Si ya hay una carrera guardada, el primer toque pide confirmación (la nueva la reemplaza).
+func _new_career() -> void:
+	if SaveManager.has_save() and not _confirm_new:
+		_confirm_new = true
+		_new_button.text = tr("MENU_NEW_CAREER_CONFIRM")
+		return
+	CreateFighterScreen.for_career = true
+	SceneRouter.go(SceneRouter.CREATE_FIGHTER)
+
+
+func _small_button(text: String, on_pressed: Callable) -> Button:
+	var b := UIStyle.button(text, on_pressed, false)
+	b.custom_minimum_size = Vector2(270, 70)
+	b.add_theme_font_size_override("font_size", 26)
+	return b
 
 
 func _process(delta: float) -> void:

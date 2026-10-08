@@ -137,3 +137,29 @@ STYLE_BRAWLER,FAJADOR,BRAWLER
 STYLE_BRAWLER_DESC,"Aguanta todo y no se cansa nunca. Le falta velocidad y técnica: gana desgastando.","Takes everything and never tires. Lacks speed and technique: wins by grinding."
 STYLE_COUNTERPUNCHER,CONTRAGOLPEADOR,COUNTERPUNCHER
 STYLE_COUNTERPUNCHER_DESC,"Guardia de hierro y buen esquive: espera el error y castiga. Poco aire y mentón frágil.","Iron guard and slick dodges: waits for mistakes and punishes. Low stamina, fragile chin."
+MENU_CONTINUE_CAREER,CONTINUAR CARRERA,CONTINUE CAREER
+MENU_NEW_CAREER,NUEVA CARRERA,NEW CAREER
+MENU_NEW_CAREER_CONFIRM,¿BORRAR LA ACTUAL?,DELETE CURRENT?
+CAREER_NEW_TITLE,NUEVA CARRERA,NEW CAREER
+CAREER_NEW_HINT,Arrancás como amateur: tus estadísticas empiezan más bajas y suben entrenando.,You start as an amateur: your stats begin lower and grow with training.
+CAREER_START,EMPEZAR,START
+CAREER_NEED_NAME,¡Poné un nombre!,Enter a name!
+HUB_STATS,TUS ESTADÍSTICAS,YOUR STATS
+HUB_MENU,GUARDAR Y SALIR,SAVE AND QUIT
+HUB_SUBTITLE,"{style}  ·  {tier}","{style}  ·  {tier}"
+HUB_DATE,"Semana {week} · Año {year}","Week {week} · Year {year}"
+HUB_AGE,{age} años,{age} years old
+HUB_MONEY,plata,money
+HUB_RECORD,"récord G-P-E ({kos} KO)","record W-L-D ({kos} KO)"
+HUB_SOON,Próximamente...,Coming soon...
+PLACE_GYM,GIMNASIO,GYM
+PLACE_ARENA,ARENA,ARENA
+PLACE_WORK,TRABAJO,WORK
+PLACE_SHOP,TIENDA,SHOP
+PLACE_HOME,CASA,HOME
+TIER_1,Amateur de barrio,Neighborhood amateur
+TIER_2,Profesional regional,Regional pro
+TIER_3,Campeón nacional,National champion
+TIER_4,Ranking internacional,International ranking
+TIER_5,Contendiente mundial,World contender
+TIER_6,Campeón mundial,World champion

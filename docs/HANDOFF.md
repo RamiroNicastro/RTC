@@ -66,6 +66,9 @@ data/rivals/arcade/            fichas FighterData de los 6 rivales del arcade (e
 fighter_model/                 FighterData (ficha: 6 estadísticas 1-100 + envergadura) y StatFormulas (ficha → FighterSetup; 50 = valores de hoy)
                                FighterStyle (estilos del jugador, en data/fighter_styles/) y PlayerFighter (tu peleador, JSON en user://)
 ui/create_fighter/             pantalla "Crear peleador" (nombre, apodo, estilo con barras de estadísticas)
+ui/stat_bars.gd                barras de las 6 estadísticas (las usan "Crear peleador" y el hub)
+autoload/                      GameState (datos de la carrera), SaveManager (JSON en user://slot_1.json + .bak), SceneRouter (rutas y cambio de pantalla)
+career/hub/                    hub de la carrera: encabezado (nombre, semana, edad, plata, récord), estadísticas y 5 lugares
 modes/arcade/                  Modo Arcade: arcade_run (flujo), arcade_rivals, arcade_score, arcade_records
 ui/                            ui_style.gd (fuente y botones) y title/ (pantalla de título, escena principal)
 debug/                         sandbox de práctica con overlay de debug (teclas en la cabecera del script)
@@ -134,6 +137,8 @@ godot --headless --path . -s res://tests/balance_report.gd
 7. **`is_touchscreen_available()` da true en la PC** (por la emulación con mouse). Para detectar un celular usá `OS.has_feature("mobile")`.
 8. **Las pruebas IA contra IA (F y G) dependen del balance.** Si cambiás números de daño, stamina o IA, volvé a correrlas y al reporte de balance. Ajustá criterios **solo** si lo que miden sigue siendo cierto.
 9. **El editor de la persona puede pisar archivos** si los tenía abiertos. Si algo "volvió atrás", revisá `git diff`.
+10. **Autoloads en las pruebas:** un script de prueba (`-s`) se compila ANTES de que existan `GameState`, `SaveManager` y `SceneRouter`. Si nombra por `class_name` a una clase que usa un autoload (por ejemplo `CreateFighterScreen`), falla al compilar. En la prueba, buscá los autoloads con `root.get_node("GameState")` y cargá esas pantallas por ruta (`load("res://...gd")`). Las escenas que se instancian en tiempo de ejecución no tienen problema.
+11. **Las pruebas no pisan los guardados reales:** `SaveManager.folder`, `PlayerFighter.path` y `ArcadeRecords.path` se cambian al principio de cada prueba que guarda.
 
 ## 7. Próximos pasos (en orden)
 
@@ -200,8 +205,8 @@ Daño localizado, que ya está previsto en el plan:
 ### Paso D: Fase 2 del plan (la carrera)
 Ver la sección 22 del plan. Arrancar por:
 1. ~~`FighterData` y `stat_formulas`~~ **hecho**. Pendiente de esa parte: que Mentón también mueva el umbral de knockdown, levantarse y la recuperación entre rounds (hoy son constantes en `fighter.gd`), y sliders de estadísticas en la sandbox;
-2. los autoloads `GameState` y `SceneRouter`;
-3. el hub;
+2. ~~autoloads `GameState`, `SaveManager` y `SceneRouter`~~ **hecho** (carrera nueva desde "Crear peleador", guardado en `user://slot_1.json` con `.bak`);
+3. ~~el hub~~ **hecho como esqueleto**: muestra todo, los 5 lugares todavía avisan "Próximamente". Sigue: Gimnasio (entrenar), Trabajo (plata), Casa (descansar) y que la semana avance;
 4. el campamento;
 5. los saltos de tiempo.
 

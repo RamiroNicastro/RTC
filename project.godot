@@ -16,6 +16,12 @@ config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+GameState="*res://autoload/game_state.gd"
+SaveManager="*res://autoload/save_manager.gd"
+SceneRouter="*res://autoload/scene_router.gd"
+
 [display]
 
 window/size/viewport_width=1280

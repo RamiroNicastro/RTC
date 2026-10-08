@@ -97,7 +97,7 @@ func test_screens() -> void:
 	root.add_child(create)
 	create._select_style(&"counterpuncher")
 	check(create._player.style_id == &"counterpuncher", "elegir un estilo lo cambia")
-	var number: Label = create._bars[5][1]
+	var number: Label = create._bars.numbers[5]
 	check(number.text == str(PlayerFighter.find_style(&"counterpuncher").defense), "las barras muestran el estilo elegido")
 	create.queue_free()
 	var title: Control = load("res://ui/title/title_screen.tscn").instantiate()
