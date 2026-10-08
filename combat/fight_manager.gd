@@ -21,7 +21,8 @@ signal fight_ended(winner: Fighter, method: Method)
 
 enum Phase { ROUND_INTRO, FIGHTING, COUNT, RESUME, ROUND_BREAK, ENDED }
 ## DECISION: se terminaron los rounds (en el E3 los jueces deciden el ganador).
-enum Method { NONE, KO, TKO, DECISION }
+## DOCTOR: el médico paró la pelea por un corte.
+enum Method { NONE, KO, TKO, DECISION, DOCTOR }
 
 ## Ticks por cada número de la cuenta (arcade: más rápida que un segundo real).
 const COUNT_TICKS_PER_NUMBER: int = 45
@@ -116,6 +117,14 @@ func tick() -> void:
 ## Segundos que le quedan al round, redondeando hacia arriba (para mostrar el reloj).
 func seconds_left() -> int:
 	return ceili(CombatTime.ticks_to_seconds(maxi(0, round_ticks_left)))
+
+
+## El médico para la pelea por un corte de `fighter` (gana el otro).
+func stop_by_doctor(fighter: Fighter) -> void:
+	if phase == Phase.ENDED:
+		return
+	downed = null
+	_end(_other(fighter), Method.DOCTOR)
 
 
 func _end_round() -> void:

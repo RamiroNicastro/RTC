@@ -96,8 +96,23 @@ func _on_canvas_draw() -> void:
 	var width: float = _canvas.size.x
 	_draw_fighter_bars(Vector2(MARGIN.x, MARGIN.y) + _jitter(_shake.x), _a, _trail_a, false)
 	_draw_fighter_bars(Vector2(width - MARGIN.x - BAR_SIZE.x, MARGIN.y) + _jitter(_shake.y), _b, _trail_b, true)
+	_draw_cut_vignette(width)
 	_draw_round_clock()
 	_draw_fight_messages(width)
+
+
+## Con un corte grave, el jugador "ve rojo" en el borde de la pantalla (sangre en el ojo).
+func _draw_cut_vignette(width: float) -> void:
+	var sev: float = _a.worst_cut_severity()
+	if sev < 0.5:
+		return
+	var a: float = clampf((sev - 0.5) * 0.5, 0.0, 0.35)
+	var h: float = _canvas.size.y
+	var edge := Color(0.6, 0.0, 0.0, a)
+	var clear := Color(0.6, 0.0, 0.0, 0.0)
+	var w: float = width * 0.18
+	_canvas.draw_polygon(PackedVector2Array([Vector2(width - w, 0), Vector2(width, 0), Vector2(width, h), Vector2(width - w, h)]),
+			PackedColorArray([clear, edge, edge, clear]))
 
 
 ## Arriba al centro: número de round y reloj.
@@ -140,6 +155,8 @@ func _draw_fight_messages(width: float) -> void:
 			_draw_centered(tr("COMBAT_FIGHT"), 300.0, 80, UIStyle.GOLD, _pop(_banner_time))
 		FightManager.Phase.ENDED:
 			match _fight.method:
+				FightManager.Method.DOCTOR:
+					_draw_centered(tr("COMBAT_DOCTOR"), 300.0, 84, UIStyle.RED, _pop(_banner_time, 1.2))
 				FightManager.Method.KO, FightManager.Method.TKO:
 					var title: String = tr("COMBAT_KO") if _fight.method == FightManager.Method.KO else tr("COMBAT_TKO")
 					_draw_centered(title, 300.0, 130, UIStyle.RED, _pop(_banner_time, 1.2))
@@ -230,6 +247,15 @@ func _draw_fighter_bars(pos: Vector2, f: Fighter, trail: float, mirrored: bool) 
 		from_end += width
 
 	# Nombre.
+	if f.has_cuts():
+		# Aviso de corte bajo la barra (rojo más intenso cuanto más grave).
+		var cut_font: Font = UIStyle.font()
+		var sev: float = clampf(f.worst_cut_severity(), 0.0, 1.0)
+		var cut_align := HORIZONTAL_ALIGNMENT_RIGHT if mirrored else HORIZONTAL_ALIGNMENT_LEFT
+		var cut_pos := Vector2(pos.x, st_pos.y + STAMINA_BAR_HEIGHT + 66.0)
+		var cut_text: String = tr("HUD_CUT").format({"pct": roundi(sev * 100.0)})
+		_canvas.draw_string_outline(cut_font, cut_pos, cut_text, cut_align, BAR_SIZE.x, 20, 6, Color.BLACK)
+		_canvas.draw_string(cut_font, cut_pos, cut_text, cut_align, BAR_SIZE.x, 20, Color(1.0, 0.6 - sev * 0.5, 0.5 - sev * 0.5))
 	var font: Font = UIStyle.font()
 	var name_pos := Vector2(pos.x, st_pos.y + STAMINA_BAR_HEIGHT + 40.0)
 	var align := HORIZONTAL_ALIGNMENT_RIGHT if mirrored else HORIZONTAL_ALIGNMENT_LEFT

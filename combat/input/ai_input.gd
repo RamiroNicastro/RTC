@@ -25,6 +25,8 @@ const MIN_REACTION_TICKS: int = 6
 var profile: AIProfile = AIProfile.new()
 var difficulty: Difficulty = Difficulty.NORMAL
 var reaction_ticks: int = 12
+## Reacción sin cortes (con un corte grave en el ojo, reaction_ticks sube).
+var _base_reaction_ticks: int = 12
 
 ## Cuántos golpes del rival recuerda para leer sus patrones.
 const READ_MEMORY: int = 6
@@ -104,10 +106,12 @@ func configure(base_profile: AIProfile, rng_seed: int, ai_difficulty: Difficulty
 		_rng.randomize()
 	else:
 		_rng.seed = rng_seed
+	_base_reaction_ticks = reaction_ticks
 
 
 func get_command(me: Fighter, opponent: Fighter) -> FighterCommand:
 	_t += 1
+	reaction_ticks = _base_reaction_ticks + me.vision_penalty_ticks()
 	_history.push_back(_observe(opponent))
 	while _history.size() > reaction_ticks + 1:
 		_history.pop_front()

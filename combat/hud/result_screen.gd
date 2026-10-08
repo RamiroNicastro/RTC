@@ -85,6 +85,8 @@ func _method_text(r: FightResult) -> String:
 			return tr("COMBAT_KO")
 		FightResult.Method.TKO:
 			return tr("COMBAT_TKO")
+		FightResult.Method.DOCTOR_STOPPAGE:
+			return tr("RESULT_DOCTOR")
 		FightResult.Method.UNANIMOUS_DECISION:
 			return tr("RESULT_UNANIMOUS")
 		FightResult.Method.SPLIT_DECISION:

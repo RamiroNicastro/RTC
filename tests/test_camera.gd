@@ -31,6 +31,7 @@ func _physics_process(_delta: float) -> bool:
 		s.fighter_a = p
 		s.fighter_b = FighterSetup.new()
 		s.fighter_b.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
+		s.fighter_b.cut_susceptibility = 0.0  # sin cortes al azar: esta prueba mide otra cosa
 		combat.start(s)
 		Input.action_press("move_right")
 		print("Viewport visible: ", vp.get_visible_rect().size)

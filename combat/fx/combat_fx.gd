@@ -202,8 +202,35 @@ func _ring(point: Vector2, radius: float, color: Color) -> void:
 	_particles.append(p)
 
 
+## CombatScene: se abrió un corte en `f`.
+func on_cut_opened(f: Fighter) -> void:
+	var head := Vector2(f.position.x + f.facing * f.half_width() * 0.3, -f.setup.body_height * 0.88)
+	popup(tr("FX_CUT"), head + Vector2(0, -60), Color(1.0, 0.25, 0.25), 38)
+	_blood_splash(head, -f.facing, 1.2)
+
+
+## Goteo de los cortes abiertos: más seguido cuanto más grave.
+func _bleed(delta: float) -> void:
+	if not blood_enabled:
+		return
+	for f in [_player, _rival]:
+		if f == null or not f.has_cuts() or f.is_down():
+			continue
+		if _rng.randf() < delta * f.worst_cut_severity() * 2.5:
+			var p := Particle.new()
+			p.pos = Vector2(f.position.x + f.facing * f.half_width() * 0.35, -f.setup.body_height * 0.84)
+			p.vel = Vector2(_rng.randf_range(-30.0, 30.0), 40.0)
+			p.max_life = 1.5
+			p.life = p.max_life
+			p.color = BLOOD_COLOR
+			p.size = _rng.randf_range(2.0, 3.5)
+			p.kind = 3
+			_particles.append(p)
+
+
 func _process(delta: float) -> void:
 	_time += delta
+	_bleed(delta)
 	for p in _particles:
 		p.life -= delta
 		p.pos += p.vel * delta

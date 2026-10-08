@@ -53,10 +53,12 @@ func new_combat(type_a: FighterSetup.ControllerType, type_b: FighterSetup.Contro
 	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
 	s.fighter_a.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
+	s.fighter_a.cut_susceptibility = 0.0  # sin cortes al azar: esta prueba mide otra cosa
 	s.fighter_a.controller_type = type_a
 	s.fighter_a.ai_seed = seed_a
 	s.fighter_b = FighterSetup.new()
 	s.fighter_b.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
+	s.fighter_b.cut_susceptibility = 0.0  # sin cortes al azar: esta prueba mide otra cosa
 	s.fighter_b.controller_type = type_b
 	s.fighter_b.ai_seed = seed_b
 	# Sin lectura de patrones: estas pruebas miden reflejos y pelea "en frío" (la lectura tiene su propia prueba).

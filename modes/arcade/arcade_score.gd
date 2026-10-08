@@ -28,7 +28,9 @@ static func breakdown(r: FightResult, player_index: int, score_mult: float) -> A
 			lines.append(["SCORE_KO", KO_BONUS])
 		FightResult.Method.TKO:
 			lines.append(["SCORE_TKO", TKO_BONUS])
-	if r.method in [FightResult.Method.KO, FightResult.Method.TKO] and r.end_round < r.scheduled_rounds:
+		FightResult.Method.DOCTOR_STOPPAGE:
+			lines.append(["SCORE_DOCTOR", TKO_BONUS])
+	if r.is_stoppage() and r.end_round < r.scheduled_rounds:
 		lines.append(["SCORE_EARLY", (r.scheduled_rounds - r.end_round) * EARLY_FINISH_PER_ROUND])
 	lines.append(["SCORE_ACCURACY", roundi(me.accuracy() * 100.0) * PER_ACCURACY_POINT])
 	if me.counters > 0:

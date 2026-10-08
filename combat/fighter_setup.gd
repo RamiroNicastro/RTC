@@ -23,6 +23,8 @@ enum ControllerType { PLAYER, DUMMY, AI }
 
 @export_group("Salud")
 @export var max_health: int = 160
+## Qué tan fácil se corta (0 = nunca, 1 = normal, 2 = piel frágil). En la carrera puede depender del peleador.
+@export var cut_susceptibility: float = 1.0
 
 @export_group("Stamina")
 @export var max_stamina: float = 100.0

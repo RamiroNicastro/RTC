@@ -49,8 +49,10 @@ func new_combat() -> Array:
 	s.game_feel = false
 	s.fighter_a = FighterSetup.new()
 	s.fighter_a.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
+	s.fighter_a.cut_susceptibility = 0.0  # sin cortes al azar: esta prueba mide otra cosa
 	s.fighter_b = FighterSetup.new()
 	s.fighter_b.max_health = 100  # las cuentas de esta prueba están hechas sobre 100
+	s.fighter_b.cut_susceptibility = 0.0  # sin cortes al azar: esta prueba mide otra cosa
 	s.start_distance = 140.0
 	combat.start(s)
 	var sa := Scripted.new()

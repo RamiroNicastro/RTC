@@ -26,6 +26,9 @@ func resolve(attacker: Fighter, defender: Fighter, move: MoveData) -> HitInfo:
 	info.combo = attacker.is_combo_attack()
 	if info.star:
 		base_damage *= Fighter.STAR_DAMAGE_MULT
+	# Pegar sobre un corte abierto duele más (y el corte crece).
+	if move.zone == MoveData.Zone.HEAD and defender.has_cuts():
+		base_damage *= 1.0 + Fighter.CUT_DAMAGE_BONUS
 	info.knockback = move.knockback * (1.0 + move.charge_knockback_bonus * info.charge_ratio) \
 			* maxf(1.0, info.momentum_mult) * (Fighter.STAR_KNOCKBACK_MULT if info.star else 1.0)
 	if defender.is_guarding():

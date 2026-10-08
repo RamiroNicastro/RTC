@@ -827,6 +827,7 @@ func _draw_face_damage(p: Pose, r: float, up: Vector2, fwd: Vector2, eye: Vector
 	if not CombatFX.blood_enabled or f.base_max_health <= 0:
 		return
 	var dmg: float = 1.0 - float(f.max_health) / float(f.base_max_health)
+	_draw_cuts(p, r, up, fwd, eye, alpha)
 	if dmg <= 0.05:
 		return
 	var bruise := Color(0.35, 0.12, 0.35, clampf((dmg - 0.05) * 3.0, 0.0, 0.55) * alpha)
@@ -848,6 +849,23 @@ func _draw_face_damage(p: Pose, r: float, up: Vector2, fwd: Vector2, eye: Vector
 		var cut_b: Vector2 = cut_a + fwd * r * 0.3 + up * r * 0.05
 		_tri_segment(cut_a, cut_b, 3.0, blood)
 		_tri_segment(cut_a + fwd * r * 0.15, cut_a + fwd * r * 0.12 - up * r * 0.35, 2.5, blood)
+
+
+## Cortes abiertos: tajo rojo (más largo y abierto cuanto más grave) con un hilo de sangre que baja.
+func _draw_cuts(p: Pose, r: float, up: Vector2, fwd: Vector2, eye: Vector2, alpha: float) -> void:
+	var f: Fighter = _fighter
+	if not CombatFX.blood_enabled:
+		return
+	var blood := Color(0.7, 0.02, 0.05, alpha)
+	for c in f.cuts:
+		var sev: float = clampf(c.severity, 0.0, 1.5)
+		var center: Vector2 = eye + up * r * 0.42 if c.spot == Fighter.CutSpot.BROW \
+				else p.head + fwd * r * 0.5 - up * r * 0.3
+		var half: Vector2 = (fwd * 0.8 + up * 0.25) * r * (0.18 + sev * 0.18)
+		_tri_segment(center - half, center + half, 2.5 + sev * 3.0, blood)
+		var drip: float = r * (0.25 + sev * 0.75)
+		_tri_segment(center, center - up * drip, 2.0 + sev * 1.5, blood)
+		_tri_circle(center - up * drip, 2.0 + sev * 2.0, blood)
 
 
 func _draw_glove(c: Vector2, elbow: Vector2, col: Color) -> void:

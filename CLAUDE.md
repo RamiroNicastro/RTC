@@ -67,7 +67,14 @@ Las convenciones de código están en [docs/CONVENCIONES.md](docs/CONVENCIONES.m
   - para compensar, la **salud base pasó a 160**. Con eso la mitad de las peleas termina por KO o TKO y todas llegan al round 3. Las pruebas fijan la salud en 100 para que sus cuentas sigan valiendo;
   - Fácil y Normal son más accesibles: más reacción, menos defensa y castigo, menos lectura. El contragolpeador conserva reflejos rápidos (reacción 6) para que su esquive siga siendo su sello.
 - **Sangre visual** (la persona busca realismo): salpicaduras en los golpes fuertes a la cabeza, manchas en la lona y la cara marcada según el daño profundo. Se apaga con `CombatFX.blood_enabled`.
-- **Cortes con efecto en la pelea** (sangrado, el médico que para la pelea): van en la **pasada de realismo**, inmediatamente después de cerrar el prototipo de combate. Es la próxima gran tarea de diseño; la persona tomó como referencia el juego "Bruisers 2D Boxing".
+- **Cortes (hecho, pasada de realismo parte 1):**
+  - un fuerte, counter o estrella a la cabeza puede abrir un corte en la ceja o el pómulo, como máximo 2;
+  - cada golpe a la cabeza lo agranda, y pegar sobre un corte suma un 18 % de daño;
+  - con un corte grave la IA ve peor (+6 ticks de reacción) y el jugador ve un borde rojo;
+  - el cutman reduce los cortes un 45 % en el descanso;
+  - el médico para la pelea con gravedad 1,0 en el descanso o 1,4 en el momento (`DOCTOR_STOPPAGE`), y los cortes quedan en `FightResult.injuries`;
+  - balance: cerca del 15 % de las peleas termina por el médico, siempre en el round 2 o 3.
+- **Antes, la idea de los cortes con efecto** (sangrado, el médico que para la pelea) iba en la **pasada de realismo**, inmediatamente después de cerrar el prototipo de combate. Es la próxima gran tarea de diseño; la persona tomó como referencia el juego "Bruisers 2D Boxing".
 - **Game feel:** se apaga con `FightSetup.game_feel = false` (todas las pruebas lo hacen, para contar ticks exactos).
 
 ## Trabajo en equipo: varias sesiones de Claude sobre el mismo repo
@@ -83,7 +90,7 @@ El repo está en GitHub (`origin`). Lo usan dos sesiones de Claude: una local, e
 7. **Si las dos sesiones necesitan los mismos archivos al mismo tiempo**, usar una rama (`git checkout -b <tema>`) y unirla a `main` cuando las pruebas den OK.
 
 ### En curso
-- Sesión local (PC de la persona): pasada de realismo, parte 1 (cortes, cutman y médico): fighter.gd, distance_hit_resolver.gd, combat_scene.gd, fight_manager.gd, fight_result.gd, combat_fx.gd, fighter_visual.gd, tests/test_cortes.gd. Ver docs/HANDOFF.md, paso A.
+- Sesión local: arreglos de la auditoría de código (ver docs/HANDOFF.md, "Auditoría pendiente"): combat_scene.gd, combat_clock.gd, player_input.gd, fighter.gd, combat_sfx.gd, result_screen.gd, arcade_run.gd, project.godot.
 
 ## Forma de trabajo
 

@@ -5,7 +5,7 @@ extends RefCounted
 ## La carrera (Fase 2) lo va a leer para pagar la bolsa, sumar fama, registrar el récord, etc.
 ## Índices: 0 = fighter_a (izquierda), 1 = fighter_b (derecha), -1 = empate.
 
-enum Method { KO, TKO, UNANIMOUS_DECISION, SPLIT_DECISION, MAJORITY_DECISION, DRAW }
+enum Method { KO, TKO, UNANIMOUS_DECISION, SPLIT_DECISION, MAJORITY_DECISION, DRAW, DOCTOR_STOPPAGE }
 
 var winner_index: int = -1
 var method: Method = Method.DRAW
@@ -28,8 +28,13 @@ var knockdowns: Vector2i = Vector2i.ZERO
 var final_health: Vector2i = Vector2i.ZERO
 var final_max_health: Vector2i = Vector2i.ZERO
 var base_health: Vector2i = Vector2i.ZERO
-## Lesiones producidas en la pelea (Fase 3).
+## Lesiones producidas en la pelea. Hoy: cortes, como {"type": "cut", "fighter": 0|1, "spot": "brow"|"cheek", "severity": float}.
 var injuries: Array = []
+
+
+## true si terminó antes del límite (KO, KO técnico o parada médica).
+func is_stoppage() -> bool:
+	return method in [Method.KO, Method.TKO, Method.DOCTOR_STOPPAGE]
 
 
 func is_draw() -> bool:

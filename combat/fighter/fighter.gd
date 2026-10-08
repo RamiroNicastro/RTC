@@ -16,6 +16,8 @@ signal guard_broken()
 ## Esquivó un golpe a la cabeza: tiene un counter disponible.
 signal dodge_succeeded(info: HitInfo)
 signal knocked_down()
+## Se abrió un corte nuevo (la gravedad arranca en CUT_START_SEVERITY).
+signal cut_opened(spot: int)
 
 enum State { IDLE, MOVING, ATTACKING, HITSTUN, BLOCKING, BLOCKSTUN, GUARD_BROKEN, DODGING, KNOCKDOWN, KO }
 enum AttackPhase { NONE, STARTUP, ACTIVE, RECOVERY }
@@ -91,6 +93,33 @@ const STAR_LOSS_POWER_HIT: float = 0.15
 ## Golpe estrella: multiplicadores de daño y empuje (y siempre rompe la guardia).
 const STAR_DAMAGE_MULT: float = 1.6
 const STAR_KNOCKBACK_MULT: float = 1.8
+## --- Cortes (pasada de realismo) ---
+## Lugares donde se puede abrir un corte.
+enum CutSpot { BROW, CHEEK }
+const CUT_MAX: int = 2
+## Probabilidad de que un fuerte/counter/estrella a la cabeza abra un corte: base + por daño + por daño profundo.
+const CUT_CHANCE_BASE: float = 0.02
+const CUT_CHANCE_PER_DAMAGE: float = 0.004
+const CUT_CHANCE_PER_DEEP_RATIO: float = 0.2
+## Gravedad inicial, cuánto crece con cada golpe a la cabeza (escalado por la fuerza del golpe) y daño extra.
+const CUT_START_SEVERITY: float = 0.3
+const CUT_GROWTH_PER_HIT: float = 0.09
+const CUT_DAMAGE_BONUS: float = 0.18
+## Con un corte grave se ve peor: ticks extra de reacción (para la IA) con la gravedad máxima.
+const CUT_VISION_MAX_TICKS: int = 6
+## El médico: revisa en el descanso con esta gravedad; para la pelea en el momento con la otra.
+const DOCTOR_CHECK_SEVERITY: float = 1.0
+const DOCTOR_IMMEDIATE_SEVERITY: float = 1.4
+## Cutman: en el descanso reduce cada corte esta fracción.
+const CUTMAN_REDUCTION: float = 0.45
+
+
+## Un corte: dónde está y qué tan grave es (0 = cerrado, 1 = el médico lo revisa).
+class Cut:
+	var spot: CutSpot
+	var severity: float
+
+
 ## Combo 1-2: después de un jab que CONECTA, durante estos ticks el fuerte arranca más rápido.
 const COMBO_WINDOW_TICKS: int = 24
 const COMBO_STARTUP_CUT_TICKS: int = 6
@@ -145,6 +174,9 @@ var attack_serial: int = 0
 var star_meter: float = 0.0
 ## Ticks que quedan de la ventana del combo 1-2 (después de un jab que conectó).
 var combo_window_left: int = 0
+## Cortes abiertos en esta pelea.
+var cuts: Array[Cut] = []
+var _rng := RandomNumberGenerator.new()
 
 # Arranque y recuperación efectivos del golpe actual (más largos si está cansado).
 var _startup_ticks: int = 0
@@ -172,6 +204,11 @@ func configure(fighter_setup: FighterSetup, facing_dir: int) -> void:
 	round_knockdowns = 0
 	star_meter = 0.0
 	combo_window_left = 0
+	cuts.clear()
+	if setup.ai_seed != 0:
+		_rng.seed = setup.ai_seed * 7919 + facing_dir
+	else:
+		_rng.randomize()
 	base_max_stamina = setup.max_stamina
 	fatigue = 0.0
 	body_drain = 0.0
@@ -245,6 +282,61 @@ func is_combo_attack() -> bool:
 
 func star_ready() -> bool:
 	return star_meter >= 1.0
+
+
+func has_cuts() -> bool:
+	return not cuts.is_empty()
+
+
+func worst_cut_severity() -> float:
+	var worst: float = 0.0
+	for c in cuts:
+		worst = maxf(worst, c.severity)
+	return worst
+
+
+## Ticks extra de reacción por ver mal (sangre en el ojo). La IA los suma a su reacción.
+func vision_penalty_ticks() -> int:
+	return roundi(clampf((worst_cut_severity() - 0.5) / 0.5, 0.0, 1.0) * CUT_VISION_MAX_TICKS)
+
+
+## Abre un corte nuevo si hay lugar. Devuelve true si se abrió.
+func open_cut() -> bool:
+	if cuts.size() >= CUT_MAX:
+		return false
+	var c := Cut.new()
+	c.spot = CutSpot.BROW if cuts.is_empty() else CutSpot.CHEEK
+	c.severity = CUT_START_SEVERITY
+	cuts.append(c)
+	cut_opened.emit(c.spot)
+	return true
+
+
+## CombatScene, en el descanso: el cutman trabaja los cortes.
+func treat_cuts(fraction: float = CUTMAN_REDUCTION) -> void:
+	for c in cuts:
+		c.severity = maxf(0.05, c.severity * (1.0 - fraction))
+
+
+## Un golpe a la cabeza que conectó: agranda el corte peor y puede abrir uno nuevo.
+func _cut_from_hit(info: HitInfo) -> void:
+	if info.zone != MoveData.Zone.HEAD:
+		return
+	var strength: float = clampf(info.damage / 14.0, 0.2, 1.6)
+	if has_cuts():
+		var worst: Cut = cuts[0]
+		for c in cuts:
+			if c.severity > worst.severity:
+				worst = c
+		worst.severity += CUT_GROWTH_PER_HIT * strength
+	var heavy: bool = info.move.is_power_punch or info.counter or info.star
+	if not heavy:
+		return
+	var deep: float = 1.0 - float(max_health) / float(base_max_health)
+	var chance: float = (CUT_CHANCE_BASE + CUT_CHANCE_PER_DAMAGE * info.damage + CUT_CHANCE_PER_DEEP_RATIO * deep) \
+			* setup.cut_susceptibility
+	if _rng.randf() < chance:
+		open_cut()
 
 
 ## CombatScene: un golpe de ESTE peleador llegó al rival (HIT, BLOCKED o DODGED).
@@ -352,6 +444,7 @@ func receive_hit(info: HitInfo) -> void:
 	match info.result:
 		HitInfo.Result.HIT:
 			_take_damage(info.damage)
+			_cut_from_hit(info)
 			_interrupt_attack()
 			counter_ready_left = 0
 			combo_window_left = 0

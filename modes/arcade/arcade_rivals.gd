@@ -62,7 +62,7 @@ static func challenge_done(c: Challenge, r: FightResult, me: int) -> bool:
 		Challenge.NO_KNOCKDOWNS:
 			return my_kd == 0
 		Challenge.BY_KO:
-			return r.winner_index == me and r.method in [FightResult.Method.KO, FightResult.Method.TKO]
+			return r.winner_index == me and r.is_stoppage()
 		Challenge.COUNTERS_3:
 			return s.counters >= 3
 		Challenge.ACCURACY_50:

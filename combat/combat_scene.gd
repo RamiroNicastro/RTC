@@ -83,6 +83,8 @@ func start(fight_setup: FightSetup) -> void:
 
 	camera.setup(fighter_a, fighter_b, ring.stage_half_width())
 	fx.setup(fighter_a, fighter_b)
+	for f in [fighter_a, fighter_b]:
+		f.cut_opened.connect(func(_spot: int) -> void: fx.on_cut_opened(f))
 	pause_menu.setup(self)
 	hud.setup(fighter_a, fighter_b, fight)
 	# Los botones táctiles se ven solo en celulares (en PC se muestran con F3 desde la sandbox).
@@ -157,6 +159,10 @@ func _apply_hit(info: HitInfo) -> void:
 	stats.record_hit(info, _index_of(info.attacker))
 	hit_resolved.emit(info)
 	_impact_feel(info)
+	# Un corte gravísimo: el médico para la pelea en el momento.
+	if fight.is_fighting() and info.defender.worst_cut_severity() >= Fighter.DOCTOR_IMMEDIATE_SEVERITY:
+		fight.stop_by_doctor(info.defender)
+		return
 	if info.defender.state == Fighter.State.KNOCKDOWN:
 		stats.record_knockdown(_index_of(info.defender))
 		fight.on_knockdown(info.defender)
@@ -267,6 +273,11 @@ func _build_result(winner: Fighter, method: FightManager.Method) -> FightResult:
 	r.final_health = Vector2i(fighter_a.health, fighter_b.health)
 	r.final_max_health = Vector2i(fighter_a.max_health, fighter_b.max_health)
 	r.base_health = Vector2i(fighter_a.base_max_health, fighter_b.base_max_health)
+	# Lesiones: los cortes (la carrera los va a usar para el tiempo de recuperación).
+	for f in [fighter_a, fighter_b]:
+		for c in f.cuts:
+			r.injuries.append({"type": "cut", "fighter": _index_of(f),
+					"spot": Fighter.CutSpot.keys()[c.spot].to_lower(), "severity": snappedf(c.severity, 0.01)})
 
 	r.judge_cards = judge_cards
 	for j in judges.size():
@@ -282,6 +293,9 @@ func _build_result(winner: Fighter, method: FightManager.Method) -> FightResult:
 			r.winner_index = _index_of(winner)
 		FightManager.Method.TKO:
 			r.method = FightResult.Method.TKO
+			r.winner_index = _index_of(winner)
+		FightManager.Method.DOCTOR:
+			r.method = FightResult.Method.DOCTOR_STOPPAGE
 			r.winner_index = _index_of(winner)
 		_:
 			var decision: Array = FightResult.decide(r.judge_totals)
@@ -310,8 +324,16 @@ func _place_fighters_at_start() -> void:
 
 ## Descanso entre rounds: cada uno vuelve a su lugar y se recupera en parte.
 func _on_round_break_started(_round_number: int) -> void:
+	# El médico revisa los cortes: si alguno es muy grave, para la pelea.
+	for f in [fighter_a, fighter_b]:
+		if f.worst_cut_severity() >= Fighter.DOCTOR_CHECK_SEVERITY:
+			fight.stop_by_doctor(f)
+			return
 	fighter_a.recover_between_rounds()
 	fighter_b.recover_between_rounds()
+	# El cutman trabaja los cortes.
+	fighter_a.treat_cuts()
+	fighter_b.treat_cuts()
 	_place_fighters_at_start()
 
 
