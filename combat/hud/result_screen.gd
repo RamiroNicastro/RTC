@@ -20,6 +20,8 @@ func _ready() -> void:
 
 func show_result(result: FightResult) -> void:
 	await get_tree().create_timer(SHOW_DELAY_SECONDS).timeout
+	if not is_inside_tree():
+		return
 	_build(result)
 	visible = true
 
@@ -76,6 +78,8 @@ func _build(r: FightResult) -> void:
 
 	# Centrar después de que el panel calcule su tamaño.
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	_panel.position = Vector2((view.x - _panel.size.x) * 0.5, maxf(MIN_TOP, (view.y - _panel.size.y) * 0.5))
 
 

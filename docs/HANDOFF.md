@@ -133,7 +133,42 @@ godot --headless --path . -s res://tests/balance_report.gd
 
 ## 7. Próximos pasos (en orden)
 
-### Paso A: pasada de realismo, parte 1: cortes, cutman y médico
+### Hecho: auditoría de código (08/10)
+Errores reales ya arreglados (prueba: `tests/test_auditoria.gd`):
+- el botón Atrás de Android pausa (`quit_on_go_back=false`);
+- intercambio justo: si los dos golpes tumbarían, los dos quedan con 1 de salud;
+- la cámara lenta más larga no se pisa;
+- la pausa no deja toques guardados;
+- no salen golpes del buffer durante la cuenta;
+- `await` seguros en `ResultScreen` y el arcade;
+- `CombatSfx` frena el audio al salir (se acabó la "fuga" de las pruebas);
+- el médico y el knockdown se procesan en orden.
+
+### Auditoría pendiente (hacer cuando convenga, de mayor a menor impacto)
+1. **Rendimiento en celular:**
+   - `Ring._draw` redibuja unas 230 siluetas de público por frame: pasar el escenario fijo a un nodo que se dibuje una vez, y el público a un único arreglo de triángulos (como `FighterVisual`) o a unos 20 Hz;
+   - `CombatFX` crea arreglos nuevos con `filter()` en cada frame: pasar a un pool;
+   - la IA crea un `Snapshot.new()` por tick: pasar a un buffer circular.
+2. **Sonido:** el precalentado de `CombatSfx` debería ser estático en `SfxSynth` y lanzarse desde el título (hoy puede trabar el arranque de la pelea).
+3. **R2:** `combat/` depende de `ui/ui_style.gd`. Mover `UIStyle` a una carpeta neutral (por ejemplo `shared/`).
+4. **Textos sin traducir que ve el jugador:**
+   - `"VS"`, los nombres y apodos de los rivales del arcade;
+   - los botones de la Práctica ("Rival", "Debug", "Reiniciar", "Jugador");
+   - `"Peleador"` por defecto.
+5. **La IA ve demasiado:** recibe el `move_id` y la zona exactos desde el tick 1, incluso en el jab al cuerpo, que no tiene aviso. Propuesta: que la zona se vea recién después de unos ticks.
+6. **Lag táctil:** la ventana de 50 ms del deslizar demora todo jab o fuerte que no se desliza. Evaluarlo en el celular real.
+7. **Toques para levantarse:** durante la congelada se juntan en un solo `bool`. Contarlos en vez de perderlos.
+8. **Deuda menor:**
+   - señales sin uso;
+   - comentarios del tipo "llega en el Hito X";
+   - `get_slice(" ", 1)` en `arcade_run`;
+   - el enum de dificultad conviene moverlo a `AIProfile`;
+   - validar `decision_interval_ticks > 0`.
+9. **Pruebas que faltan:** que todas las claves de `tr()` existan en el CSV, y `quit_requested`.
+
+### Hecho: pasada de realismo, parte 1: cortes, cutman y médico (ver CLAUDE.md)
+
+### (Diseño original del paso A, como referencia)
 Lo pidió la persona ("me gusta la sangre y que afecte"). Diseño propuesto, a validar con ella si cambia algo:
 - **Abrir un corte:** un golpe fuerte, counter o estrella **a la cabeza** que conecta puede abrir un corte en la ceja o el pómulo. La probabilidad crece con el daño y con el daño profundo acumulado. Hay como máximo 2 cortes por peleador.
 - **Efectos del corte:**

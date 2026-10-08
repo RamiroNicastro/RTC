@@ -773,6 +773,11 @@ func _read_buffer(cmd: FighterCommand) -> void:
 			_clear_buffer()
 
 
+## CombatScene: fuera de la pelea activa (cuenta, carteles) no deben salir golpes guardados en el buffer.
+func clear_buffer() -> void:
+	_clear_buffer()
+
+
 func _clear_buffer() -> void:
 	_buffered_move = null
 	_buffered_dodge = false

@@ -22,7 +22,7 @@ const DODGE_DIAMETER: float = 112.0
 ## Deslizar hacia abajo: cuánto (unidades) y en qué ventana (ms) para que el golpe salga al cuerpo.
 const SWIPE_DOWN_DISTANCE: float = 34.0
 const SWIPE_WINDOW_MS: int = 50
-## Ticks que se mantiene "apretado" un jab tocado (para que el control lo registre).
+## Ticks de física que se mantiene "apretado" un golpe tocado (para que el control lo registre).
 const TAP_HOLD_FRAMES: int = 2
 const EDGE_MARGIN: float = 36.0
 
@@ -232,6 +232,11 @@ func _process(_delta: float) -> void:
 	for p: Press in _presses.values():
 		if not p.fired and now - p.start_ms >= SWIPE_WINDOW_MS:
 			_fire(p)
+
+
+# Las acciones se sueltan contando ticks de FÍSICA (los mismos que lee PlayerInput), no frames de pantalla:
+# en una pantalla de 120 Hz, contar frames soltaba el "cuerpo" antes de que la lógica lo leyera.
+func _physics_process(_delta: float) -> void:
 	for i in range(_release_queue.size() - 1, -1, -1):
 		_release_queue[i][1] -= 1
 		if _release_queue[i][1] <= 0:

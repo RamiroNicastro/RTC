@@ -90,7 +90,7 @@ El repo está en GitHub (`origin`). Lo usan dos sesiones de Claude: una local, e
 7. **Si las dos sesiones necesitan los mismos archivos al mismo tiempo**, usar una rama (`git checkout -b <tema>`) y unirla a `main` cuando las pruebas den OK.
 
 ### En curso
-- Sesión local: arreglos de la auditoría de código (ver docs/HANDOFF.md, "Auditoría pendiente"): combat_scene.gd, combat_clock.gd, player_input.gd, fighter.gd, combat_sfx.gd, result_screen.gd, arcade_run.gd, project.godot.
+- (nada)
 
 ## Forma de trabajo
 

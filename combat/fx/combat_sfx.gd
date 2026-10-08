@@ -53,6 +53,10 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	for p in _players:
+		p.stop()
+	if _ambience != null:
+		_ambience.stop()
 	if _warm_task >= 0:
 		WorkerThreadPool.wait_for_task_completion(_warm_task)
 		_warm_task = -1

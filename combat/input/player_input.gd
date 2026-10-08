@@ -16,6 +16,14 @@ var _pending_dodge: bool = false
 var _pending_body: bool = false
 
 
+## Descarta lo pendiente (al salir de la pausa: lo apretado en el menú no debe salir como golpe).
+func clear_pending() -> void:
+	_pending_jab = false
+	_pending_power = false
+	_pending_dodge = false
+	_pending_body = false
+
+
 ## Se llama en cada tick de física (avance o no la lógica). Guarda lo que se apretó.
 func poll() -> void:
 	var body_now: bool = Input.is_action_pressed("body")

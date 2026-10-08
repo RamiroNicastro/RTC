@@ -102,6 +102,8 @@ func _start_fight() -> void:
 
 func _on_fight_finished(r: FightResult) -> void:
 	await get_tree().create_timer(CONTINUE_BUTTON_DELAY).timeout
+	if not is_inside_tree():
+		return
 	# Botón CONTINUAR abajo al centro, encima del combate (que sigue visible con su resultado).
 	var holder := Control.new()
 	holder.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -144,10 +146,14 @@ func _show_tally(r: FightResult) -> void:
 	box.add_child(total_label)
 	box.add_child(next)
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	UIStyle.pop_in(box.get_child(0))
 	# Conteo línea por línea, con un ritmo que se disfruta.
 	for l in lines:
 		await get_tree().create_timer(0.28).timeout
+		if not is_inside_tree():
+			return
 		var is_challenge: bool = l.size() > 2
 		var text: String = tr(l[0])
 		var color: Color = UIStyle.TEXT if int(l[1]) >= 0 else UIStyle.RED
@@ -158,6 +164,8 @@ func _show_tally(r: FightResult) -> void:
 		list.add_child(row)
 		UIStyle.pop_in(row)
 	await get_tree().create_timer(0.3).timeout
+	if not is_inside_tree():
+		return
 	var before: int = _score
 	_score += gained
 	total_label.text = tr("ARCADE_MULT").format({"mult": "%.1f" % rival.score_mult, "gained": gained})
@@ -166,6 +174,8 @@ func _show_tally(r: FightResult) -> void:
 	tw.tween_method(func(v: int) -> void: total_label.text = tr("ARCADE_TOTAL").format({"score": v, "gained": gained}),
 			before, _score, 0.9)
 	await tw.finished
+	if not is_inside_tree():
+		return
 	next.visible = true
 	UIStyle.pop_in(next)
 	next.grab_focus()
@@ -259,6 +269,8 @@ func _screen() -> VBoxContainer:
 
 func _animate(box: VBoxContainer, focus: Control) -> void:
 	await get_tree().process_frame
+	if not is_inside_tree():
+		return
 	var i: int = 0
 	for c in box.get_children():
 		if c is Control:

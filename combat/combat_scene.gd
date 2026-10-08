@@ -98,9 +98,10 @@ func _physics_process(_delta: float) -> void:
 	if not _started:
 		return
 	# Los toques del jugador se guardan en CADA tick, aunque la lógica esté congelada (hitstop, cámara lenta).
-	for c in [controller_a, controller_b]:
-		if c is PlayerInput:
-			(c as PlayerInput).poll()
+	if not clock.paused:
+		for c in [controller_a, controller_b]:
+			if c is PlayerInput:
+				(c as PlayerInput).poll()
 	if not clock.advance():
 		camera.follow()  # durante el hitstop la lógica se congela, pero la sacudida sigue
 		return
@@ -111,8 +112,10 @@ func _physics_process(_delta: float) -> void:
 	if not fight.is_fighting():
 		if fight.downed != fighter_a:
 			cmd_a = FighterCommand.new()
+			fighter_a.clear_buffer()
 		if fight.downed != fighter_b:
 			cmd_b = FighterCommand.new()
+			fighter_b.clear_buffer()
 
 	fighter_a.tick(cmd_a)
 	fighter_b.tick(cmd_b)
@@ -128,6 +131,11 @@ func _physics_process(_delta: float) -> void:
 func _resolve_hits() -> void:
 	var info_a: HitInfo = _check_hit(fighter_a, fighter_b)
 	var info_b: HitInfo = _check_hit(fighter_b, fighter_a)
+	# Intercambio en el que los dos tumbarían: nadie tiene ventaja por el orden → los dos quedan con 1 de salud.
+	if info_a != null and info_b != null and info_a.result == HitInfo.Result.HIT and info_b.result == HitInfo.Result.HIT \
+			and info_a.damage >= fighter_b.health and info_b.damage >= fighter_a.health:
+		info_a.damage = maxi(0, fighter_b.health - 1)
+		info_b.damage = maxi(0, fighter_a.health - 1)
 	if info_a != null:
 		_apply_hit(info_a)
 	if info_b != null:
@@ -153,20 +161,20 @@ func _apply_hit(info: HitInfo) -> void:
 		# Que te esquiven cansa como pegarle al aire.
 		info.attacker.spend_stamina(info.move.whiff_stamina_penalty)
 	info.defender.receive_hit(info)
-	info.attacker.notify_attack_result(info)
+	if not info.attacker.is_down():
+		info.attacker.notify_attack_result(info)
 	if info.knockback > 0.0 and info.result != HitInfo.Result.DODGED:
 		info.defender.push_back(info.knockback)
 	stats.record_hit(info, _index_of(info.attacker))
 	hit_resolved.emit(info)
 	_impact_feel(info)
-	# Un corte gravísimo: el médico para la pelea en el momento.
-	if fight.is_fighting() and info.defender.worst_cut_severity() >= Fighter.DOCTOR_IMMEDIATE_SEVERITY:
-		fight.stop_by_doctor(info.defender)
-		return
 	if info.defender.state == Fighter.State.KNOCKDOWN:
 		stats.record_knockdown(_index_of(info.defender))
+		_knockdown_feel(info.defender)   # antes de on_knockdown: si es TKO, la cámara lenta final la pone el fin de pelea
 		fight.on_knockdown(info.defender)
-		_knockdown_feel(info.defender)
+	# Un corte gravísimo: el médico para la pelea en el momento.
+	elif fight.is_fighting() and info.defender.worst_cut_severity() >= Fighter.DOCTOR_IMMEDIATE_SEVERITY:
+		fight.stop_by_doctor(info.defender)
 
 
 ## Game feel de cada impacto: hitstop (la lógica se congela), sacudida, zoom y vibración.
@@ -347,6 +355,10 @@ func set_paused(value: bool) -> void:
 	if not _started or result != null:
 		return
 	clock.paused = value
+	if not value:
+		for c in [controller_a, controller_b]:
+			if c is PlayerInput:
+				(c as PlayerInput).clear_pending()
 	pause_changed.emit(value)
 
 

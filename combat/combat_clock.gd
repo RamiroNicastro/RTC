@@ -27,7 +27,7 @@ func freeze(ticks: int) -> void:
 
 ## Cámara lenta: durante `ticks` ticks reales, la lógica avanza 1 de cada `every`.
 func slow_motion(ticks: int, every: int) -> void:
-	if effects_enabled:
+	if effects_enabled and ticks >= _slow_left:
 		_slow_left = ticks
 		_slow_every = maxi(1, every)
 		_slow_counter = 0
