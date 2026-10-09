@@ -23,6 +23,8 @@ var continue_button: Button
 var _gs: Object
 var _event: Dictionary
 var _content: VBoxContainer
+## Texto del evento: al elegir, deja lugar a lo que pasó (así entra en la pantalla).
+var _text: Label
 var _next: String = ""
 
 
@@ -51,7 +53,8 @@ func _ready() -> void:
 	var title := UIStyle.label(tr(EventRunner.key(_event, "TITLE")), 38, UIStyle.GOLD, 8)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_content.add_child(title)
-	_content.add_child(_paragraph(_fill(tr(EventRunner.key(_event, "TEXT"))), UIStyle.TEXT))
+	_text = _paragraph(_fill(tr(EventRunner.key(_event, "TEXT"))), UIStyle.TEXT)
+	_content.add_child(_text)
 	_show_options()
 	UIStyle.pop_in.call_deferred(panel)
 
@@ -125,6 +128,8 @@ func _show_options() -> void:
 	var options: Array = _event["options"]
 	for i in options.size():
 		var o: Dictionary = options[i]
+		if not EventRunner.option_visible(_gs, o):
+			continue
 		var ok: bool = EventRunner.option_available(_gs, o)
 		var text: String = tr(EventRunner.option_key(_event, i))
 		if not ok:
@@ -154,6 +159,7 @@ func _choose(index: int) -> void:
 	for b in option_buttons:
 		b.queue_free()
 	option_buttons.clear()
+	_text.queue_free()
 	_content.add_child(_paragraph(tr(EventRunner.option_key(_event, index)), UIStyle.MUTED))
 	_content.add_child(_paragraph(_fill(tr(EventRunner.result_key(_event, index))), Color(1.0, 0.92, 0.75)))
 	var chips := HFlowContainer.new()

@@ -1,0 +1,49 @@
+[
+	{
+		"id": "b_cosme",
+		"trigger": "week",
+		"character": "cosme",
+		"weight": 2,
+		"when": {"min_week": 3},
+		"options": [
+			{"requires": {"min_money": 10}, "effects": {"money": -10, "relations": {"cosme": 15}, "stats": {"speed": 1}, "flags": ["cosme_amigo"]}},
+			{"effects": {"relations": {"cosme": -5}}}
+		]
+	},
+	{
+		"id": "b_cosme_tecnica",
+		"trigger": "week",
+		"character": "cosme",
+		"once": false,
+		"cooldown": 6,
+		"weight": 2,
+		"when": {"flags": ["cosme_amigo"], "relation_min": {"cosme": 10}},
+		"options": [
+			{"effects": {"stats": {"power": 1}, "relations": {"cosme": 5, "tito": -5}, "flags": ["tecnica_prohibida"]}},
+			{"effects": {"stats": {"chin": 1}, "relations": {"cosme": 5, "tito": -5}, "flags": ["tecnica_prohibida"]}},
+			{"effects": {"stats": {"technique": 1}, "relations": {"cosme": 2}}}
+		]
+	},
+	{
+		"id": "b_cosme_secreto",
+		"trigger": "week",
+		"character": "cosme",
+		"when": {"relation_min": {"cosme": 30}},
+		"options": [
+			{"effects": {"relations": {"cosme": 10}, "morale": 3, "flags": ["cosme_historia"]}},
+			{"effects": {"relations": {"cosme": 15, "mama": -3}, "money": -20, "flags": ["cosme_historia"]}}
+		]
+	},
+	{
+		"id": "b_pampa_cobro",
+		"trigger": "week",
+		"character": "pampa",
+		"once": false,
+		"cooldown": 10,
+		"when": {"flags": ["pelea_galpon"], "not_flags": ["pampa_enemigo"]},
+		"options": [
+			{"effects": {"money": 200, "morale": -8, "relations": {"pampa": 10, "felipe": -5, "mama": -5}}},
+			{"effects": {"relations": {"pampa": -10}, "morale": 3}}
+		]
+	}
+]

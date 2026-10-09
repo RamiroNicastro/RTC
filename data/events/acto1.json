@@ -1,13 +1,23 @@
 [
 	{
-		"id": "a1_club",
+		"id": "a1_nono",
 		"trigger": "hub",
+		"story": true,
+		"character": "nono",
+		"options": [
+			{"effects": {"relations": {"nono": 10}, "morale": 5, "next": "a1_club"}},
+			{"effects": {"relations": {"nono": 5}, "flags": ["nono_boxeaba"], "next": "a1_club"}}
+		]
+	},
+	{
+		"id": "a1_club",
+		"trigger": "chain",
 		"story": true,
 		"character": "tito",
 		"options": [
 			{"effects": {"relations": {"tito": 5}, "morale": 5, "flags": ["en_el_club", "ambicioso"], "next": "a1_bruno_intro"}},
 			{"effects": {"relations": {"tito": 10}, "flags": ["en_el_club", "humilde"], "next": "a1_bruno_intro"}},
-			{"effects": {"relations": {"tito": -5, "chino": 5}, "morale": 3, "flags": ["en_el_club"], "next": "a1_bruno_intro"}}
+			{"effects": {"relations": {"tito": -5, "felipe": 5}, "morale": 3, "flags": ["en_el_club"], "next": "a1_bruno_intro"}}
 		]
 	},
 	{
@@ -18,6 +28,17 @@
 		"options": [
 			{"effects": {"relations": {"bruno": 5}, "morale": 2, "flags": ["pique_bruno"]}},
 			{"effects": {"relations": {"bruno": 10}}}
+		]
+	},
+	{
+		"id": "a1_ramiro",
+		"trigger": "week",
+		"story": true,
+		"character": "ramiro",
+		"when": {"min_week": 1, "flags": ["en_el_club"]},
+		"options": [
+			{"effects": {"relations": {"ramiro": 10, "agus": 5}, "stats": {"defense": 1}}},
+			{"effects": {"relations": {"ramiro": 5, "agus": 5}, "flags": ["ramiro_historia"]}}
 		]
 	},
 	{
@@ -41,7 +62,7 @@
 		"options": [
 			{"effects": {"morale": 5, "relations": {"tito": -2}}},
 			{"effects": {"relations": {"tito": 8}, "stats": {"defense": 1}}},
-			{"effects": {"relations": {"chino": 8, "tito": -5}, "morale": 8, "energy": -15}}
+			{"effects": {"relations": {"felipe": 8, "tito": -5}, "morale": 8, "energy": -15}}
 		]
 	},
 	{
@@ -77,6 +98,49 @@
 		]
 	},
 	{
+		"id": "a1_nono_enfermo",
+		"trigger": "week",
+		"story": true,
+		"character": "nono",
+		"when": {"min_week": 5},
+		"options": [
+			{"effects": {"add_status": {"nono_enfermo": 0}, "relations": {"nono": 10, "mama": 10}, "flags": ["pagas_remedios"]}},
+			{"effects": {"add_status": {"nono_enfermo": 0}, "money": 100, "relations": {"felipe": 5, "tito": 5, "nono": 5}}}
+		]
+	},
+	{
+		"id": "a1_pampa",
+		"trigger": "week",
+		"story": true,
+		"character": "pampa",
+		"when": {"min_wins": 2},
+		"options": [
+			{"effects": {"relations": {"ramiro": 10, "tito": 5, "pampa": -10}, "morale": 3, "flags": ["pampa_no"]}},
+			{"effects": {"flags": ["pampa_pendiente"], "schedule": {"events": ["a1_pampa_vuelve"], "weeks": 3}}},
+			{"requires": {"min_energy": 40}, "effects": {"money": 500, "energy": -40, "morale": -5, "relations": {"tito": -15, "ramiro": -15, "pampa": 15}, "flags": ["pelea_galpon"], "schedule": {"events": ["a1_pampa_vuelve"], "weeks": 4}}}
+		]
+	},
+	{
+		"id": "a1_pampa_vuelve",
+		"trigger": "chain",
+		"story": true,
+		"character": "pampa",
+		"options": [
+			{"effects": {"relations": {"pampa": -20, "tito": 5, "ramiro": 5}, "morale": 5, "flags": ["pampa_enemigo"], "schedule": {"events": ["a1_pampa_aviso"], "weeks": 2}}},
+			{"effects": {"money": 1500, "morale": -15, "relations": {"pampa": 20}, "flags": ["tongo"]}}
+		]
+	},
+	{
+		"id": "a1_pampa_aviso",
+		"trigger": "chain",
+		"story": true,
+		"character": "felipe",
+		"options": [
+			{"requires": {"min_money": 150}, "effects": {"money": -150, "relations": {"felipe": 15}}},
+			{"effects": {"relations": {"felipe": 5, "mama": -5, "pampa": -5}, "morale": 5, "flags": ["encaraste_pampa"]}}
+		]
+	},
+	{
 		"id": "a1_promotor",
 		"trigger": "week",
 		"story": true,
@@ -86,6 +150,27 @@
 			{"effects": {"relations": {"tito": 15, "bruno": -10}, "flags": ["leal_tito"]}},
 			{"effects": {"relations": {"bruno": 10, "tito": -15}, "flags": ["tentado"]}},
 			{"effects": {"relations": {"tito": 5, "bruno": -20}, "flags": ["le_contaste_a_tito"]}}
+		]
+	},
+	{
+		"id": "a1_nono_despedida",
+		"trigger": "week",
+		"story": true,
+		"character": "nono",
+		"when": {"min_week": 16, "statuses": ["nono_enfermo"]},
+		"options": [
+			{"effects": {"remove_status": ["nono_enfermo"], "morale": -20, "relations": {"nono": 10, "mama": 10}, "flags": ["promesa_nono", "nono_murio"], "next": "a1_velorio"}},
+			{"effects": {"remove_status": ["nono_enfermo"], "morale": -15, "relations": {"mama": 10}, "flags": ["promesa_campeon", "nono_murio"], "next": "a1_velorio"}}
+		]
+	},
+	{
+		"id": "a1_velorio",
+		"trigger": "chain",
+		"story": true,
+		"character": "bruno",
+		"options": [
+			{"effects": {"relations": {"bruno": 15}, "flags": ["bruno_velorio"]}},
+			{"effects": {"relations": {"bruno": -10}}}
 		]
 	},
 	{

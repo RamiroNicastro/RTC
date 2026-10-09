@@ -12,18 +12,25 @@ extends RefCounted
 const EVENT_FILES: Array[String] = [
 	"res://data/events/acto1.json",
 	"res://data/events/vida.json",
+	"res://data/events/barrio.json",
 	"res://data/events/humor.json",
 ]
 const CHARACTERS: Array[CharacterData] = [
+	preload("res://data/characters/nono.tres"),
 	preload("res://data/characters/tito.tres"),
 	preload("res://data/characters/bruno.tres"),
-	preload("res://data/characters/chino.tres"),
+	preload("res://data/characters/felipe.tres"),
 	preload("res://data/characters/mama.tres"),
-	preload("res://data/characters/sofi.tres"),
+	preload("res://data/characters/ani.tres"),
+	preload("res://data/characters/ramiro.tres"),
+	preload("res://data/characters/agus.tres"),
+	preload("res://data/characters/pampa.tres"),
+	preload("res://data/characters/cosme.tres"),
 	preload("res://data/characters/aurelio.tres"),
 ]
 const STATUSES: Array[StatusData] = [
 	preload("res://data/statuses/novia.tres"),
+	preload("res://data/statuses/nono_enfermo.tres"),
 	preload("res://data/statuses/amuleto.tres"),
 	preload("res://data/statuses/turbo_toro.tres"),
 ]
@@ -210,6 +217,15 @@ static func conditions_met(gs: Object, when: Dictionary, context: Dictionary = {
 ## true si el jugador puede elegir esa opción (por ejemplo, si le alcanza la plata).
 static func option_available(gs: Object, option: Dictionary) -> bool:
 	return conditions_met(gs, option.get("requires", {}))
+
+
+## true si la opción se muestra. Las que piden plata o energía se ven apagadas ("no te alcanza");
+## las que dependen de la historia (marcas, relaciones…) directamente no aparecen hasta que se cumplan.
+static func option_visible(gs: Object, option: Dictionary) -> bool:
+	var story_req: Dictionary = option.get("requires", {}).duplicate()
+	story_req.erase("min_money")
+	story_req.erase("min_energy")
+	return conditions_met(gs, story_req)
 
 
 ## Lo agendado que ya venció. Sale el primero cuyas condiciones se cumplan; los que ya no

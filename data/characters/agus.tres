@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_char")
-id = &"chino"
-name_key = "CHAR_CHINO"
-role_key = "CHAR_CHINO_ROLE"
-color = Color(0.95, 0.8, 0.25, 1)
+id = &"agus"
+name_key = "CHAR_AGUS"
+role_key = "CHAR_AGUS_ROLE"
+color = Color(0.9, 0.65, 0.4, 1)

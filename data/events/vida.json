@@ -1,88 +1,125 @@
 [
 	{
-		"id": "v_chino_negocio",
+		"id": "v_nono_visita",
 		"trigger": "week",
-		"character": "chino",
+		"character": "nono",
+		"once": false,
+		"cooldown": 4,
+		"weight": 3,
+		"when": {"statuses": ["nono_enfermo"]},
+		"options": [
+			{"effects": {"morale": 5, "relations": {"nono": 5}}},
+			{"effects": {"energy": -10, "relations": {"nono": 10, "mama": 5}}}
+		]
+	},
+	{
+		"id": "v_felipe_negocio",
+		"trigger": "week",
+		"character": "felipe",
 		"weight": 2,
 		"when": {"min_week": 4},
 		"options": [
-			{"requires": {"min_money": 200}, "effects": {"money": -200, "relations": {"chino": 10}, "schedule": {"events": ["v_chino_bien", "v_chino_mal"], "weeks": 3}}},
-			{"effects": {"relations": {"chino": -5, "tito": 3}}}
+			{"requires": {"min_money": 200}, "effects": {"money": -200, "relations": {"felipe": 10}, "schedule": {"events": ["v_felipe_bien", "v_felipe_mal"], "weeks": 3}}},
+			{"effects": {"relations": {"felipe": -5, "tito": 3}}}
 		]
 	},
 	{
-		"id": "v_chino_bien",
+		"id": "v_felipe_bien",
 		"trigger": "chain",
-		"character": "chino",
+		"character": "felipe",
 		"options": [
-			{"effects": {"money": 450, "relations": {"chino": 10}, "morale": 5}}
+			{"effects": {"money": 450, "relations": {"felipe": 10}, "morale": 5}}
 		]
 	},
 	{
-		"id": "v_chino_mal",
+		"id": "v_felipe_mal",
 		"trigger": "chain",
-		"character": "chino",
+		"character": "felipe",
 		"options": [
-			{"effects": {"relations": {"chino": 5}, "morale": -3}},
-			{"effects": {"relations": {"chino": -10}, "flags": ["chino_debe"]}}
+			{"effects": {"relations": {"felipe": 5}, "morale": -3}},
+			{"effects": {"relations": {"felipe": -10}, "flags": ["felipe_debe"]}}
 		]
 	},
 	{
-		"id": "v_sofi_conoce",
+		"id": "v_ani_conoce",
 		"trigger": "week",
-		"character": "sofi",
+		"character": "ani",
 		"weight": 2,
-		"when": {"min_week": 3, "not_flags": ["sofi_conocida"]},
+		"when": {"min_week": 3, "not_flags": ["ani_conocida"]},
 		"options": [
-			{"requires": {"min_money": 40}, "effects": {"money": -40, "relations": {"sofi": 20}, "morale": 5, "flags": ["sofi_conocida"]}},
-			{"effects": {"relations": {"sofi": 5}, "flags": ["sofi_conocida"]}}
+			{"requires": {"min_money": 40}, "effects": {"money": -40, "relations": {"ani": 20}, "morale": 5, "flags": ["ani_conocida"]}},
+			{"effects": {"relations": {"ani": 5}, "flags": ["ani_conocida"]}}
 		]
 	},
 	{
-		"id": "v_sofi_salida",
+		"id": "v_ani_salida",
 		"trigger": "week",
-		"character": "sofi",
+		"character": "ani",
 		"once": false,
 		"cooldown": 4,
 		"weight": 2,
-		"when": {"flags": ["sofi_conocida"], "not_flags": ["sofi_ex"], "not_statuses": ["novia"], "relation_max": {"sofi": 29}},
+		"when": {"flags": ["ani_conocida"], "not_flags": ["ani_ex"], "not_statuses": ["novia"], "relation_max": {"ani": 29}},
 		"options": [
-			{"effects": {"relations": {"sofi": 10}, "morale": 3, "energy": -5}},
-			{"effects": {"relations": {"sofi": -3}}}
+			{"effects": {"relations": {"ani": 10}, "morale": 3, "energy": -5}},
+			{"effects": {"relations": {"ani": -3}}}
 		]
 	},
 	{
-		"id": "v_sofi_novios",
+		"id": "v_ani_novios",
 		"trigger": "week",
 		"story": true,
-		"character": "sofi",
-		"when": {"flags": ["sofi_conocida"], "not_flags": ["sofi_ex"], "not_statuses": ["novia"], "relation_min": {"sofi": 30}},
+		"character": "ani",
+		"when": {"flags": ["ani_conocida"], "not_flags": ["ani_ex"], "not_statuses": ["novia"], "relation_min": {"ani": 30}},
 		"options": [
-			{"effects": {"add_status": {"novia": 0}, "relations": {"sofi": 15, "tito": -5}, "morale": 10}},
-			{"effects": {"relations": {"sofi": -20, "tito": 5}, "morale": -5, "flags": ["sofi_ex"]}}
+			{"effects": {"add_status": {"novia": 0}, "relations": {"ani": 15, "tito": -5}, "morale": 10}},
+			{"effects": {"relations": {"ani": -20, "tito": 5}, "morale": -5, "flags": ["ani_ex"]}}
 		]
 	},
 	{
-		"id": "v_sofi_reclamo",
+		"id": "v_ani_reclamo",
 		"trigger": "week",
-		"character": "sofi",
+		"character": "ani",
 		"once": false,
 		"cooldown": 6,
 		"weight": 2,
 		"when": {"statuses": ["novia"]},
 		"options": [
-			{"requires": {"min_money": 60}, "effects": {"money": -60, "energy": -15, "relations": {"sofi": 12}, "morale": 5}},
-			{"effects": {"relations": {"sofi": -15, "tito": 3}}}
+			{"requires": {"min_money": 60}, "effects": {"money": -60, "energy": -15, "relations": {"ani": 12}, "morale": 5}},
+			{"effects": {"relations": {"ani": -15, "tito": 3}}}
 		]
 	},
 	{
-		"id": "v_sofi_corte",
+		"id": "v_ani_corte",
 		"trigger": "week",
 		"story": true,
-		"character": "sofi",
-		"when": {"statuses": ["novia"], "relation_max": {"sofi": 0}},
+		"character": "ani",
+		"when": {"statuses": ["novia"], "relation_max": {"ani": 0}},
 		"options": [
-			{"effects": {"remove_status": ["novia"], "morale": -15, "flags": ["sofi_ex"]}}
+			{"effects": {"remove_status": ["novia"], "morale": -15, "flags": ["ani_ex"]}}
+		]
+	},
+	{
+		"id": "v_ramiro_agus",
+		"trigger": "week",
+		"character": "agus",
+		"once": false,
+		"cooldown": 8,
+		"when": {"min_week": 4, "relation_min": {"ramiro": 5}},
+		"options": [
+			{"effects": {"relations": {"agus": 10, "ramiro": -3}, "morale": 2}},
+			{"effects": {"relations": {"ramiro": 10, "agus": -5}}}
+		]
+	},
+	{
+		"id": "v_ramiro_esquina",
+		"trigger": "fight",
+		"character": "ramiro",
+		"once": false,
+		"cooldown": 10,
+		"when": {"min_fights": 3, "relation_min": {"ramiro": 20}, "outcome": ["loss", "loss_ko", "draw"]},
+		"options": [
+			{"effects": {"stats": {"technique": 1}, "relations": {"ramiro": 5}}},
+			{"effects": {"relations": {"ramiro": -2}, "morale": 3}}
 		]
 	},
 	{
@@ -94,6 +131,7 @@
 		"when": {"min_week": 6, "relation_min": {"tito": 25}},
 		"options": [
 			{"effects": {"relations": {"tito": 5}, "morale": 5, "flags": ["tito_historia"]}},
+			{"requires": {"flags": ["nono_boxeaba"]}, "effects": {"relations": {"tito": 5, "nono": 5}, "morale": 5}},
 			{"effects": {"relations": {"tito": 2}, "stats": {"defense": 1}}}
 		]
 	},
@@ -113,25 +151,25 @@
 	{
 		"id": "v_bajon",
 		"trigger": "week",
-		"character": "chino",
+		"character": "felipe",
 		"once": false,
 		"cooldown": 6,
 		"weight": 3,
 		"when": {"max_morale": 30},
 		"options": [
-			{"effects": {"morale": 15, "energy": -10, "relations": {"chino": 5}}},
-			{"effects": {"morale": -3, "relations": {"chino": -3}}}
+			{"effects": {"morale": 15, "energy": -10, "relations": {"felipe": 5}}},
+			{"effects": {"morale": -3, "relations": {"felipe": -3}}}
 		]
 	},
 	{
 		"id": "f_asado_ko",
 		"trigger": "fight",
-		"character": "chino",
+		"character": "felipe",
 		"once": false,
 		"cooldown": 6,
 		"when": {"outcome": "win_ko", "min_fights": 2},
 		"options": [
-			{"effects": {"morale": 10, "energy": -15, "relations": {"chino": 5, "tito": -3}}},
+			{"effects": {"morale": 10, "energy": -15, "relations": {"felipe": 5, "tito": -3}}},
 			{"effects": {"morale": 4, "relations": {"tito": 3}}}
 		]
 	},

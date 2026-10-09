@@ -18,6 +18,8 @@ const PLACES: Array = [
 	[&"home", "PLACE_HOME", Color(0.35, 0.65, 0.45)],
 ]
 const ENERGY_BAR := Vector2(300, 20)
+## Alto de la lista de "Mi gente" (lo que no entra se ve deslizando).
+const PEOPLE_HEIGHT: float = 470.0
 const PLAYER_BLUE := Color(0.4, 0.7, 1.0)
 
 var _root_box: CenterContainer
@@ -419,30 +421,39 @@ func _on_event_finished(next_id: String) -> void:
 ## Relaciones con cada personaje que conociste y las situaciones activas.
 func _open_people() -> void:
 	var box := _open_overlay(tr("HUB_PEOPLE"))
+	# Con mucha gente o muchas situaciones no entra en la pantalla: va dentro de un scroll.
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(1120, PEOPLE_HEIGHT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 10)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	box.add_child(scroll)
 	if GameState.relations.is_empty():
-		box.add_child(UIStyle.label(tr("PEOPLE_EMPTY"), 26, UIStyle.MUTED, 5))
+		list.add_child(UIStyle.label(tr("PEOPLE_EMPTY"), 26, UIStyle.MUTED, 5))
 	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 40)
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 34)
 	grid.add_theme_constant_override("v_separation", 12)
 	for id in GameState.relations:
 		var c: CharacterData = EventRunner.character(StringName(id))
 		if c != null:
 			grid.add_child(_person_row(c, int(GameState.relations[id])))
-	box.add_child(grid)
+	list.add_child(grid)
 	if not GameState.statuses.is_empty():
-		box.add_child(UIStyle.label(tr("PEOPLE_STATUSES"), 24, UIStyle.MUTED, 5))
+		list.add_child(UIStyle.label(tr("PEOPLE_STATUSES"), 24, UIStyle.MUTED, 5))
 		for id in GameState.statuses:
 			var s: StatusData = EventRunner.status(StringName(id))
 			if s == null:
 				continue
 			var weeks: int = int(GameState.statuses[id])
 			var when: String = tr("PEOPLE_FOREVER") if weeks < 0 else tr("PEOPLE_WEEKS").format({"n": weeks})
-			box.add_child(UIStyle.label("%s (%s)" % [tr(s.name_key), when], 26, StatBars.UP_COLOR if s.good else Color(0.95, 0.65, 0.2), 5))
-			var d := UIStyle.label("%s  %s" % [tr(s.desc_key), EventBox.status_effects_text(s)], 20, UIStyle.MUTED, 4)
-			d.custom_minimum_size = Vector2(820, 0)
+			list.add_child(UIStyle.label("%s (%s)" % [tr(s.name_key), when], 24, StatBars.UP_COLOR if s.good else Color(0.95, 0.65, 0.2), 5))
+			var d := UIStyle.label("%s  %s" % [tr(s.desc_key), EventBox.status_effects_text(s)], 18, UIStyle.MUTED, 4)
+			d.custom_minimum_size = Vector2(1000, 0)
 			d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			box.add_child(d)
+			list.add_child(d)
 	var back := UIStyle.button(tr("CREATE_BACK"), _close_overlay, false)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(back)
@@ -459,14 +470,16 @@ func _person_row(c: CharacterData, value: int) -> HBoxContainer:
 	var name_label := UIStyle.label(tr(c.name_key), 22, c.color.lightened(0.3), 5)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	info.add_child(name_label)
-	var role := UIStyle.label(tr(c.role_key), 17, UIStyle.MUTED, 4)
+	var role := UIStyle.label(tr(c.role_key), 16, UIStyle.MUTED, 4)
 	role.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	role.custom_minimum_size = Vector2(250, 0)
+	role.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.add_child(role)
 	var bar_row := HBoxContainer.new()
 	bar_row.add_theme_constant_override("separation", 10)
 	var bg := ColorRect.new()
 	bg.color = Color(1, 1, 1, 0.12)
-	bg.custom_minimum_size = Vector2(240, 14)
+	bg.custom_minimum_size = Vector2(200, 14)
 	bg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var half: float = bg.custom_minimum_size.x * 0.5
 	var fill := ColorRect.new()

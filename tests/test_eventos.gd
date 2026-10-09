@@ -33,6 +33,8 @@ func _process(_delta: float) -> bool:
 	test_fight_events()
 	test_morale()
 	test_status_novia()
+	test_nono()
+	test_hidden_option()
 	test_save_and_migration()
 	test_hub_shows_event()
 	test_arena_event_after_fight()
@@ -71,18 +73,20 @@ func test_data_is_valid() -> void:
 	for ev in EventRunner.events():
 		if String(ev["id"]).begins_with("a1_"):
 			story += 1
-	check(story >= 5 and story <= 10, "el Acto 1 tiene entre 5 y 10 eventos (plan: 5 a 8 + continuaciones)")
+	check(story >= 5 and story <= 25, "el Acto 1 tiene entre 5 y 25 eventos (el plan pedía 5 a 8; la persona lo amplió el 09/10)")
 
 
 func test_first_event_and_chain() -> void:
 	new_career()
 	var ev: Dictionary = EventRunner.pick(gs, "hub", {}, rng)
-	check(ev.get("id", "") == "a1_club", "al abrir el hub por primera vez sale la llegada al club")
-	var s: Dictionary = EventRunner.choose(gs, ev, 1, rng)
+	check(ev.get("id", "") == "a1_nono", "al abrir el hub por primera vez, el Nono te da sus guantes")
+	var s: Dictionary = EventRunner.choose(gs, ev, 0, rng)
+	check(gs.relations.get("nono", 0) == 10 and s["next"] == "a1_club", "el Nono te manda al club (evento encadenado)")
+	check(EventRunner.pick(gs, "hub", {}, rng).is_empty(), "los guantes del Nono salen una sola vez")
+	s = EventRunner.choose(gs, EventRunner.find_event("a1_club"), 1, rng)
 	check(gs.relations.get("tito", 0) == 10, "aprender: Tito +10")
 	check(gs.flags.has("en_el_club") and gs.flags.has("humilde"), "quedan las marcas de la decisión")
 	check(s["next"] == "a1_bruno_intro", "después de Tito aparece Bruno (evento encadenado)")
-	check(EventRunner.pick(gs, "hub", {}, rng).is_empty(), "la llegada al club sale una sola vez")
 	var bruno: Dictionary = EventRunner.find_event(s["next"])
 	EventRunner.choose(gs, bruno, 0, rng)
 	check(gs.relations.has("bruno"), "conocer a Bruno lo suma a tu gente")
@@ -109,18 +113,20 @@ func test_story_before_side() -> void:
 	new_career()
 	gs.flags.append("en_el_club")
 	gs.week = 5
-	gs.events_seen["a1_club"] = 0
-	# En la semana 5 hay eventos secundarios posibles (Sofi, el Chino), pero el guanteo es historia.
+	for seen in ["a1_nono", "a1_club", "a1_ramiro"]:
+		gs.events_seen[seen] = 0
+	# En la semana 5 hay eventos secundarios posibles (Ani, el Chino), pero el guanteo es historia.
 	for i in 5:
 		var ev: Dictionary = EventRunner.pick(gs, "week", {}, rng)
 		check(ev.get("id", "") == "a1_guanteo", "la historia sale antes que los secundarios (salió '%s')" % ev.get("id", ""))
 	EventRunner.choose(gs, EventRunner.find_event("a1_guanteo"), 1, rng)
+	gs.events_seen["a1_nono_enfermo"] = 0
 	var ids := {}
 	for i in 60:
 		var ev: Dictionary = EventRunner.pick(gs, "week", {}, rng)
 		ids[ev.get("id", "")] = true
 	check(ids.has(""), "a veces no sale nada (los secundarios dependen del azar)")
-	check(ids.has("v_chino_negocio") and ids.has("v_sofi_conoce"), "salen secundarios distintos: " + str(ids.keys()))
+	check(ids.has("v_felipe_negocio") and ids.has("v_ani_conoce"), "salen secundarios distintos: " + str(ids.keys()))
 
 
 func test_once_and_cooldown() -> void:
@@ -137,7 +143,7 @@ func test_once_and_cooldown() -> void:
 
 func test_option_requires_money() -> void:
 	new_career()
-	var ev: Dictionary = EventRunner.find_event("v_chino_negocio")
+	var ev: Dictionary = EventRunner.find_event("v_felipe_negocio")
 	var invest: int = index_of(ev, "200")
 	gs.money = 100
 	check(not EventRunner.option_available(gs, ev["options"][invest]), "sin $200 no podés invertir")
@@ -148,11 +154,11 @@ func test_option_requires_money() -> void:
 func test_schedule() -> void:
 	new_career()
 	gs.money = 300
-	var ev: Dictionary = EventRunner.find_event("v_chino_negocio")
+	var ev: Dictionary = EventRunner.find_event("v_felipe_negocio")
 	EventRunner.choose(gs, ev, index_of(ev, "200"), rng)
 	check(gs.money == 100 and gs.scheduled.size() == 1, "invertir cobra y agenda el resultado")
 	var due: String = gs.scheduled[0]["id"]
-	check(due in ["v_chino_bien", "v_chino_mal"], "el resultado es bueno o malo al azar")
+	check(due in ["v_felipe_bien", "v_felipe_mal"], "el resultado es bueno o malo al azar")
 	gs.week += 2
 	var got: Dictionary = EventRunner.pick(gs, "week", {}, rng)
 	check(got.get("id", "") != due, "antes de tiempo no sale")
@@ -205,10 +211,10 @@ func test_morale() -> void:
 
 func test_status_novia() -> void:
 	new_career()
-	gs.flags.append("sofi_conocida")
-	gs.relations["sofi"] = 30
+	gs.flags.append("ani_conocida")
+	gs.relations["ani"] = 30
 	var ev: Dictionary = EventRunner.pick(gs, "week", {}, rng)
-	check(ev.get("id", "") == "v_sofi_novios", "con buena relación con Sofi llega la pregunta")
+	check(ev.get("id", "") == "v_ani_novios", "con buena relación con Ani llega la pregunta")
 	gs.relations["tito"] = 0
 	EventRunner.choose(gs, ev, 0, rng)
 	check(gs.statuses.has("novia") and gs.statuses["novia"] == -1, "de novio, sin fecha de fin")
@@ -228,19 +234,53 @@ func test_status_novia() -> void:
 	gs.statuses.erase("novia")
 	var without: float = ArenaRules.build_fight_setup(gs, offer).fighter_a.max_stamina
 	check(with_novia < without, "de novio, un poco menos de stamina en la pelea (%.1f contra %.1f)" % [with_novia, without])
-	# Si la relación se cae, Sofi corta (es un evento de historia: sale sí o sí).
+	# Si la relación se cae, Ani corta (es un evento de historia: sale sí o sí).
 	gs.statuses["novia"] = -1
-	gs.relations["sofi"] = -5
+	gs.relations["ani"] = -5
 	ev = EventRunner.pick(gs, "week", {}, rng)
-	check(ev.get("id", "") == "v_sofi_corte", "con la relación en el piso, Sofi corta")
+	check(ev.get("id", "") == "v_ani_corte", "con la relación en el piso, Ani corta")
 	EventRunner.choose(gs, ev, 0, rng)
-	check(not gs.statuses.has("novia") and gs.flags.has("sofi_ex"), "se termina el noviazgo")
+	check(not gs.statuses.has("novia") and gs.flags.has("ani_ex"), "se termina el noviazgo")
 	# Situación con duración: el amuleto dura 6 semanas.
 	gs.statuses["amuleto"] = 2
 	var r: Dictionary = EventRunner.apply_week(gs)
 	check(gs.statuses["amuleto"] == 1 and r["expired"].is_empty(), "a la situación le queda una semana menos")
 	r = EventRunner.apply_week(gs)
 	check(not gs.statuses.has("amuleto") and r["expired"] == ["amuleto"], "y al llegar a 0 se termina")
+
+
+func test_nono() -> void:
+	new_career()
+	for seen in ["a1_nono", "a1_club", "a1_ramiro", "a1_guanteo"]:
+		gs.events_seen[seen] = 0
+	gs.flags.append("en_el_club")
+	gs.week = 5
+	var ev: Dictionary = EventRunner.pick(gs, "week", {}, rng)
+	check(ev.get("id", "") == "a1_nono_enfermo", "en la semana 5 el Nono se enferma (salió '%s')" % ev.get("id", ""))
+	EventRunner.choose(gs, ev, 0, rng)
+	check(gs.statuses.has("nono_enfermo"), "pagás los remedios")
+	gs.money = 1000
+	WeekActions.end_week(gs)
+	check(gs.money == 1000 - WeekActions.WEEKLY_EXPENSES - 60, "los remedios cuestan $60 por semana (quedó $%d)" % gs.money)
+	gs.week = 16
+	ev = EventRunner.pick(gs, "week", {}, rng)
+	check(ev.get("id", "") == "a1_nono_despedida", "en la semana 16 llega la despedida (salió '%s')" % ev.get("id", ""))
+	var s: Dictionary = EventRunner.choose(gs, ev, 0, rng)
+	check(not gs.statuses.has("nono_enfermo") and gs.flags.has("promesa_nono"), "se terminan los remedios y queda la promesa")
+	check(s["next"] == "a1_velorio", "después, Bruno en el velorio")
+
+
+func test_hidden_option() -> void:
+	new_career()
+	var ev: Dictionary = EventRunner.find_event("v_tito_mate")
+	var nono_option: Dictionary = ev["options"][1]
+	check(not EventRunner.option_visible(gs, nono_option), "sin saber que el Nono boxeaba, no aparece la pregunta")
+	gs.flags.append("nono_boxeaba")
+	check(EventRunner.option_visible(gs, nono_option), "si lo sabés, aparece")
+	var money_option: Dictionary = EventRunner.find_event("v_felipe_negocio")["options"][0]
+	gs.money = 0
+	check(EventRunner.option_visible(gs, money_option) and not EventRunner.option_available(gs, money_option),
+			"la que pide plata se ve, pero apagada")
 
 
 func test_save_and_migration() -> void:
@@ -250,7 +290,7 @@ func test_save_and_migration() -> void:
 	gs.relations["tito"] = 33
 	gs.statuses["novia"] = -1
 	gs.events_seen["a1_club"] = 0
-	gs.scheduled.append({"id": "v_chino_bien", "week": 5})
+	gs.scheduled.append({"id": "v_felipe_bien", "week": 5})
 	check(sm.save(), "guarda")
 	gs.clear()
 	check(gs.flags.is_empty() and gs.relations.is_empty(), "clear() borra la historia")
@@ -276,19 +316,27 @@ func test_hub_shows_event() -> void:
 	var hub: Control = load("res://career/hub/hub_screen.tscn").instantiate()
 	root.add_child(hub)
 	var box: EventBox = hub._overlay as EventBox
-	check(box != null and box._event["id"] == "a1_club", "al abrir el hub por primera vez aparece Tito")
+	check(box != null and box._event["id"] == "a1_nono", "al abrir el hub por primera vez aparece el Nono")
 	if box == null:
 		hub.queue_free()
 		return
-	check(box.option_buttons.size() == 3, "con 3 opciones")
+	check(box.option_buttons.size() == 2, "con 2 opciones")
 	hub._unhandled_input(esc())
 	check(hub._overlay == box, "Esc no saltea el evento")
 	var buttons: Array[Button] = box.option_buttons.duplicate()
 	buttons[0].pressed.emit()
 	buttons[1].pressed.emit()
-	check(gs.flags.has("ambicioso") and not gs.flags.has("humilde"), "un doble toque no aplica dos opciones")
-	check(box.continue_button != null and gs.flags.has("ambicioso"), "elegir aplica la opción y muestra SEGUIR")
+	check(gs.relations.get("nono", 0) == 10 and not gs.flags.has("nono_boxeaba"), "un doble toque no aplica dos opciones")
+	check(box.continue_button != null, "elegir aplica la opción y muestra SEGUIR")
 	box.continue_button.pressed.emit()
+	var club: EventBox = hub._overlay as EventBox
+	check(club != null and club._event["id"] == "a1_club", "SEGUIR lleva al club (Tito)")
+	if club == null:
+		hub.queue_free()
+		return
+	club.option_buttons[0].pressed.emit()
+	check(gs.flags.has("ambicioso"), "la opción de Tito se aplica")
+	club.continue_button.pressed.emit()
 	var next: EventBox = hub._overlay as EventBox
 	check(next != null and next._event["id"] == "a1_bruno_intro", "SEGUIR lleva al evento encadenado (Bruno)")
 	if next != null:
