@@ -2,7 +2,7 @@
 
 > Leé esto **después** de [CLAUDE.md](../CLAUDE.md), donde están las reglas, el estado y las decisiones. El plan aprobado y congelado es [PLAN_FINAL_V2.1.md](PLAN_FINAL_V2.1.md).
 > Este documento explica **dónde quedó todo, cómo está armado, qué trampas hay y qué sigue**, paso a paso.
-> Última actualización: 08/10/2026.
+> Última actualización: 09/10/2026.
 
 ---
 
@@ -71,6 +71,9 @@ autoload/                      GameState (datos de la carrera), SaveManager (JSO
 career/hub/                    hub de la carrera: encabezado (nombre, semana, edad, plata, récord), estadísticas y 5 lugares
 career/week/week_actions.gd    acciones de la semana (entrenar, trabajar, descansar), paso de la semana y TODOS sus números
 career/training/               TrainingData (un ejercicio); los .tres están en data/trainings/
+narrative/                     eventos de la historia: EventRunner (elige el evento, condiciones, efectos, moral, relaciones,
+                               situaciones), EventBox (la ventana del evento), CharacterData y StatusData. Ver docs/EVENTOS.md
+data/events/                   eventos en JSON (acto1, vida, humor); data/characters/ y data/statuses/ en .tres
 career/arena/                  la Arena: FightOffer (oferta, guardable), RivalGenerator (rivales a tu nivel; nombres en data/rivals/names.json), ArenaRules (ofertas, bolsas, ranking, setup y resultado; TODOS sus números), ArenaScreen (ofertas → pelea → resultado)
 modes/arcade/                  Modo Arcade: arcade_run (flujo), arcade_rivals, arcade_score, arcade_records
 ui/                            ui_style.gd (fuente y botones) y title/ (pantalla de título, escena principal)
@@ -142,6 +145,7 @@ godot --headless --path . -s res://tests/balance_report.gd
 9. **El editor de la persona puede pisar archivos** si los tenía abiertos. Si algo "volvió atrás", revisá `git diff`.
 10. **Autoloads en las pruebas:** un script de prueba (`-s`) se compila ANTES de que existan `GameState`, `SaveManager` y `SceneRouter`. Si nombra por `class_name` a una clase que usa un autoload (por ejemplo `CreateFighterScreen`), falla al compilar. En la prueba, buscá los autoloads con `root.get_node("GameState")` y cargá esas pantallas por ruta (`load("res://...gd")`). Las escenas que se instancian en tiempo de ejecución no tienen problema.
 11. **Las pruebas no pisan los guardados reales:** `SaveManager.folder`, `PlayerFighter.path` y `ArcadeRecords.path` se cambian al principio de cada prueba que guarda.
+12. **`set_anchors_preset(PRESET_FULL_RECT)` dentro de `_ready()`** (con el nodo ya en el árbol) cambia las anclas pero no el tamaño: el nodo queda en 0×0. Ahí usá `set_anchors_and_offsets_preset()`. Antes de `add_child` cualquiera de las dos anda.
 
 ## 7. Próximos pasos (en orden)
 
@@ -211,7 +215,8 @@ Ver la sección 22 del plan. Arrancar por:
 2. ~~autoloads `GameState`, `SaveManager` y `SceneRouter`~~ **hecho** (carrera nueva desde "Crear peleador", guardado en `user://slot_1.json` con `.bak`);
 3. ~~el hub~~ **hecho como esqueleto**: muestra todo, los 5 lugares todavía avisan "Próximamente". Sigue: Gimnasio (entrenar), Trabajo (plata), Casa (descansar) y que la semana avance;
 4. ~~semana con acciones~~ y ~~Arena~~ **hechos**. Sigue (a consultar con la persona): Tienda (guantes que se ven en el ring, programas de entrenamiento), peleas callejeras con apuestas, campamento antes de cada pelea, pasar a T2 profesional al llegar al #1;
-5. los saltos de tiempo.
+5. ~~eventos y Acto 1~~ **hecho como borrador** (docs/EVENTOS.md): la persona tiene que leer y corregir la historia. Propuesta pendiente de aprobar: el hub como mapa del barrio, estilo Punch Club (sección 5 de EVENTOS.md);
+6. los saltos de tiempo.
 
 **El combate no se toca:** la carrera arma un `FightSetup` y lee el `FightResult` (R2).
 

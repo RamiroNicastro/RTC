@@ -22,6 +22,9 @@ const ACTIONS_PER_WEEK: int = 3
 ## Puesto inicial en el ranking amateur (1 = el mejor) y el peor posible.
 const START_RANK: int = 30
 const WORST_RANK: int = 40
+## Moral (0 a MAX_MORALE). Con 50 no cambia nada; alta entrena mejor, baja entrena peor.
+const START_MORALE: int = 60
+const MAX_MORALE: int = 100
 
 ## true si hay una carrera cargada (nueva o continuada).
 var active: bool = false
@@ -49,6 +52,19 @@ var offers: Array = []
 ## Semana a la que corresponden las ofertas (-1 = ninguna todavía).
 var offers_week: int = -1
 
+## --- Historia (la maneja EventRunner) ---
+var morale: int = START_MORALE
+## Marcas de lo que decidiste en los eventos ("leal_tito", "sofi_conocida"…).
+var flags: Array = []
+## Relación con cada personaje que conociste: id → de -100 a 100.
+var relations: Dictionary = {}
+## Situaciones activas: id → semanas que quedan (-1 = hasta que un evento la saque).
+var statuses: Dictionary = {}
+## Eventos que ya salieron: id → semana en que salieron (para "una sola vez" y las esperas).
+var events_seen: Dictionary = {}
+## Eventos agendados para más adelante: [{"id", "week"}].
+var scheduled: Array = []
+
 
 ## Arranca una carrera desde cero con el peleador que creó el jugador.
 func new_career(player: PlayerFighter) -> void:
@@ -69,8 +85,18 @@ func new_career(player: PlayerFighter) -> void:
 	rank = START_RANK
 	offers = []
 	offers_week = -1
+	_reset_story()
 	active = true
 	changed.emit()
+
+
+func _reset_story() -> void:
+	morale = START_MORALE
+	flags = []
+	relations = {}
+	statuses = {}
+	events_seen = {}
+	scheduled = []
 
 
 func age() -> int:
@@ -102,6 +128,12 @@ func to_dict() -> Dictionary:
 		"rank": rank,
 		"offers": offers,
 		"offers_week": offers_week,
+		"morale": morale,
+		"flags": flags,
+		"relations": relations,
+		"statuses": statuses,
+		"events_seen": events_seen,
+		"scheduled": scheduled,
 	}
 
 
@@ -125,6 +157,23 @@ func from_dict(d: Dictionary) -> void:
 	rank = clampi(int(d.get("rank", START_RANK)), 1, WORST_RANK)
 	offers = d.get("offers", [])
 	offers_week = int(d.get("offers_week", -1))
+	morale = clampi(int(d.get("morale", START_MORALE)), 0, MAX_MORALE)
+	flags = d.get("flags", [])
+	relations = {}
+	var rel: Dictionary = d.get("relations", {})
+	for who in rel:
+		relations[who] = int(rel[who])
+	statuses = {}
+	var st: Dictionary = d.get("statuses", {})
+	for id in st:
+		statuses[id] = int(st[id])
+	events_seen = {}
+	var seen: Dictionary = d.get("events_seen", {})
+	for id in seen:
+		events_seen[id] = int(seen[id])
+	scheduled = []
+	for item in d.get("scheduled", []):
+		scheduled.append({"id": str(item.get("id", "")), "week": int(item.get("week", 0))})
 	active = true
 	changed.emit()
 
@@ -133,4 +182,5 @@ func from_dict(d: Dictionary) -> void:
 func clear() -> void:
 	active = false
 	fighter = FighterData.new()
+	_reset_story()
 	changed.emit()

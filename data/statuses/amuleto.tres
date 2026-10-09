@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="StatusData" format=3]
+
+[ext_resource type="Script" path="res://narrative/status_data.gd" id="1_status"]
+
+[resource]
+script = ExtResource("1_status")
+id = &"amuleto"
+name_key = "STATUS_AMULETO"
+desc_key = "STATUS_AMULETO_DESC"
+good = true
+weekly_morale = 1
+weekly_energy = 0
+weekly_money = 0
+training_mult = 1.0
+fight_stamina_mult = 1.0

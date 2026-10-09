@@ -1,0 +1,102 @@
+[
+	{
+		"id": "a1_club",
+		"trigger": "hub",
+		"story": true,
+		"character": "tito",
+		"options": [
+			{"effects": {"relations": {"tito": 5}, "morale": 5, "flags": ["en_el_club", "ambicioso"], "next": "a1_bruno_intro"}},
+			{"effects": {"relations": {"tito": 10}, "flags": ["en_el_club", "humilde"], "next": "a1_bruno_intro"}},
+			{"effects": {"relations": {"tito": -5, "chino": 5}, "morale": 3, "flags": ["en_el_club"], "next": "a1_bruno_intro"}}
+		]
+	},
+	{
+		"id": "a1_bruno_intro",
+		"trigger": "chain",
+		"story": true,
+		"character": "bruno",
+		"options": [
+			{"effects": {"relations": {"bruno": 5}, "morale": 2, "flags": ["pique_bruno"]}},
+			{"effects": {"relations": {"bruno": 10}}}
+		]
+	},
+	{
+		"id": "a1_guanteo",
+		"trigger": "week",
+		"story": true,
+		"character": "bruno",
+		"when": {"min_week": 2, "flags": ["en_el_club"]},
+		"options": [
+			{"requires": {"min_energy": 15}, "effects": {"energy": -15, "stats": {"chin": 1, "technique": 1}, "relations": {"bruno": 5}, "flags": ["guanteo_full"]}},
+			{"effects": {"stats": {"technique": 1}, "relations": {"bruno": 2, "tito": 3}}},
+			{"effects": {"morale": -3, "relations": {"bruno": -5}}}
+		]
+	},
+	{
+		"id": "a1_debut_gano",
+		"trigger": "fight",
+		"story": true,
+		"character": "tito",
+		"when": {"max_fights": 1, "outcome": ["win", "win_ko"]},
+		"options": [
+			{"effects": {"morale": 5, "relations": {"tito": -2}}},
+			{"effects": {"relations": {"tito": 8}, "stats": {"defense": 1}}},
+			{"effects": {"relations": {"chino": 8, "tito": -5}, "morale": 8, "energy": -15}}
+		]
+	},
+	{
+		"id": "a1_debut_perdio",
+		"trigger": "fight",
+		"story": true,
+		"character": "tito",
+		"when": {"max_fights": 1, "outcome": ["loss", "loss_ko", "draw"]},
+		"options": [
+			{"effects": {"relations": {"tito": 10}, "morale": 5}},
+			{"effects": {"morale": -5, "flags": ["dudas"]}}
+		]
+	},
+	{
+		"id": "a1_mama",
+		"trigger": "week",
+		"story": true,
+		"character": "mama",
+		"when": {"min_fights": 1},
+		"options": [
+			{"effects": {"relations": {"mama": 10}, "flags": ["promesa_mama"]}},
+			{"effects": {"relations": {"mama": -5}, "morale": 5}},
+			{"effects": {"relations": {"mama": 5}, "schedule": {"events": ["a1_mama_club"], "weeks": 3}}}
+		]
+	},
+	{
+		"id": "a1_mama_club",
+		"trigger": "chain",
+		"story": true,
+		"character": "mama",
+		"options": [
+			{"effects": {"morale": 10, "relations": {"mama": 10, "tito": 5}, "flags": ["mama_vio_entrenar"]}}
+		]
+	},
+	{
+		"id": "a1_promotor",
+		"trigger": "week",
+		"story": true,
+		"character": "bruno",
+		"when": {"min_wins": 3, "flags": ["en_el_club"]},
+		"options": [
+			{"effects": {"relations": {"tito": 15, "bruno": -10}, "flags": ["leal_tito"]}},
+			{"effects": {"relations": {"bruno": 10, "tito": -15}, "flags": ["tentado"]}},
+			{"effects": {"relations": {"tito": 5, "bruno": -20}, "flags": ["le_contaste_a_tito"]}}
+		]
+	},
+	{
+		"id": "a1_cara_a_cara",
+		"trigger": "week",
+		"story": true,
+		"character": "bruno",
+		"when": {"best_rank": 5, "flags": ["en_el_club"]},
+		"options": [
+			{"effects": {"relations": {"bruno": -5}, "morale": 5, "flags": ["rivalidad", "acto1_fin"]}},
+			{"effects": {"relations": {"bruno": 5}, "flags": ["amistad", "acto1_fin"]}}
+		]
+	}
+]

@@ -5,7 +5,8 @@ extends Node
 ## Escritura segura: archivo temporal → se renombra, y se conserva una copia .bak.
 ## NO decide cuándo guardar, salvo el autoguardado al cerrar o pausar la app en el celular.
 
-const SAVE_VERSION: int = 1
+## 2: se suma la historia (moral, flags, relaciones, situaciones y eventos).
+const SAVE_VERSION: int = 2
 const DEFAULT_SLOT: int = 1
 
 ## Carpeta de las partidas (las pruebas la cambian para no pisar las reales).
@@ -65,6 +66,10 @@ func _migrate(data: Dictionary) -> Dictionary:
 	var version: int = int(data.get("save_version", 1))
 	if version > SAVE_VERSION:
 		push_warning("Guardado de una versión más nueva del juego (%d)." % version)
+	if version < 2:
+		# Carrera empezada antes de los eventos: arranca la historia de cero (moral inicial,
+		# sin flags ni relaciones). GameState.from_dict completa el resto con sus valores por defecto.
+		data["morale"] = GameState.START_MORALE
 	return data
 
 

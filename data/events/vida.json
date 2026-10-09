@@ -1,0 +1,150 @@
+[
+	{
+		"id": "v_chino_negocio",
+		"trigger": "week",
+		"character": "chino",
+		"weight": 2,
+		"when": {"min_week": 4},
+		"options": [
+			{"requires": {"min_money": 200}, "effects": {"money": -200, "relations": {"chino": 10}, "schedule": {"events": ["v_chino_bien", "v_chino_mal"], "weeks": 3}}},
+			{"effects": {"relations": {"chino": -5, "tito": 3}}}
+		]
+	},
+	{
+		"id": "v_chino_bien",
+		"trigger": "chain",
+		"character": "chino",
+		"options": [
+			{"effects": {"money": 450, "relations": {"chino": 10}, "morale": 5}}
+		]
+	},
+	{
+		"id": "v_chino_mal",
+		"trigger": "chain",
+		"character": "chino",
+		"options": [
+			{"effects": {"relations": {"chino": 5}, "morale": -3}},
+			{"effects": {"relations": {"chino": -10}, "flags": ["chino_debe"]}}
+		]
+	},
+	{
+		"id": "v_sofi_conoce",
+		"trigger": "week",
+		"character": "sofi",
+		"weight": 2,
+		"when": {"min_week": 3, "not_flags": ["sofi_conocida"]},
+		"options": [
+			{"requires": {"min_money": 40}, "effects": {"money": -40, "relations": {"sofi": 20}, "morale": 5, "flags": ["sofi_conocida"]}},
+			{"effects": {"relations": {"sofi": 5}, "flags": ["sofi_conocida"]}}
+		]
+	},
+	{
+		"id": "v_sofi_salida",
+		"trigger": "week",
+		"character": "sofi",
+		"once": false,
+		"cooldown": 4,
+		"weight": 2,
+		"when": {"flags": ["sofi_conocida"], "not_flags": ["sofi_ex"], "not_statuses": ["novia"], "relation_max": {"sofi": 29}},
+		"options": [
+			{"effects": {"relations": {"sofi": 10}, "morale": 3, "energy": -5}},
+			{"effects": {"relations": {"sofi": -3}}}
+		]
+	},
+	{
+		"id": "v_sofi_novios",
+		"trigger": "week",
+		"story": true,
+		"character": "sofi",
+		"when": {"flags": ["sofi_conocida"], "not_flags": ["sofi_ex"], "not_statuses": ["novia"], "relation_min": {"sofi": 30}},
+		"options": [
+			{"effects": {"add_status": {"novia": 0}, "relations": {"sofi": 15, "tito": -5}, "morale": 10}},
+			{"effects": {"relations": {"sofi": -20, "tito": 5}, "morale": -5, "flags": ["sofi_ex"]}}
+		]
+	},
+	{
+		"id": "v_sofi_reclamo",
+		"trigger": "week",
+		"character": "sofi",
+		"once": false,
+		"cooldown": 6,
+		"weight": 2,
+		"when": {"statuses": ["novia"]},
+		"options": [
+			{"requires": {"min_money": 60}, "effects": {"money": -60, "energy": -15, "relations": {"sofi": 12}, "morale": 5}},
+			{"effects": {"relations": {"sofi": -15, "tito": 3}}}
+		]
+	},
+	{
+		"id": "v_sofi_corte",
+		"trigger": "week",
+		"story": true,
+		"character": "sofi",
+		"when": {"statuses": ["novia"], "relation_max": {"sofi": 0}},
+		"options": [
+			{"effects": {"remove_status": ["novia"], "morale": -15, "flags": ["sofi_ex"]}}
+		]
+	},
+	{
+		"id": "v_tito_mate",
+		"trigger": "week",
+		"character": "tito",
+		"once": false,
+		"cooldown": 10,
+		"when": {"min_week": 6, "relation_min": {"tito": 25}},
+		"options": [
+			{"effects": {"relations": {"tito": 5}, "morale": 5, "flags": ["tito_historia"]}},
+			{"effects": {"relations": {"tito": 2}, "stats": {"defense": 1}}}
+		]
+	},
+	{
+		"id": "v_tito_enojado",
+		"trigger": "week",
+		"character": "tito",
+		"once": false,
+		"cooldown": 8,
+		"weight": 3,
+		"when": {"relation_max": {"tito": -15}},
+		"options": [
+			{"effects": {"relations": {"tito": 15}, "morale": -2}},
+			{"effects": {"relations": {"tito": -5}, "morale": -5}}
+		]
+	},
+	{
+		"id": "v_bajon",
+		"trigger": "week",
+		"character": "chino",
+		"once": false,
+		"cooldown": 6,
+		"weight": 3,
+		"when": {"max_morale": 30},
+		"options": [
+			{"effects": {"morale": 15, "energy": -10, "relations": {"chino": 5}}},
+			{"effects": {"morale": -3, "relations": {"chino": -3}}}
+		]
+	},
+	{
+		"id": "f_asado_ko",
+		"trigger": "fight",
+		"character": "chino",
+		"once": false,
+		"cooldown": 6,
+		"when": {"outcome": "win_ko", "min_fights": 2},
+		"options": [
+			{"effects": {"morale": 10, "energy": -15, "relations": {"chino": 5, "tito": -3}}},
+			{"effects": {"morale": 4, "relations": {"tito": 3}}}
+		]
+	},
+	{
+		"id": "f_derrota_dura",
+		"trigger": "fight",
+		"character": "mama",
+		"once": false,
+		"cooldown": 6,
+		"when": {"outcome": "loss_ko", "min_fights": 2},
+		"options": [
+			{"effects": {"relations": {"mama": 5}, "morale": 5, "energy": 10}},
+			{"effects": {"relations": {"tito": 8}, "stats": {"technique": 1}, "energy": -10, "morale": -3}}
+		]
+	}
+]

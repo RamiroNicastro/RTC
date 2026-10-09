@@ -45,6 +45,12 @@ const ENERGY_PER_KNOCKDOWN: int = 15
 const KO_LOSS_MAX_ENERGY: int = 25
 const MIN_ENERGY_AFTER: int = 10
 
+## Moral después de pelear.
+const MORALE_WIN: int = 8
+const MORALE_WIN_KO: int = 12
+const MORALE_LOSS: int = -10
+const MORALE_LOSS_STOPPED: int = -15
+
 const ROUNDS: int = 3
 const ROUND_SECONDS: float = 60.0
 
@@ -135,7 +141,7 @@ static func build_fight_setup(gs: Object, offer: FightOffer) -> FightSetup:
 	var me: FighterSetup = StatFormulas.build_setup(gs.fighter)
 	me.display_name = gs.display_name()
 	me.controller_type = FighterSetup.ControllerType.PLAYER
-	me.max_stamina *= stamina_mult(gs.energy)
+	me.max_stamina *= stamina_mult(gs.energy) * EventRunner.fight_stamina_mult(gs)
 	var rival: FighterSetup = StatFormulas.build_setup(offer.rival)
 	rival.display_name = offer.display_name()
 	rival.controller_type = FighterSetup.ControllerType.AI
@@ -179,8 +185,10 @@ static func apply_result(gs: Object, offer: FightOffer, r: FightResult) -> Dicti
 	elif not draw:
 		gs.rank = mini(gs.WORST_RANK, gs.rank + RANK_LOSS)
 
+	var stopped_me: bool = not won and not draw and r.is_stoppage()
+	var morale: int = EventRunner.add_morale(gs, _morale_change(won, draw, ko, stopped_me))
 	var week: Dictionary = WeekActions.end_week(gs)
-	gs.energy = energy_after(r, not won and not draw and r.is_stoppage())
+	gs.energy = energy_after(r, stopped_me)
 	gs.offers = []
 	gs.changed.emit()
 	return {
@@ -191,8 +199,27 @@ static func apply_result(gs: Object, offer: FightOffer, r: FightResult) -> Dicti
 		"rank_before": rank_before,
 		"rank_after": gs.rank,
 		"energy": gs.energy,
+		"morale": morale,
+		"outcome": outcome(won, draw, ko, stopped_me),
 		"week": week,
 	}
+
+
+static func _morale_change(won: bool, draw: bool, ko: bool, stopped_me: bool) -> int:
+	if won:
+		return MORALE_WIN_KO if ko else MORALE_WIN
+	if draw:
+		return 0
+	return MORALE_LOSS_STOPPED if stopped_me else MORALE_LOSS
+
+
+## Resultado para los eventos de después de la pelea (condición "outcome" de EventRunner).
+static func outcome(won: bool, draw: bool, ko: bool, stopped_me: bool) -> String:
+	if won:
+		return "win_ko" if ko else "win"
+	if draw:
+		return "draw"
+	return "loss_ko" if stopped_me else "loss"
 
 
 ## Energía con la que arrancás la semana siguiente, según cómo terminaste la pelea.

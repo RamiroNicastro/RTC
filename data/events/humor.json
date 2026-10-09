@@ -1,0 +1,22 @@
+[
+	{
+		"id": "h_cutman",
+		"trigger": "week",
+		"character": "aurelio",
+		"when": {"min_fights": 2},
+		"options": [
+			{"requires": {"min_money": 50}, "effects": {"money": -50, "morale": 8, "add_status": {"amuleto": 6}}},
+			{"effects": {"morale": -2}}
+		]
+	},
+	{
+		"id": "h_turbo_toro",
+		"trigger": "week",
+		"character": "chino",
+		"when": {"min_wins": 1},
+		"options": [
+			{"effects": {"money": 150, "relations": {"chino": 5}, "add_status": {"turbo_toro": 3}}},
+			{"effects": {"relations": {"chino": -3, "tito": 3}}}
+		]
+	}
+]

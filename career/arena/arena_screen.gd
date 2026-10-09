@@ -5,6 +5,8 @@ extends Node
 ## Usa el combate tal cual (R2): ArenaRules arma el FightSetup y aplica el FightResult.
 ## El resultado se aplica y se guarda apenas termina la pelea (antes del botón CONTINUAR).
 ## Abandonar desde la pausa vuelve al hub sin consecuencias (la oferta sigue).
+## Al salir del resultado puede aparecer un evento de la historia (EventRunner: primero los de
+## "después de la pelea" y, si no hay, los de "pasó la semana").
 ## Teclado: Esc vuelve al hub (en la pelea, Esc es pausa).
 
 const COMBAT_SCENE: PackedScene = preload("res://combat/combat_scene.tscn")
@@ -28,6 +30,10 @@ var _combat: CombatScene
 var _fight_buttons: Array[Button] = []
 ## Resumen del último resultado (las pruebas lo leen).
 var _last_summary: Dictionary = {}
+## Evento de la historia en pantalla (Esc no lo saltea: hay que elegir).
+var _event_box: EventBox
+## true en la pantalla de resultado: Esc sigue como VOLVER (pasando por los eventos).
+var _showing_result: bool = false
 
 
 func _ready() -> void:
@@ -42,8 +48,11 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key != null and key.pressed and not key.echo and key.physical_keycode == KEY_ESCAPE and _combat == null:
-		_back_to_hub()
+	if key != null and key.pressed and not key.echo and key.physical_keycode == KEY_ESCAPE and _combat == null and _event_box == null:
+		if _showing_result:
+			_after_result()
+		else:
+			_back_to_hub()
 
 
 # --- Ofertas ---
@@ -186,22 +195,57 @@ func _show_result(r: FightResult) -> void:
 	box.add_child(UIStyle.label(rank_line, 28, UIStyle.TEXT, 6))
 	box.add_child(UIStyle.label(tr("ARENA_RECORD").format({"record": "%d-%d-%d" % [GameState.wins, GameState.losses, GameState.draws],
 			"kos": GameState.kos}), 22, UIStyle.MUTED, 5))
+	if s["morale"] != 0:
+		box.add_child(UIStyle.label(tr("ARENA_MORALE").format({"n": EventBox.signed_text(s["morale"])}), 24,
+				StatBars.UP_COLOR if s["morale"] > 0 else Color(0.95, 0.65, 0.2), 5))
 	var energy_color: Color = UIStyle.TEXT if s["energy"] >= ArenaRules.MIN_ENERGY else Color(0.95, 0.65, 0.2)
 	box.add_child(UIStyle.label(tr("ARENA_ENERGY_AFTER").format({"n": s["energy"]}), 24, energy_color, 5))
 	var week: Dictionary = s["week"]
 	box.add_child(UIStyle.label(tr("WEEK_EXPENSES").format({"n": week["expenses"]}), 22, UIStyle.MUTED, 5))
 	if week.get("birthday", false):
 		box.add_child(UIStyle.label(tr("WEEK_BIRTHDAY").format({"age": GameState.age()}), 24, UIStyle.GOLD, 5))
+	for line in EventBox.week_status_lines(week):
+		box.add_child(UIStyle.label(line[0], 22, line[1], 5))
 	if week.get("in_debt", false):
 		box.add_child(UIStyle.label(tr("WEEK_DEBT_WARNING"), 22, UIStyle.RED, 5))
-	var back := UIStyle.button(tr("ARENA_BACK"), _back_to_hub)
+	var back := UIStyle.button(tr("ARENA_BACK"), _after_result)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(back)
 	_animate(box, back)
+	_showing_result = true
 
 
 func _back_to_hub() -> void:
 	SceneRouter.go_hub()
+
+
+# --- Eventos después de la pelea ---
+
+func _after_result() -> void:
+	_showing_result = false
+	var ev: Dictionary = EventRunner.pick(GameState, "fight", {"outcome": _last_summary["outcome"]})
+	if ev.is_empty():
+		ev = EventRunner.pick(GameState, "week")
+	if ev.is_empty():
+		_back_to_hub()
+	else:
+		_show_event(ev)
+
+
+func _show_event(ev: Dictionary) -> void:
+	_clear()
+	_event_box = EventBox.new(GameState, ev)
+	_event_box.finished.connect(_on_event_finished)
+	_ui.add_child(_event_box)
+
+
+func _on_event_finished(next_id: String) -> void:
+	SaveManager.save()
+	_event_box = null
+	if next_id != "":
+		_show_event(EventRunner.find_event(next_id))
+	else:
+		_back_to_hub()
 
 
 # --- Ayudas de pantalla ---

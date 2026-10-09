@@ -31,6 +31,11 @@ const TIRED_ENERGY: int = 50
 const TIRED_MIN_MULT: float = 0.6
 ## Con deuda (plata negativa) se entrena preocupado.
 const DEBT_MULT: float = 0.75
+## Moral: con esto o más se entrena con ganas; con menos de LOW_MORALE, desganado. Efecto chico.
+const HIGH_MORALE: int = 70
+const HIGH_MORALE_MULT: float = 1.1
+const LOW_MORALE: int = 30
+const LOW_MORALE_MULT: float = 0.85
 
 const WORK_PAY: int = 150
 const WORK_ENERGY: int = 30
@@ -56,14 +61,24 @@ static func can_work(gs: Object) -> bool:
 	return gs.energy >= WORK_ENERGY
 
 
-## Cuánto rinde una sesión según la energía y la plata (1.0 = normal).
+## Cuánto rinde una sesión según la energía, la plata, la moral y las situaciones (1.0 = normal).
 static func session_mult(gs: Object) -> float:
 	var mult: float = 1.0
 	if gs.energy < TIRED_ENERGY:
 		mult *= lerpf(TIRED_MIN_MULT, 1.0, float(gs.energy) / TIRED_ENERGY)
 	if gs.money < 0:
 		mult *= DEBT_MULT
+	mult *= morale_mult(gs.morale)
+	mult *= EventRunner.training_mult(gs)
 	return mult
+
+
+static func morale_mult(morale: int) -> float:
+	if morale >= HIGH_MORALE:
+		return HIGH_MORALE_MULT
+	if morale < LOW_MORALE:
+		return LOW_MORALE_MULT
+	return 1.0
 
 
 ## Rendimiento decreciente de una estadística (1.0 con 30).
@@ -124,17 +139,22 @@ static func _use_action(gs: Object) -> Dictionary:
 	return result
 
 
-## Pasa la semana: gastos fijos, algo de energía, acciones nuevas y, si toca, cumpleaños.
+## Pasa la semana: gastos fijos, algo de energía, acciones nuevas, la moral y las situaciones
+## (EventRunner.apply_week) y, si toca, cumpleaños.
 static func end_week(gs: Object) -> Dictionary:
 	var age_before: int = gs.age()
 	gs.week += 1
 	gs.money -= WEEKLY_EXPENSES
 	var before: int = gs.energy
 	gs.energy = mini(gs.MAX_ENERGY, gs.energy + WEEKEND_ENERGY)
+	var energy_gain: int = gs.energy - before
+	var story: Dictionary = EventRunner.apply_week(gs)
 	gs.actions_left = gs.ACTIONS_PER_WEEK
 	return {
 		"expenses": WEEKLY_EXPENSES,
-		"energy": gs.energy - before,
+		"energy": energy_gain,
 		"birthday": gs.age() > age_before,
 		"in_debt": gs.money < 0,
+		"status_lines": story["lines"],
+		"expired": story["expired"],
 	}

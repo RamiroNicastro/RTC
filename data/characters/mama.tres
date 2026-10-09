@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CharacterData" format=3]
+
+[ext_resource type="Script" path="res://narrative/character_data.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = &"mama"
+name_key = "CHAR_MAMA"
+role_key = "CHAR_MAMA_ROLE"
+color = Color(0.7, 0.55, 0.85, 1)
